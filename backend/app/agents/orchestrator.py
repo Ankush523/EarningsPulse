@@ -172,6 +172,44 @@ class PlaybookOrchestrator:
         )
         return playbook, trace
 
+    async def astream(
+        self,
+        ticker: str,
+        *,
+        job_id: str | None = None,
+        earnings_date: str | None = None,
+    ):
+        """
+        Stream LangGraph node updates for SSE consumers.
+
+        Yields merged partial state updates including trace_events and playbook.
+        """
+        normalized = ticker.upper().strip()
+        job_id = job_id or f"job_{uuid.uuid4().hex[:12]}"
+
+        initial_state: AgentState = {
+            "job_id": job_id,
+            "ticker": normalized,
+            "earnings_date": earnings_date,
+            "trace_events": [
+                trace_to_dict(
+                    make_trace_event(
+                        job_id,
+                        TraceEventType.RUN_STARTED,
+                        f"Playbook generation started for {normalized}",
+                        input_summary={"ticker": normalized},
+                    )
+                )
+            ],
+            "errors": [],
+            "messages": [],
+            "status": "running",
+        }
+
+        async for update in self._graph.astream(initial_state, stream_mode="updates"):
+            for _node_name, node_output in update.items():
+                yield node_output
+
     async def _parallel_gather_node(self, state: AgentState) -> dict[str, Any]:
         """Run Research and Reaction agents in parallel."""
         research_task = self._research.run(state)
