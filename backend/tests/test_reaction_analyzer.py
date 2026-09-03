@@ -3,7 +3,6 @@
 from datetime import date
 
 import pytest
-
 from app.models.data import EarningsEvent, OHLCVBar
 from app.models.playbook import ReactionArchetype, ReportOutcome
 from app.services.reaction_analyzer import ReactionAnalyzer
@@ -139,7 +138,9 @@ async def test_analyze_ticker_with_mocks(settings, cache):
             ticker="AAPL",
             source="finnhub",
             events=[
-                EarningsEvent(ticker="AAPL", report_date=date(2024, 1, 3), eps_estimate=1.0, eps_actual=1.2),
+                EarningsEvent(
+                    ticker="AAPL", report_date=date(2024, 1, 3), eps_estimate=1.0, eps_actual=1.2
+                ),
             ],
         )
     )

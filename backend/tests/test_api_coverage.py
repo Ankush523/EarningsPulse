@@ -1,14 +1,13 @@
 """Additional API endpoint coverage tests."""
 
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from app.main import app
 from app.models.playbook import PlaybookStatus
 from app.services.job_store import job_store
+from httpx import ASGITransport, AsyncClient
 from tests.test_api_playbook import _sample_playbook
 
 
@@ -72,7 +71,7 @@ async def test_sse_stream_includes_data_prefix(client):
             "job_id": "job_sse_fmt",
             "event_type": "run_started",
             "message": "Started",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
     job.status = PlaybookStatus.COMPLETED

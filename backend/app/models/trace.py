@@ -1,6 +1,6 @@
 """PRISM-compatible trace event schemas."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -25,7 +25,7 @@ class TraceEvent(BaseModel):
     event_id: str
     job_id: str
     event_type: TraceEventType
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     agent_name: str | None = None
     tool_name: str | None = None
     message: str
@@ -45,7 +45,7 @@ class TraceLog(BaseModel):
     job_id: str
     ticker: str
     events: list[TraceEvent] = Field(default_factory=list)
-    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
     total_latency_ms: int | None = None
     prism_synced: bool = False

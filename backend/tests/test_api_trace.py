@@ -1,12 +1,10 @@
 """Tests for PRISM client, trace store, and trace API."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from app.agents.trace_utils import make_trace_event, trace_to_dict
 from app.api.deps import get_trace_store
 from app.config import Settings
@@ -15,6 +13,7 @@ from app.models.trace import TraceEventType, TraceLog
 from app.services.job_store import job_store
 from app.services.prism_client import PrismClient
 from app.services.trace_store import TraceStore, trace_event_to_prism_step
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.fixture(autouse=True)
@@ -83,7 +82,7 @@ async def test_build_trace_log_from_job(trace_settings):
             )
         ),
     )
-    job.completed_at = datetime.now(timezone.utc)
+    job.completed_at = datetime.now(UTC)
     trace_log = store.build_trace_log(job)
     assert trace_log.job_id == "job_trace1"
     assert trace_log.ticker == "AAPL"
@@ -143,7 +142,7 @@ async def test_get_trace_api_completed_job(client, trace_settings):
             )
         ),
     )
-    job.completed_at = datetime.now(timezone.utc)
+    job.completed_at = datetime.now(UTC)
 
     app.dependency_overrides[get_trace_store] = lambda: TraceStore(
         store=job_store, settings=trace_settings

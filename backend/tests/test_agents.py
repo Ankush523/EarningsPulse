@@ -1,10 +1,8 @@
 """Integration tests for multi-agent orchestrator."""
 
-from datetime import date
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.agents.forecast import ForecastAgent
 from app.agents.llm import LLMClient
 from app.agents.orchestrator import PlaybookOrchestrator
@@ -12,13 +10,9 @@ from app.agents.reaction import ReactionAgent
 from app.agents.research import ResearchAgent
 from app.agents.spillover import SpilloverAgent
 from app.agents.synthesis import SynthesisAgent
-from app.models.analysis import PeerMapResult, ReactionPatternAnalysis
-from app.models.data import EarningsEvent, HistoricalEarningsResponse, OHLCVBar
 from app.models.playbook import (
-    ConfidenceTier,
     Playbook,
     ReactionArchetype,
-    ReportOutcome,
 )
 from app.services.reaction_analyzer import ReactionAnalyzer
 
@@ -104,7 +98,9 @@ async def test_orchestrator_returns_complete_playbook(
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_run_with_trace(settings, mock_research_bundle, mock_reaction_analysis, mock_peer_map_result):
+async def test_orchestrator_run_with_trace(
+    settings, mock_research_bundle, mock_reaction_analysis, mock_peer_map_result
+):
     research_agent = ResearchAgent(settings=settings)
     research_agent.run = AsyncMock(
         return_value={"research": mock_research_bundle, "trace_events": [], "errors": []}
@@ -162,9 +158,7 @@ async def test_orchestrator_run_with_trace(settings, mock_research_bundle, mock_
 
 @pytest.mark.asyncio
 async def test_research_agent_fallback_without_keys(cache, settings):
-    settings_no_keys = settings.model_copy(
-        update={"tavily_api_key": None, "finnhub_api_key": None}
-    )
+    settings_no_keys = settings.model_copy(update={"tavily_api_key": None, "finnhub_api_key": None})
     agent = ResearchAgent(settings=settings_no_keys)
     agent._price_data.get_company_name = MagicMock(return_value="Apple Inc.")
     agent._earnings.get_next_earnings_date = AsyncMock(return_value=None)
@@ -192,7 +186,9 @@ async def test_forecast_agent_heuristic_fallback(settings):
     }
     result = await agent.run(state)
     forecast = result["forecast"]
-    total = forecast["beat_probability"] + forecast["inline_probability"] + forecast["miss_probability"]
+    total = (
+        forecast["beat_probability"] + forecast["inline_probability"] + forecast["miss_probability"]
+    )
     assert abs(total - 1.0) < 0.01
     assert forecast["bull_case"]
 
@@ -209,10 +205,7 @@ async def test_reaction_agent_with_mock_analyzer(mock_reaction_analysis):
 
 
 @pytest.mark.asyncio
-async def test_spillover_agent_with_mock_peer_map(
-    cache, mock_peer_map_result
-):
-    from app.agents.mappers import peer_map_to_spillover
+async def test_spillover_agent_with_mock_peer_map(cache, mock_peer_map_result):
     from app.agents.spillover import SpilloverAgent
     from app.services.peer_map import PeerMapService
 

@@ -18,15 +18,43 @@ from app.utils.confidence import score_from_data_quality
 # Keys are canonical group names; values are ticker lists.
 SECTOR_PEER_GROUPS: dict[str, list[str]] = {
     "semiconductors": [
-        "NVDA", "AMD", "INTC", "AVGO", "MRVL", "MU", "QCOM", "TXN", "ASML", "ARM",
-        "LRCX", "KLAC", "AMAT", "ON", "MCHP",
+        "NVDA",
+        "AMD",
+        "INTC",
+        "AVGO",
+        "MRVL",
+        "MU",
+        "QCOM",
+        "TXN",
+        "ASML",
+        "ARM",
+        "LRCX",
+        "KLAC",
+        "AMAT",
+        "ON",
+        "MCHP",
     ],
     "storage": ["WDC", "STX", "MU", "NTAP", "PSTG"],
     "cloud_software": [
-        "MSFT", "AMZN", "GOOGL", "META", "CRM", "ORCL", "SNOW", "DDOG", "NET",
+        "MSFT",
+        "AMZN",
+        "GOOGL",
+        "META",
+        "CRM",
+        "ORCL",
+        "SNOW",
+        "DDOG",
+        "NET",
     ],
     "enterprise_software": [
-        "MSFT", "ORCL", "CRM", "ADBE", "NOW", "INTU", "PANW", "CRWD",
+        "MSFT",
+        "ORCL",
+        "CRM",
+        "ADBE",
+        "NOW",
+        "INTU",
+        "PANW",
+        "CRWD",
     ],
     "consumer_tech": ["AAPL", "SSNLF", "SONY", "QCOM", "SWKS"],
     "financials": ["JPM", "BAC", "WFC", "C", "GS", "MS", "BLK", "SCHW"],
@@ -34,7 +62,14 @@ SECTOR_PEER_GROUPS: dict[str, list[str]] = {
     "retail_ecommerce": ["AMZN", "WMT", "COST", "TGT", "SHOP", "EBAY", "ETSY"],
     "automotive_ev": ["TSLA", "F", "GM", "RIVN", "LCID", "NIO", "LI"],
     "ai_infrastructure": [
-        "NVDA", "AMD", "SMCI", "DELL", "HPE", "ANET", "MRVL", "AVGO",
+        "NVDA",
+        "AMD",
+        "SMCI",
+        "DELL",
+        "HPE",
+        "ANET",
+        "MRVL",
+        "AVGO",
     ],
     "networking": ["CSCO", "ANET", "JNPR", "FFIV", "MSFT", "AMZN"],
     "healthcare_pharma": ["JNJ", "PFE", "MRK", "ABBV", "LLY", "BMY", "AMGN"],
@@ -87,11 +122,7 @@ THEMATIC_LINKS: dict[str, list[tuple[str, PeerRelationship, str]]] = {
 def find_groups_for_ticker(ticker: str) -> list[str]:
     """Return sector group names that include the ticker."""
     normalized = ticker.upper().strip()
-    return [
-        group
-        for group, members in SECTOR_PEER_GROUPS.items()
-        if normalized in members
-    ]
+    return [group for group, members in SECTOR_PEER_GROUPS.items() if normalized in members]
 
 
 def get_static_peers(ticker: str) -> list[tuple[str, PeerRelationship, str, str | None]]:
@@ -148,9 +179,7 @@ class PeerMapService:
     ) -> PeerMapResult:
         """Build a ranked peer map for the reporting ticker."""
         normalized = ticker.upper().strip()
-        cache_key = TTLCache.make_key(
-            "peer_map", normalized, max_peers, earnings_limit
-        )
+        cache_key = TTLCache.make_key("peer_map", normalized, max_peers, earnings_limit)
         if use_cache:
             cached = self._cache.get(cache_key)
             if cached is not None:
@@ -196,9 +225,7 @@ class PeerMapService:
 
         confidence = score_from_data_quality(
             sample_size=len(peers),
-            has_correlation=any(
-                p.earnings_events_used >= MIN_CORRELATION_EVENTS for p in peers
-            ),
+            has_correlation=any(p.earnings_events_used >= MIN_CORRELATION_EVENTS for p in peers),
         )
 
         result = PeerMapResult(
@@ -279,9 +306,7 @@ class PeerMapService:
             reporting_bars = self._price.fetch_ohlcv(
                 reporting_ticker, start, end, use_cache=use_cache
             )
-            peer_bars = self._price.fetch_ohlcv(
-                peer_ticker, start, end, use_cache=use_cache
-            )
+            peer_bars = self._price.fetch_ohlcv(peer_ticker, start, end, use_cache=use_cache)
         except Exception:
             return None
 
@@ -315,7 +340,7 @@ class PeerMapService:
 
         mean_x = mean(x)
         mean_y = mean(y)
-        num = sum((a - mean_x) * (b - mean_y) for a, b in zip(x, y))
+        num = sum((a - mean_x) * (b - mean_y) for a, b in zip(x, y, strict=True))
         den_x = sum((a - mean_x) ** 2 for a in x) ** 0.5
         den_y = sum((b - mean_y) ** 2 for b in y) ** 0.5
         if den_x == 0 or den_y == 0:

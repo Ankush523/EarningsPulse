@@ -77,6 +77,8 @@ finance_hackathon/
 ├── backend/              # FastAPI + LangGraph agents
 │   ├── app/              # Application code
 │   ├── demo/             # Pre-cached demo playbooks (AAPL)
+│   ├── pyproject.toml    # Python deps + ruff config
+│   ├── uv.lock           # Locked dependency versions
 │   ├── Dockerfile        # Production container
 │   └── railway.toml      # Railway deploy config
 ├── frontend/             # Next.js 14 web app
@@ -114,11 +116,11 @@ docker compose up --build
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uv sync                    # install deps into .venv (includes dev tools)
+uv run uvicorn app.main:app --reload --port 8000
 ```
+
+Install [uv](https://docs.astral.sh/uv/) if needed: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 **Frontend:**
 
@@ -162,9 +164,9 @@ git push origin v1.0.0
 **Seed / refresh demo cache:**
 
 ```bash
-cd backend && source .venv/bin/activate
-python ../scripts/seed_demo.py --offline --ticker AAPL   # offline
-python ../scripts/seed_demo.py --ticker AAPL             # live agent run
+cd backend
+uv run python ../scripts/seed_demo.py --offline --ticker AAPL   # offline
+uv run python ../scripts/seed_demo.py --ticker AAPL             # live agent run
 ```
 
 ## API Reference
@@ -227,7 +229,10 @@ Demo AAPL and health checks work without any keys.
 
 ```bash
 # Backend (100+ tests)
-cd backend && pytest
+cd backend && uv run python -m pytest
+
+# Lint backend
+cd backend && uv run ruff check app tests && uv run ruff format --check app tests
 
 # Full suite (pytest + build + E2E)
 ./scripts/run_tests.sh
@@ -239,13 +244,13 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && npx playwright install chromium && npm run test:e2e
 ```
 
-CI (GitHub Actions): backend pytest → frontend lint/build → Playwright E2E on every push/PR to `main`.
+CI (GitHub Actions): backend ruff + pytest → frontend lint/build → Playwright E2E on every push/PR to `main`.
 
 Backtest validation:
 
 ```bash
-cd backend && source .venv/bin/activate
-python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA JPM AMZN
+cd backend
+uv run python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA JPM AMZN
 ```
 
 ## Documentation

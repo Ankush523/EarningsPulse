@@ -147,9 +147,7 @@ class EarningsCalendarService:
             try:
                 upcoming = await self.get_upcoming_earnings(days=30, use_cache=True)
                 ticker_events = [
-                    event
-                    for event in upcoming.events
-                    if event.ticker.upper() == normalized
+                    event for event in upcoming.events if event.ticker.upper() == normalized
                 ]
                 if ticker_events:
                     return min(event.report_date for event in ticker_events)

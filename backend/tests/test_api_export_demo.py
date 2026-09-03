@@ -1,15 +1,14 @@
 """Tests for demo cache and export endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from app.main import app
 from app.models.playbook import PlaybookStatus
 from app.services.demo_store import DemoCacheEntry, DemoStore
 from app.services.job_store import job_store
+from httpx import ASGITransport, AsyncClient
 from tests.test_api_playbook import _sample_playbook
 
 
@@ -95,7 +94,7 @@ async def test_export_playbook_json(client):
     playbook = _sample_playbook("job_export")
     job.status = PlaybookStatus.COMPLETED
     job.playbook = playbook
-    job.completed_at = datetime.now(timezone.utc)
+    job.completed_at = datetime.now(UTC)
 
     response = await client.get("/api/playbook/job_export/export/json")
     assert response.status_code == 200
@@ -109,7 +108,7 @@ async def test_export_playbook_bundle(client):
     playbook = _sample_playbook("job_bundle")
     job.status = PlaybookStatus.COMPLETED
     job.playbook = playbook
-    job.completed_at = datetime.now(timezone.utc)
+    job.completed_at = datetime.now(UTC)
     await job_store.append_trace(
         "job_bundle",
         {
@@ -117,7 +116,7 @@ async def test_export_playbook_bundle(client):
             "job_id": "job_bundle",
             "event_type": "run_started",
             "message": "Started",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
 

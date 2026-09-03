@@ -3,14 +3,14 @@
 Pre-cache demo playbooks for instant hackathon demos.
 
 Usage:
-  cd backend && source .venv/bin/activate
+  cd backend
 
   # Mock demo (no API keys required)
-  python ../scripts/seed_demo.py --offline --ticker AAPL
+  uv run python ../scripts/seed_demo.py --offline --ticker AAPL
 
   # Live demo (requires Phase 1–3 env keys)
-  python ../scripts/seed_demo.py --ticker AAPL
-  python ../scripts/seed_demo.py --ticker NVDA --ticker MSFT
+  uv run python ../scripts/seed_demo.py --ticker AAPL
+  uv run python ../scripts/seed_demo.py --ticker NVDA --ticker MSFT
 """
 
 from __future__ import annotations

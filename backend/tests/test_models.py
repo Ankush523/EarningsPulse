@@ -1,19 +1,15 @@
 """Model validation tests for Phase 0."""
 
-from datetime import datetime
-
 import pytest
-from pydantic import ValidationError
-
 from app.models import (
     AgentState,
     ExecutiveSummary,
-    Playbook,
     PlaybookGenerateRequest,
     ReactionArchetype,
     TraceEvent,
     TraceEventType,
 )
+from pydantic import ValidationError
 
 
 def test_playbook_generate_request_valid():

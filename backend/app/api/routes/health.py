@@ -1,6 +1,6 @@
 """Health check routes."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 
@@ -18,7 +18,7 @@ async def health_check(settings: Settings = Depends(get_app_settings)) -> dict:
         "service": settings.app_name,
         "version": settings.app_version,
         "environment": settings.environment,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 
@@ -37,5 +37,5 @@ async def readiness_check(settings: Settings = Depends(get_app_settings)) -> dic
         "service": settings.app_name,
         "version": settings.app_version,
         "checks": checks,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }

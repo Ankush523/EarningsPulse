@@ -4,7 +4,6 @@ from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.models.data import EarningsEvent, HistoricalEarningsResponse, OHLCVBar
 from app.models.playbook import PeerRelationship
 from app.services.earnings_calendar import EarningsCalendarService

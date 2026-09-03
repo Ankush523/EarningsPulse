@@ -5,11 +5,9 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-
 from app.models.data import OHLCVBar
 from app.services.errors import DataNotFoundError
 from app.services.price_data import PriceDataService
-from app.utils.cache import TTLCache
 
 
 def test_fetch_ohlcv_returns_bars(cache, sample_price_history):
