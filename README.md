@@ -225,11 +225,16 @@ Demo AAPL and health checks work without any keys.
 
 ## Testing
 
+Property-based tests use [Hypothesis](https://hypothesis.readthedocs.io/) (backend) and [Hegel](https://hegel.dev/typescript) (frontend). Agent guidance for writing Hegel tests lives in `.cursor/skills/hegel/`.
+
 ```bash
-# Backend (100+ tests)
+# Backend (unit + Hypothesis property tests)
 cd backend && pytest
 
-# Full suite (pytest + build + E2E)
+# Frontend property tests (Hegel via Vitest)
+cd frontend && npm run test:property
+
+# Full suite (pytest + property tests + build + E2E)
 ./scripts/run_tests.sh
 
 # Skip E2E locally
@@ -239,7 +244,7 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && npx playwright install chromium && npm run test:e2e
 ```
 
-CI (GitHub Actions): backend pytest → frontend lint/build → Playwright E2E on every push/PR to `main`.
+CI (GitHub Actions): backend pytest → frontend property tests/lint/build → Playwright E2E on every push/PR to `main`.
 
 Backtest validation:
 

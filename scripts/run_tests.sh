@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run all EarningsPulse test suites (backend unit/integration + frontend build + E2E).
+# Run all EarningsPulse test suites (backend, frontend property/build, and E2E).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -14,8 +14,11 @@ fi
 python -m pytest tests/ -q
 cd "$ROOT"
 
-echo "==> Frontend production build"
+echo "==> Frontend property tests (Hegel)"
 cd frontend
+npm run test:property
+
+echo "==> Frontend production build"
 npm run build
 cd "$ROOT"
 
