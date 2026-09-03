@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+from datetime import datetime, timezone
 from typing import AsyncIterator
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from app.api.deps import get_job_runner, get_job_store
 from app.api.rate_limit import client_key, playbook_rate_limiter
@@ -21,6 +22,7 @@ from app.models.playbook import (
 from app.services.job_store import JobStore
 from app.services.playbook_runner import PlaybookJobRunner
 from app.services.sse_events import error_event, trace_event_to_sse
+from app.services.trace_store import TraceStore
 
 router = APIRouter(prefix="/playbook", tags=["playbook"])
 
@@ -51,6 +53,57 @@ async def generate_playbook(
         ticker=body.ticker.upper(),
         status=PlaybookStatus.PENDING.value,
         stream_url=f"/api/playbook/stream/{job_id}",
+    )
+
+
+@router.get("/{job_id}/export/json")
+async def export_playbook_json(
+    job_id: str,
+    store: JobStore = Depends(get_job_store),
+) -> Response:
+    """Download completed playbook as JSON."""
+    job = await store.get(job_id)
+    if job.playbook is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Playbook not available for export",
+        )
+
+    filename = f"earningspulse-{job.ticker.lower()}-{job_id}.json"
+    content = job.playbook.model_dump_json(indent=2)
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{job_id}/export/bundle")
+async def export_playbook_bundle(
+    job_id: str,
+    store: JobStore = Depends(get_job_store),
+) -> JSONResponse:
+    """Download playbook + PRISM trace as a single JSON bundle."""
+    job = await store.get(job_id)
+    if job.playbook is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Playbook not available for export",
+        )
+
+    trace_store = TraceStore(store=store)
+    trace_log = trace_store.build_trace_log(job)
+    bundle = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "job_id": job_id,
+        "ticker": job.ticker,
+        "playbook": job.playbook.model_dump(mode="json"),
+        "trace": trace_log.model_dump(mode="json"),
+    }
+    filename = f"earningspulse-{job.ticker.lower()}-{job_id}-bundle.json"
+    return JSONResponse(
+        content=bundle,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

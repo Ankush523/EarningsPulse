@@ -109,3 +109,35 @@ export async function fetchEarningsCalendar(
 
   return response.json();
 }
+
+export function getPlaybookJsonExportUrl(jobId: string): string {
+  return `${BACKEND_URL}/api/playbook/${jobId}/export/json`;
+}
+
+export function getPlaybookBundleExportUrl(jobId: string): string {
+  return `${BACKEND_URL}/api/playbook/${jobId}/export/bundle`;
+}
+
+export async function listDemoTickers(): Promise<string[]> {
+  const response = await fetch(`${BACKEND_URL}/api/playbook/demo`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+  const data: { tickers: string[] } = await response.json();
+  return data.tickers;
+}
+
+export async function loadDemoPlaybook(
+  ticker: string
+): Promise<PlaybookGenerateResponse & { demo?: boolean }> {
+  const response = await fetch(
+    `${BACKEND_URL}/api/playbook/demo/${ticker.toUpperCase()}`,
+    { method: "POST" }
+  );
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+  return response.json();
+}

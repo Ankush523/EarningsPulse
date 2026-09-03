@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/AppHeader";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { EarningsCalendarPreview } from "@/components/EarningsCalendarPreview";
+import { DemoButton } from "@/components/DemoButton";
 import { TickerInput } from "@/components/TickerInput";
 
 export default function HomePage() {
@@ -27,6 +28,7 @@ export default function HomePage() {
             and maps peer spillover — before the market moves.
           </p>
           <TickerInput />
+          <DemoButton />
         </section>
 
         <section className="grid gap-6 md:grid-cols-3">
