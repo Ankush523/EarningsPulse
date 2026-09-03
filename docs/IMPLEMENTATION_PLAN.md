@@ -341,21 +341,21 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 2 — Analysis Engines
 
-- [ ] `reaction_analyzer.py`**:** Core pattern engine
+- [x] `reaction_analyzer.py`**:** Core pattern engine
   - Input: list of (earnings_date, prices around date)
   - Output per event: direction, dip %, recovery %, time-to-bottom
   - Aggregate: archetype classification, avg dip, avg recovery, pattern frequency
   - Classify into archetypes (Dip-Then-Rally, Immediate Rip, etc.)
-- [ ] `peer_map.py`**:** Spillover engine
+- [x] `peer_map.py`**:** Spillover engine
   - Static sector taxonomy (GICS-based peer groups for major sectors)
   - Dynamic correlation: compute return correlation on past earnings dates
   - Output: ranked peer list with correlation scores and relationship types
-- [ ] `confidence.py`**:** Confidence scoring utility
+- [x] `confidence.py`**:** Confidence scoring utility
   - Score based on data availability, sample size, source quality
-- [ ] `scripts/backtest_reactions.py`**:** Validation script
+- [x] `scripts/backtest_reactions.py`**:** Validation script
   - Run reaction analyzer on 5 well-known tickers
   - Print pattern classifications for manual verification
-- [ ] Unit tests with synthetic price data (known dip-then-rally pattern)
+- [x] Unit tests with synthetic price data (known dip-then-rally pattern)
 
 **Exit criteria:** Backtest script correctly identifies known patterns on AAPL, NVDA, TSLA historical earnings.
 
