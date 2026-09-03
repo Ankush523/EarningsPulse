@@ -206,3 +206,147 @@ async def test_reaction_agent_with_mock_analyzer(mock_reaction_analysis):
     result = await agent.run({"job_id": "job-react", "ticker": "AAPL"})
 
     assert result["reaction"].archetype == ReactionArchetype.DIP_THEN_RALLY
+
+
+@pytest.mark.asyncio
+async def test_spillover_agent_with_mock_peer_map(
+    cache, mock_peer_map_result
+):
+    from app.agents.mappers import peer_map_to_spillover
+    from app.agents.spillover import SpilloverAgent
+    from app.services.peer_map import PeerMapService
+
+    service = PeerMapService(cache=cache)
+    service.build_peer_map = AsyncMock(return_value=mock_peer_map_result)
+
+    agent = SpilloverAgent(peer_map=service)
+    agent._tavily.search_sector_context = AsyncMock(return_value=[])
+
+    state = {
+        "job_id": "job-spill",
+        "ticker": "AAPL",
+        "research": {
+            "ticker": "AAPL",
+            "sector": "Technology",
+            "industry": "Consumer Electronics",
+        },
+    }
+    result = await agent.run(state)
+
+    spillover = result["spillover"]
+    assert spillover.reporting_ticker == "AAPL"
+    assert len(spillover.peers) >= 1
+    assert result["trace_events"]
+
+
+@pytest.mark.asyncio
+async def test_synthesis_agent_builds_playbook(
+    mock_research_bundle,
+    mock_reaction_analysis,
+    mock_peer_map_result,
+):
+    from app.agents.mappers import (
+        peer_map_to_spillover,
+        reaction_analysis_to_summary,
+    )
+    from app.agents.synthesis import SynthesisAgent
+
+    agent = SynthesisAgent()
+    state = {
+        "job_id": "job-synth",
+        "ticker": "AAPL",
+        "research": mock_research_bundle,
+        "forecast": {
+            "beat_probability": 0.5,
+            "inline_probability": 0.3,
+            "miss_probability": 0.2,
+            "key_metrics": [
+                {
+                    "name": "Services",
+                    "description": "Growth driver",
+                    "importance": "high",
+                }
+            ],
+            "bull_case": "Beat case",
+            "base_case": "Base case",
+            "bear_case": "Bear case",
+            "positive_surprises": ["Services beat"],
+            "negative_surprises": [],
+            "confidence": "medium",
+        },
+        "reaction": reaction_analysis_to_summary(mock_reaction_analysis),
+        "spillover": peer_map_to_spillover(mock_peer_map_result),
+    }
+
+    result = await agent.run(state)
+    playbook = result["playbook"]
+
+    assert playbook.executive_summary.ticker == "AAPL"
+    assert playbook.report_forecast.bull_case == "Beat case"
+    assert len(playbook.action_playbook.rules) >= 1
+    assert playbook.metadata.job_id == "job-synth"
+
+
+@pytest.mark.asyncio
+async def test_orchestrator_astream_yields_updates(
+    settings,
+    mock_research_bundle,
+    mock_reaction_analysis,
+    mock_peer_map_result,
+):
+    from app.agents.mappers import peer_map_to_spillover, reaction_analysis_to_summary
+
+    research_agent = ResearchAgent(settings=settings)
+    research_agent.run = AsyncMock(
+        return_value={"research": mock_research_bundle, "trace_events": [], "errors": []}
+    )
+    reaction_agent = ReactionAgent()
+    reaction_agent.run = AsyncMock(
+        return_value={
+            "reaction": reaction_analysis_to_summary(mock_reaction_analysis),
+            "trace_events": [],
+            "errors": [],
+        }
+    )
+    forecast_agent = ForecastAgent()
+    forecast_agent.run = AsyncMock(
+        return_value={
+            "forecast": {
+                "beat_probability": 0.5,
+                "inline_probability": 0.3,
+                "miss_probability": 0.2,
+                "key_metrics": [],
+                "bull_case": "Bull",
+                "base_case": "Base",
+                "bear_case": "Bear",
+                "positive_surprises": [],
+                "negative_surprises": [],
+                "confidence": "medium",
+            },
+            "trace_events": [],
+        }
+    )
+    spillover_agent = SpilloverAgent()
+    spillover_agent.run = AsyncMock(
+        return_value={
+            "spillover": peer_map_to_spillover(mock_peer_map_result),
+            "trace_events": [],
+            "errors": [],
+        }
+    )
+
+    orchestrator = PlaybookOrchestrator(
+        settings=settings,
+        research=research_agent,
+        forecast=forecast_agent,
+        reaction=reaction_agent,
+        spillover=spillover_agent,
+        synthesis=SynthesisAgent(),
+    )
+
+    updates = []
+    async for update in orchestrator.astream("AAPL", job_id="job-stream-test"):
+        updates.append(update)
+
+    assert len(updates) >= 3
+    assert any(u.get("playbook") is not None for u in updates)
