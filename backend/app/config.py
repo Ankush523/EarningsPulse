@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     # Market data
     finnhub_api_key: str | None = None
 
+    # SEC EDGAR (required User-Agent per SEC policy)
+    sec_user_agent: str = "EarningsPulse earningspulse@example.com"
+
+    # Cache
+    cache_ttl_seconds: int = 300
+
     # PRISM (Block Convey)
     prism_api_key: str | None = None
     prism_project_id: str | None = None
