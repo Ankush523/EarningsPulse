@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.api.errors import register_exception_handlers
 from app.api.routes import calendar, health, playbook
 
 
@@ -33,6 +34,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    register_exception_handlers(app)
 
     app.include_router(health.router)
     app.include_router(playbook.router, prefix="/api")

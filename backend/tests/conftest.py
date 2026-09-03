@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 
 from app.config import Settings
+from app.models.analysis import PeerMapResult, ReactionPatternAnalysis
+from app.models.playbook import ConfidenceTier, PeerRelationship, ReactionArchetype, ReportOutcome
 from app.utils.cache import TTLCache
 
 
@@ -42,3 +44,84 @@ def sample_price_history() -> pd.DataFrame:
 @pytest.fixture
 def earnings_date() -> date:
     return date(2024, 1, 3)
+
+
+@pytest.fixture
+def mock_research_bundle():
+    return {
+        "ticker": "AAPL",
+        "company_name": "Apple Inc.",
+        "earnings_date": "2025-09-10",
+        "is_after_hours": True,
+        "last_earnings_summary": "Latest 10-Q filed 2024-08-01",
+        "recent_news": [
+            {
+                "title": "Apple earnings preview",
+                "url": "https://example.com/aapl",
+                "content": "Analysts expect a beat on services revenue.",
+                "score": 0.9,
+            }
+        ],
+        "filing_links": [
+            {"form": "10-Q", "url": "https://sec.gov/aapl", "date": "2024-08-01"}
+        ],
+        "analyst_context": "Consensus expects modest beat.",
+        "sector_context": "Consumer tech demand stable.",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "sources": [
+            {"title": "Apple news", "url": "https://example.com/aapl", "source_type": "tavily"}
+        ],
+    }
+
+
+@pytest.fixture
+def mock_reaction_analysis():
+    from app.models.analysis import EarningsReactionEvent
+
+    return ReactionPatternAnalysis(
+        ticker="AAPL",
+        archetype=ReactionArchetype.DIP_THEN_RALLY,
+        archetype_description="Dip-then-rally pattern",
+        events_analyzed=2,
+        events=[
+            EarningsReactionEvent(
+                ticker="AAPL",
+                earnings_date=date(2024, 5, 2),
+                report_outcome=ReportOutcome.BEAT,
+                initial_move_pct=-2.0,
+                dip_pct=-3.5,
+                recovery_pct=5.0,
+                pattern=ReactionArchetype.DIP_THEN_RALLY,
+            )
+        ],
+        pattern_counts={"dip_then_rally": 1},
+        avg_dip_pct=-3.5,
+        avg_recovery_pct=5.0,
+        dip_frequency_on_positive=1.0,
+        expected_dip_zone={"min": -3.5, "max": -3.5, "median": -3.5},
+        confidence=ConfidenceTier.MEDIUM,
+    )
+
+
+@pytest.fixture
+def mock_peer_map_result():
+    from app.models.analysis import PeerCandidate
+
+    return PeerMapResult(
+        reporting_ticker="AAPL",
+        sector="Technology",
+        industry="Consumer Electronics",
+        peers=[
+            PeerCandidate(
+                ticker="MSFT",
+                company_name="Microsoft",
+                relationship=PeerRelationship.DIRECT_PEER,
+                correlation_score=0.62,
+                expected_direction="same",
+                rationale="Same cloud_software group",
+                earnings_events_used=2,
+            )
+        ],
+        confidence=ConfidenceTier.MEDIUM,
+    )

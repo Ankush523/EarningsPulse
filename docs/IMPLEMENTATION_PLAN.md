@@ -299,14 +299,14 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 0 — Foundation
 
-- [ ] Initialize monorepo with `backend/` and `frontend/` directories
-- [ ] Set up Python virtual environment, `requirements.txt` (FastAPI, LangGraph, yfinance, httpx, pydantic, etc.)
-- [ ] Set up Next.js 14 with TypeScript, Tailwind, shadcn/ui
-- [ ] Create `.env.example` with all required keys documented
-- [ ] Create `docker-compose.yml` for local dev (backend + frontend)
-- [ ] Implement health check endpoints (`GET /health` on backend, frontend loads)
-- [ ] Write initial `README.md` with setup instructions
-- [ ] Define all Pydantic models for Playbook, AgentState, TraceEvent
+- [x] Initialize monorepo with `backend/` and `frontend/` directories
+- [x] Set up Python virtual environment, `requirements.txt` (FastAPI, LangGraph, yfinance, httpx, pydantic, etc.)
+- [x] Set up Next.js 14 with TypeScript, Tailwind, shadcn/ui
+- [x] Create `.env.example` with all required keys documented
+- [x] Create `docker-compose.yml` for local dev (backend + frontend)
+- [x] Implement health check endpoints (`GET /health` on backend, frontend loads)
+- [x] Write initial `README.md` with setup instructions
+- [x] Define all Pydantic models for Playbook, AgentState, TraceEvent
 
 **Exit criteria:** `docker-compose up` runs both services; health checks pass.
 
@@ -316,22 +316,22 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 1 — Data Layer
 
-- [ ] `price_data.py`**:** yfinance wrapper
+- [x] `price_data.py`**:** yfinance wrapper
   - Fetch OHLCV for date range
   - Fetch price around earnings dates (±3 days window)
   - Calculate returns, dips, recovery metrics
-- [ ] `earnings_calendar.py`**:** Finnhub wrapper
+- [x] `earnings_calendar.py`**:** Finnhub wrapper
   - Upcoming earnings for next 7 days
   - Historical earnings dates for a ticker (last 8 events)
-- [ ] `tavily_client.py`**:** Tavily search wrapper
+- [x] `tavily_client.py`**:** Tavily search wrapper
   - Search company news (last 90 days)
   - Search earnings-related content
   - Extract and summarize results
-- [ ] `edgar_client.py`**:** SEC EDGAR wrapper
+- [x] `edgar_client.py`**:** SEC EDGAR wrapper
   - Fetch latest 10-Q/10-K filing metadata
   - Link to previous earnings report
-- [ ] `cache.py`**:** In-memory TTL cache for API responses
-- [ ] Unit tests for each service with mocked responses
+- [x] `cache.py`**:** In-memory TTL cache for API responses
+- [x] Unit tests for each service with mocked responses
 
 **Exit criteria:** Given a ticker (e.g., AAPL), all services return valid data independently.
 
@@ -397,17 +397,17 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 4 — API Layer
 
-- [ ] `POST /api/playbook/generate`**:** Start playbook generation
+- [x] `POST /api/playbook/generate`**:** Start playbook generation
   - Input: `{ ticker: string }`
   - Returns: `{ job_id: string }`
-- [ ] `GET /api/playbook/stream/{job_id}`**:** SSE stream
+- [x] `GET /api/playbook/stream/{job_id}`**:** SSE stream
   - Events: `agent_start`, `tool_call`, `agent_complete`, `playbook_ready`, `error`
   - Each event includes PRISM-compatible trace data
-- [ ] `GET /api/playbook/{job_id}`**:** Fetch completed playbook
-- [ ] `GET /api/calendar`**:** Upcoming earnings (next 7 days)
-- [ ] `GET /api/calendar/{ticker}`**:** Earnings date for specific ticker
-- [ ] Request validation, error responses, rate limiting (basic)
-- [ ] CORS configuration for frontend
+- [x] `GET /api/playbook/{job_id}`**:** Fetch completed playbook
+- [x] `GET /api/calendar`**:** Upcoming earnings (next 7 days)
+- [x] `GET /api/calendar/{ticker}`**:** Earnings date for specific ticker
+- [x] Request validation, error responses, rate limiting (basic)
+- [x] CORS configuration for frontend
 
 **Exit criteria:** API endpoints work via curl/Postman; SSE stream emits events during generation.
 

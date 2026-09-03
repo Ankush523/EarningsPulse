@@ -127,6 +127,39 @@ asyncio.run(main())
 
 Run from `backend/` with venv activated. Requires `OPENAI_API_KEY` for best forecast quality (heuristic fallback works without it).
 
+### REST API (Phase 4)
+
+Start a playbook generation job:
+
+```bash
+curl -X POST http://localhost:8000/api/playbook/generate \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+```
+
+Stream agent progress (SSE):
+
+```bash
+curl -N http://localhost:8000/api/playbook/stream/<job_id>
+```
+
+Fetch completed playbook:
+
+```bash
+curl http://localhost:8000/api/playbook/<job_id>
+```
+
+Upcoming earnings calendar:
+
+```bash
+curl "http://localhost:8000/api/calendar?days=7"
+curl http://localhost:8000/api/calendar/AAPL
+```
+
+Interactive docs: http://localhost:8000/docs
+
+Rate limit: 10 playbook generation requests per minute per client IP.
+
 ## Documentation
 
 - [Project Specification](docs/PROJECT_SPEC.md)
@@ -140,7 +173,7 @@ Run from `backend/` with venv activated. Requires `OPENAI_API_KEY` for best fore
 | 1 | ✅ | Data layer — Tavily, yfinance, Finnhub, EDGAR |
 | 2 | ✅ | Analysis engines — reaction analyzer, peer map |
 | 3 | ✅ | Agents — LangGraph orchestrator + 5 agents |
-| 4 | 🔜 | API — playbook generation + SSE streaming |
+| 4 | ✅ | API — playbook generation + SSE streaming |
 | 5 | 🔜 | PRISM — observability integration |
 | 6 | 🔜 | Frontend — full UI |
 | 7 | 🔜 | Polish — export, calendar, demo seed |
