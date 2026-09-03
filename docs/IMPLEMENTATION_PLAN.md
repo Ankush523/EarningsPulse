@@ -437,36 +437,36 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 6 — Frontend
 
-- [ ] **Landing page (**`page.tsx`**):**
+- [x] **Landing page (**`page.tsx`**):**
   - Hero with tagline and brief explanation
   - Ticker input with search/autocomplete
   - "Generate Playbook" CTA
   - Upcoming earnings calendar preview
-- [ ] `usePlaybookStream.ts`**:** SSE hook
+- [x] `usePlaybookStream.ts`**:** SSE hook
   - Connect to stream endpoint
   - Parse events, update state
   - Handle completion and errors
-- [ ] `AgentTracePanel.tsx`**:** Live PRISM trace viewer
+- [x] `AgentTracePanel.tsx`**:** Live PRISM trace viewer
   - Step-by-step agent progress
   - Tool call log with timestamps
   - Status indicators (running/complete/error)
   - Expandable detail per step
-- [ ] `PlaybookView.tsx`**:** Main output display
+- [x] `PlaybookView.tsx`**:** Main output display
   - Section A: Executive summary card
   - Section B: Report forecast
   - Section C: Scenario tree (interactive)
   - Section D: Peer spillover table
   - Section E: Action playbook
   - Section F: Sources list
-- [ ] `ReactionChart.tsx`**:** Historical earnings reaction chart
+- [x] `ReactionChart.tsx`**:** Historical earnings reaction chart
   - Price line with earnings dates marked
   - Dip/recovery annotations
-- [ ] `ScenarioTree.tsx`**:** Interactive scenario tree with probabilities
-- [ ] `PeerSpilloverTable.tsx`**:** Sortable peer table with correlation bars
-- [ ] `ConfidenceBadge.tsx`**:** Reusable confidence tier badge
-- [ ] `calendar/page.tsx`**:** Full earnings calendar view
-- [ ] Responsive design, dark theme, loading/error/empty states
-- [ ] Disclaimer banner (persistent)
+- [x] `ScenarioTree.tsx`**:** Interactive scenario tree with probabilities
+- [x] `PeerSpilloverTable.tsx`**:** Sortable peer table with correlation bars
+- [x] `ConfidenceBadge.tsx`**:** Reusable confidence tier badge
+- [x] `calendar/page.tsx`**:** Full earnings calendar view
+- [x] Responsive design, dark theme, loading/error/empty states
+- [x] Disclaimer banner (persistent)
 
 **Exit criteria:** Full user flow works in browser — input ticker → watch agent run → view playbook.
 

@@ -1,28 +1,13 @@
-import Link from "next/link";
-import { BackendStatus } from "@/components/BackendStatus";
+import { AppHeader } from "@/components/AppHeader";
+import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { EarningsCalendarPreview } from "@/components/EarningsCalendarPreview";
 import { TickerInput } from "@/components/TickerInput";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      <header className="border-b border-card-border bg-card/50 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent font-mono text-sm font-bold text-white">
-              EP
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              EarningsPulse
-            </span>
-          </div>
-          <nav className="flex items-center gap-6 text-sm text-muted">
-            <Link href="/calendar" className="transition hover:text-foreground">
-              Calendar
-            </Link>
-            <BackendStatus />
-          </nav>
-        </div>
-      </header>
+      <DisclaimerBanner />
+      <AppHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-16">
         <section className="mb-16 text-center">
@@ -78,10 +63,7 @@ export default function HomePage() {
           ))}
         </section>
 
-        <p className="mt-16 text-center text-xs text-muted">
-          Not financial advice. For informational and decision-support purposes
-          only.
-        </p>
+        <EarningsCalendarPreview />
       </main>
     </div>
   );
