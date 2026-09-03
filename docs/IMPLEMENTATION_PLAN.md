@@ -365,29 +365,29 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 3 — Agents
 
-- [ ] `agent_state.py`**:** Shared LangGraph state schema
-- [ ] `research.py`**:** Research Agent
+- [x] `agent_state.py`**:** Shared LangGraph state schema
+- [x] `research.py`**:** Research Agent
   - Tools: Tavily search, EDGAR fetch, earnings calendar
   - Output: structured research bundle (news, last ER summary, key developments)
-- [ ] `forecast.py`**:** Forecast Agent
+- [x] `forecast.py`**:** Forecast Agent
   - Input: research bundle
   - Output: beat/miss/inline probabilities, key metrics, bull/bear cases
-- [ ] `reaction.py`**:** Reaction Agent
+- [x] `reaction.py`**:** Reaction Agent
   - Tools: price_data, reaction_analyzer
   - Output: historical pattern stats, archetype, scenario probabilities
-- [ ] `spillover.py`**:** Spillover Agent
+- [x] `spillover.py`**:** Spillover Agent
   - Tools: peer_map, Tavily (peer context), price_data (correlation)
   - Output: ranked peer list with correlation and direction bias
-- [ ] `synthesis.py`**:** Synthesis Agent
+- [x] `synthesis.py`**:** Synthesis Agent
   - Input: all agent outputs
   - Output: complete Playbook JSON matching spec schema
   - Conflict resolution, confidence assignment, source linking
-- [ ] `orchestrator.py`**:** LangGraph workflow
+- [x] `orchestrator.py`**:** LangGraph workflow
   - Parallel: Research + Reaction
   - Sequential: Forecast (needs Research) → Spillover (needs Forecast) → Synthesis
   - Error handling: retry failed tools, fallback sources
   - Emit trace events at each step
-- [ ] Integration test: end-to-end agent run for one ticker
+- [x] Integration test: end-to-end agent run for one ticker
 
 **Exit criteria:** `orchestrator.run("AAPL")` returns a complete Playbook JSON.
 
