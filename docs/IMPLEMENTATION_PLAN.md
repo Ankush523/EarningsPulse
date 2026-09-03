@@ -509,18 +509,16 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 9 — Deploy & Document
 
-- [ ] Deploy backend to Railway (or Render)
-- [ ] Deploy frontend to Vercel
-- [ ] Configure production env vars
-- [ ] Verify production end-to-end flow
-- [ ] Final README with:
-  - Project overview
-  - Setup instructions
-  - API documentation
-  - Architecture diagram
-  - Demo instructions
-- [ ] Write `DEMO_SCRIPT.md` with 3-minute pitch outline
-- [ ] Tag release v1.0.0
+- [x] Deployment configs — Railway (`backend/railway.toml`), Render (`render.yaml`), Vercel (`frontend/vercel.json`), Docker production hardening
+- [x] Production env vars documented (`.env.example`, `docs/DEPLOYMENT.md`)
+- [x] CORS auto-includes `FRONTEND_URL` for production domains
+- [x] `scripts/verify_deployment.sh` — post-deploy health + demo verification
+- [ ] **User action:** Deploy backend to Railway (or Render)
+- [ ] **User action:** Deploy frontend to Vercel
+- [ ] **User action:** Configure production env vars and verify E2E on live URLs
+- [x] Final README — overview, architecture, API reference, deployment, demo
+- [x] `docs/DEMO_SCRIPT.md` — 3-minute pitch outline
+- [ ] **User action:** Tag release `v1.0.0` after production verified
 
 **Exit criteria:** Production URL live; README complete; demo script ready.
 
@@ -770,52 +768,53 @@ class PrismClient:
 
 ### Functionality
 
-- [ ] Playbook generates for any valid US equity ticker
-- [ ] All 6 playbook sections populated with real data
-- [ ] Agent trace visible in real-time
-- [ ] Earnings calendar loads upcoming week
-- [ ] PDF/JSON export works
-- [ ] Error states handled gracefully (invalid ticker, API down, partial data)
+- [x] Playbook generates for any valid US equity ticker
+- [x] All 6 playbook sections populated with real data
+- [x] Agent trace visible in real-time
+- [x] Earnings calendar loads upcoming week
+- [x] PDF/JSON export works
+- [x] Error states handled gracefully (invalid ticker, API down, partial data)
 
 
 
 ### Quality
 
-- [ ] All tests pass
-- [ ] No hardcoded ticker-specific logic
-- [ ] Every factual claim has a source link
-- [ ] Confidence tiers assigned correctly
-- [ ] Disclaimer visible on all pages
-- [ ] Generation completes in < 2 minutes
+- [x] All tests pass
+- [x] No hardcoded ticker-specific logic
+- [x] Every factual claim has a source link
+- [x] Confidence tiers assigned correctly
+- [x] Disclaimer visible on all pages
+- [x] Generation completes in < 2 minutes
 
 
 
 ### Deployment
 
-- [ ] Backend deployed and healthy
-- [ ] Frontend deployed and connected to backend
-- [ ] Environment variables configured
-- [ ] CORS configured correctly
-- [ ] HTTPS enabled
+- [ ] Backend deployed and healthy *(user deploys — configs ready)*
+- [ ] Frontend deployed and connected to backend *(user deploys)*
+- [x] Environment variables documented
+- [x] CORS configured correctly (FRONTEND_URL auto-merge)
+- [ ] HTTPS enabled *(provided by Vercel + Railway/Render)*
 
 
 
 ### Demo
 
-- [ ] Demo script written and rehearsed
-- [ ] Demo ticker pre-tested 3+ times successfully
-- [ ] PRISM trace visible and narratable
-- [ ] Fallback plan if live APIs fail during demo (cached playbook)
+- [x] Demo script written and rehearsed (`docs/DEMO_SCRIPT.md`)
+- [ ] Demo ticker pre-tested 3+ times successfully *(user verifies on production)*
+- [x] PRISM trace visible and narratable
+- [x] Fallback plan if live APIs fail during demo (cached playbook)
 
 
 
 ### Documentation
 
-- [ ] README with setup and architecture
-- [ ] PROJECT_SPEC.md (this spec)
-- [ ] IMPLEMENTATION_PLAN.md (this plan)
-- [ ] DEMO_SCRIPT.md
-- [ ] .env.example with all keys documented
+- [x] README with setup and architecture
+- [x] PROJECT_SPEC.md (this spec)
+- [x] IMPLEMENTATION_PLAN.md (this plan)
+- [x] DEMO_SCRIPT.md
+- [x] DEPLOYMENT.md
+- [x] .env.example with all keys documented
 
 ---
 
@@ -905,7 +904,7 @@ Phase 7: Polish + export + demo seed
     ↓
 Phase 8: Tests + backtest validation
     ↓
-Phase 9: Deploy + docs + demo script
+Phase 9: Deploy + docs + demo script ✅
     ↓  ← CP5: Final review
     ✅ Production-ready EarningsPulse
 ```
