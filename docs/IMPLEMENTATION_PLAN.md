@@ -417,17 +417,17 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 5 — PRISM Integration
 
-- [ ] `prism_client.py`**:** PRISM SDK wrapper
+- [x] `prism_client.py`**:** PRISM SDK wrapper
   - If PRISM credentials available: send traces to Block Convey
   - If not: write traces to local JSON log (swap-in ready)
-- [ ] Emit PRISM events from orchestrator at every state transition:
+- [x] Emit PRISM events from orchestrator at every state transition:
   - Agent started/completed
   - Tool call initiated/completed/failed
   - Confidence updated
   - Error + retry
   - Final playbook generated
-- [ ] Trace schema matches PRISM expected format (or documented local format)
-- [ ] `GET /api/trace/{job_id}`**:** Full trace for a playbook generation job
+- [x] Trace schema matches PRISM expected format (or documented local format)
+- [x] `GET /api/trace/{job_id}`**:** Full trace for a playbook generation job
 
 **Exit criteria:** Agent run produces a complete trace log viewable via API; PRISM-compatible format.
 

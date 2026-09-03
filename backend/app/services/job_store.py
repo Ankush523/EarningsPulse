@@ -24,6 +24,7 @@ class PlaybookJob:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
     earnings_date: str | None = None
+    prism_synced: bool = False
 
 
 class JobNotFoundError(KeyError):
@@ -77,6 +78,10 @@ class JobStore:
         if status in {PlaybookStatus.COMPLETED, PlaybookStatus.FAILED}:
             job.completed_at = datetime.now(timezone.utc)
         return job
+
+    async def mark_prism_synced(self, job_id: str, synced: bool = True) -> None:
+        job = await self.get(job_id)
+        job.prism_synced = synced
 
     async def append_trace(self, job_id: str, event: dict[str, Any]) -> None:
         job = await self.get(job_id)

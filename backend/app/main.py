@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.api.errors import register_exception_handlers
-from app.api.routes import calendar, health, playbook
+from app.api.routes import calendar, health, playbook, trace
 
 
 @asynccontextmanager
@@ -40,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(playbook.router, prefix="/api")
     app.include_router(calendar.router, prefix="/api")
+    app.include_router(trace.router, prefix="/api")
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict:

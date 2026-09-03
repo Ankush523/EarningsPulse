@@ -160,6 +160,18 @@ Interactive docs: http://localhost:8000/docs
 
 Rate limit: 10 playbook generation requests per minute per client IP.
 
+### Trace API (Phase 5)
+
+Fetch the full PRISM-compatible trace for a completed job:
+
+```bash
+curl http://localhost:8000/api/trace/<job_id>
+```
+
+Trace logs are also persisted locally at `backend/logs/traces/<job_id>.json`.
+
+When `PRISM_API_KEY` and `PRISM_PROJECT_ID` are set, the full agent trajectory is synced to Block Convey PRISM on job completion (local trace always preserved).
+
 ## Documentation
 
 - [Project Specification](docs/PROJECT_SPEC.md)
@@ -174,7 +186,7 @@ Rate limit: 10 playbook generation requests per minute per client IP.
 | 2 | ✅ | Analysis engines — reaction analyzer, peer map |
 | 3 | ✅ | Agents — LangGraph orchestrator + 5 agents |
 | 4 | ✅ | API — playbook generation + SSE streaming |
-| 5 | 🔜 | PRISM — observability integration |
+| 5 | ✅ | PRISM — observability integration |
 | 6 | 🔜 | Frontend — full UI |
 | 7 | 🔜 | Polish — export, calendar, demo seed |
 | 8 | 🔜 | Testing — E2E, backtest validation |

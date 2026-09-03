@@ -13,7 +13,9 @@ from app.config import Settings, get_settings
 from app.models.playbook import PlaybookStatus
 from app.models.trace import TraceEventType
 from app.services.job_store import JobStore, job_store
+from app.services.prism_client import PrismClient, get_prism_client
 from app.services.sse_events import error_event, playbook_ready_event, trace_event_to_sse
+from app.services.trace_store import TraceStore
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +28,14 @@ class PlaybookJobRunner:
         store: JobStore | None = None,
         orchestrator: PlaybookOrchestrator | None = None,
         settings: Settings | None = None,
+        prism_client: PrismClient | None = None,
+        trace_store: TraceStore | None = None,
     ):
         self._store = store or job_store
         self._settings = settings or get_settings()
         self._orchestrator = orchestrator or PlaybookOrchestrator(settings=self._settings)
+        self._prism = prism_client or get_prism_client()
+        self._trace_store = trace_store or TraceStore(store=self._store, settings=self._settings)
 
     async def start_job(
         self,
@@ -83,12 +89,14 @@ class PlaybookJobRunner:
                 await self._store.publish_event(
                     job_id, trace_event_to_sse(completed_event)
                 )
+                await self._prism.emit(completed_event)
 
             ready = playbook_ready_event(job_id, job.ticker)
             await self._store.publish_event(job_id, ready)
             await self._store.update_status(
                 job_id, PlaybookStatus.COMPLETED, playbook=playbook
             )
+            await self._finalize_trace(job_id)
         except Exception as exc:
             logger.exception("Job %s failed: %s", job_id, exc)
             fail_event = trace_to_dict(
@@ -102,10 +110,25 @@ class PlaybookJobRunner:
             )
             await self._store.append_trace(job_id, fail_event)
             await self._store.publish_event(job_id, trace_event_to_sse(fail_event))
+            await self._prism.emit(fail_event)
             await self._store.publish_event(job_id, error_event(job_id, str(exc)))
             await self._store.update_status(
                 job_id, PlaybookStatus.FAILED, error=str(exc)
             )
+            await self._finalize_trace(job_id)
+
+    async def _finalize_trace(self, job_id: str) -> None:
+        """Persist trace log locally and sync to PRISM when configured."""
+        try:
+            job = await self._store.get(job_id)
+            trace_log = self._trace_store.build_trace_log(job)
+            await self._trace_store.save_trace_log(trace_log)
+            synced = await self._prism.sync_trace_log(trace_log)
+            if synced:
+                await self._store.mark_prism_synced(job_id, True)
+                trace_log.prism_synced = True
+        except Exception as exc:
+            logger.warning("Trace finalization failed for job %s: %s", job_id, exc)
 
     async def _publish_update(
         self,
@@ -123,6 +146,7 @@ class PlaybookJobRunner:
                 seen_trace_ids.add(event_id)
             await self._store.append_trace(job_id, raw_event)
             await self._store.publish_event(job_id, trace_event_to_sse(raw_event))
+            await self._prism.emit(raw_event)
 
         if update.get("playbook") is not None:
             job = await self._store.get(job_id)
