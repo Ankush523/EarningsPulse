@@ -23,7 +23,7 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
   const actions = playbook.action_playbook;
 
   return (
-    <div className="space-y-8">
+    <div className="playbook-view space-y-8">
       {/* Section A — Executive Summary */}
       <section className="rounded-xl border border-card-border bg-card p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">

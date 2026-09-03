@@ -1,0 +1,251 @@
+{
+  "ticker": "AAPL",
+  "job_id": "demo_aapl",
+  "playbook": {
+    "metadata": {
+      "job_id": "demo_aapl",
+      "generated_at": "2026-09-03T18:48:13.045039Z",
+      "generation_time_ms": 1250,
+      "model_version": "0.1.0",
+      "data_sources_used": [
+        "tavily",
+        "yfinance",
+        "edgar",
+        "finnhub"
+      ]
+    },
+    "executive_summary": {
+      "ticker": "AAPL",
+      "company_name": "Apple Inc.",
+      "earnings_date": "2026-09-03T18:48:13.045044Z",
+      "is_after_hours": true,
+      "beat_probability": 0.52,
+      "inline_probability": 0.28,
+      "miss_probability": 0.2,
+      "primary_pattern": "dip_then_rally",
+      "primary_pattern_description": "Historical pattern shows initial volatility after beats, often dipping before a multi-day recovery.",
+      "overall_confidence": "medium",
+      "top_drivers": [
+        "Services revenue growth trajectory",
+        "iPhone demand in China",
+        "Margin guidance for next quarter",
+        "Buyback and capital return cadence"
+      ],
+      "sources": []
+    },
+    "report_forecast": {
+      "key_metrics": [
+        {
+          "name": "Services revenue",
+          "description": "High-margin recurring revenue stream",
+          "importance": "high"
+        },
+        {
+          "name": "Gross margin",
+          "description": "Product mix and cost discipline",
+          "importance": "medium"
+        }
+      ],
+      "bull_case": "Beat on Services with raised full-year guidance.",
+      "base_case": "Inline report with stable margins.",
+      "bear_case": "Soft iPhone units and cautious outlook.",
+      "positive_surprises": [
+        "Services beat",
+        "Strong installed base"
+      ],
+      "negative_surprises": [
+        "China headwinds",
+        "FX drag"
+      ],
+      "confidence": "medium",
+      "sources": []
+    },
+    "reaction_analysis": {
+      "archetype": "dip_then_rally",
+      "archetype_description": "Dip-then-rally after positive reports",
+      "scenarios": [
+        {
+          "outcome": "beat",
+          "label": "Beat \u2192 dip \u2192 rally",
+          "description": "Initial sell-the-news dip, then recovery over 2\u20133 sessions.",
+          "probability": 0.45,
+          "expected_direction": "mixed",
+          "historical_reference": "Observed on 3 of last 4 beats",
+          "key_levels": {}
+        },
+        {
+          "outcome": "inline",
+          "label": "Inline \u2192 muted",
+          "description": "Limited move, range-bound reaction.",
+          "probability": 0.3,
+          "expected_direction": "mixed",
+          "historical_reference": null,
+          "key_levels": {}
+        },
+        {
+          "outcome": "miss",
+          "label": "Miss \u2192 gap down",
+          "description": "Sharp downside with limited same-day recovery.",
+          "probability": 0.25,
+          "expected_direction": "down",
+          "historical_reference": null,
+          "key_levels": {}
+        }
+      ],
+      "historical_reactions": [],
+      "avg_dip_pct": -2.8,
+      "avg_recovery_pct": 4.1,
+      "dip_frequency_on_positive": 0.75,
+      "expected_dip_zone": {
+        "min": -4.0,
+        "max": -1.5,
+        "median": -2.8
+      },
+      "confidence": "medium",
+      "sources": []
+    },
+    "spillover_map": {
+      "reporting_ticker": "AAPL",
+      "peers": [
+        {
+          "ticker": "MSFT",
+          "company_name": "Microsoft",
+          "relationship": "direct_peer",
+          "correlation_score": 0.58,
+          "expected_direction": "same",
+          "rationale": "Large-cap tech sentiment linkage",
+          "watch_flag": true
+        },
+        {
+          "ticker": "GOOGL",
+          "company_name": "Alphabet",
+          "relationship": "direct_peer",
+          "correlation_score": 0.51,
+          "expected_direction": "same",
+          "rationale": "Mag7 peer earnings read-through",
+          "watch_flag": true
+        }
+      ],
+      "confidence": "medium",
+      "sources": []
+    },
+    "action_playbook": {
+      "rules": [
+        {
+          "condition": "Report beats but stock dips >2% in first hour",
+          "action": "Watch for dip zone support before adding exposure; pattern favors recovery.",
+          "confidence": "medium",
+          "historical_basis": "Dip-then-rally on prior beats"
+        },
+        {
+          "condition": "Report misses with gap down >3%",
+          "action": "Avoid catching falling knife; reassess peer spillover impact.",
+          "confidence": "high",
+          "historical_basis": null
+        }
+      ],
+      "disclaimer": "Not financial advice. For informational and decision-support purposes only."
+    },
+    "all_sources": [],
+    "trace_id": null
+  },
+  "trace_log": {
+    "job_id": "demo_aapl",
+    "ticker": "AAPL",
+    "events": [
+      {
+        "event_id": "evt_8f7e4f990ae0",
+        "job_id": "demo_aapl",
+        "event_type": "run_started",
+        "timestamp": "2026-09-03T18:48:13.045089Z",
+        "agent_name": null,
+        "tool_name": null,
+        "message": "Playbook generation started for AAPL",
+        "input_summary": {
+          "ticker": "AAPL"
+        },
+        "output_summary": null,
+        "latency_ms": null,
+        "error": null,
+        "retry_attempt": null,
+        "confidence_before": null,
+        "confidence_after": null,
+        "metadata": {}
+      },
+      {
+        "event_id": "evt_9064a2fdcf89",
+        "job_id": "demo_aapl",
+        "event_type": "agent_started",
+        "timestamp": "2026-09-03T18:48:13.045095Z",
+        "agent_name": "research",
+        "tool_name": null,
+        "message": "Research agent started",
+        "input_summary": null,
+        "output_summary": null,
+        "latency_ms": null,
+        "error": null,
+        "retry_attempt": null,
+        "confidence_before": null,
+        "confidence_after": null,
+        "metadata": {}
+      },
+      {
+        "event_id": "evt_a61163c263fa",
+        "job_id": "demo_aapl",
+        "event_type": "tool_call_completed",
+        "timestamp": "2026-09-03T18:48:13.045099Z",
+        "agent_name": "research",
+        "tool_name": "tavily_search",
+        "message": "tavily_search completed",
+        "input_summary": null,
+        "output_summary": null,
+        "latency_ms": 420,
+        "error": null,
+        "retry_attempt": null,
+        "confidence_before": null,
+        "confidence_after": null,
+        "metadata": {}
+      },
+      {
+        "event_id": "evt_e736ef325d3c",
+        "job_id": "demo_aapl",
+        "event_type": "agent_completed",
+        "timestamp": "2026-09-03T18:48:13.045103Z",
+        "agent_name": "research",
+        "tool_name": null,
+        "message": "Research agent completed",
+        "input_summary": null,
+        "output_summary": null,
+        "latency_ms": 2100,
+        "error": null,
+        "retry_attempt": null,
+        "confidence_before": null,
+        "confidence_after": null,
+        "metadata": {}
+      },
+      {
+        "event_id": "evt_68f7902ea9c8",
+        "job_id": "demo_aapl",
+        "event_type": "run_completed",
+        "timestamp": "2026-09-03T18:48:13.045106Z",
+        "agent_name": null,
+        "tool_name": null,
+        "message": "Playbook generation completed for AAPL",
+        "input_summary": null,
+        "output_summary": null,
+        "latency_ms": 1250,
+        "error": null,
+        "retry_attempt": null,
+        "confidence_before": null,
+        "confidence_after": null,
+        "metadata": {}
+      }
+    ],
+    "started_at": "2026-09-03T18:48:13.045108Z",
+    "completed_at": null,
+    "total_latency_ms": 1250,
+    "prism_synced": false
+  },
+  "seeded_at": "2026-09-03T18:48:13.045110Z",
+  "source": "offline"
+}

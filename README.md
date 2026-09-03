@@ -189,6 +189,32 @@ Open http://localhost:3000 → enter a ticker → watch the live agent trace →
 
 Ensure `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000` is set (see `.env.example`).
 
+### Export & demo (Phase 7)
+
+**Export** (on completed playbook page):
+- **JSON** — download playbook via `GET /api/playbook/{job_id}/export/json`
+- **JSON + Trace** — audit bundle via `GET /api/playbook/{job_id}/export/bundle`
+- **Print / PDF** — browser print with print-optimized stylesheet
+
+**Instant demo** (no API keys required):
+
+```bash
+cd backend && source .venv/bin/activate
+python ../scripts/seed_demo.py --offline --ticker AAPL
+```
+
+Then click **Demo AAPL** on the home page, or:
+
+```bash
+curl -X POST http://localhost:8000/api/playbook/demo/AAPL
+```
+
+For live demo data with real agent run:
+
+```bash
+python ../scripts/seed_demo.py --ticker AAPL
+```
+
 ## Documentation
 
 - [Project Specification](docs/PROJECT_SPEC.md)
@@ -205,7 +231,7 @@ Ensure `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000` is set (see `.env.example
 | 4 | ✅ | API — playbook generation + SSE streaming |
 | 5 | ✅ | PRISM — observability integration |
 | 6 | ✅ | Frontend — full UI |
-| 7 | 🔜 | Polish — export, calendar, demo seed |
+| 7 | ✅ | Polish — export, calendar, demo seed |
 | 8 | 🔜 | Testing — E2E, backtest validation |
 | 9 | 🔜 | Deploy — production deployment |
 

@@ -476,14 +476,14 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 7 — Polish
 
-- [ ] PDF export of playbook (backend generation or frontend print)
-- [ ] JSON export download button
-- [ ] Pre-cache demo ticker via `scripts/seed_demo.py`
-- [ ] Loading skeletons and smooth transitions
-- [ ] Error recovery UX (retry button, partial results)
-- [ ] SEO meta tags and favicon
-- [ ] Performance: playbook generation < 2 minutes
-- [ ] Mobile-responsive layout verification
+- [x] PDF export of playbook (backend generation or frontend print)
+- [x] JSON export download button
+- [x] Pre-cache demo ticker via `scripts/seed_demo.py`
+- [x] Loading skeletons and smooth transitions
+- [x] Error recovery UX (retry button, partial results)
+- [x] SEO meta tags and favicon
+- [x] Performance: playbook generation < 2 minutes
+- [x] Mobile-responsive layout verification
 
 **Exit criteria:** Demo-ready UX with no rough edges on happy path or error path.
 
