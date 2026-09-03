@@ -1,0 +1,114 @@
+# EarningsPulse
+
+**Know the report. Read the reaction. Watch the ripple.**
+
+AI-powered pre-earnings research agent that generates structured Earnings Playbooks — forecasting report sentiment, modeling price reaction scenarios, and mapping peer spillover.
+
+Built for the [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre) (Money Intelligence track).
+
+## Project Structure
+
+```
+finance_hackathon/
+├── backend/          # FastAPI + LangGraph agents
+├── frontend/         # Next.js 14 web app
+├── docs/             # Project spec & implementation plan
+├── scripts/          # Backtest & demo utilities
+└── docker-compose.yml
+```
+
+## Prerequisites
+
+- Python 3.12+
+- Node.js 20+
+- Docker & Docker Compose (optional, recommended)
+
+## Quick Start
+
+### 1. Clone and configure
+
+```bash
+cp .env.example .env
+# Edit .env with your API keys (not required for Phase 0 health checks)
+```
+
+### 2. Run with Docker (recommended)
+
+```bash
+docker compose up --build
+```
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+### 3. Run locally (development)
+
+**Backend:**
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend:**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Health Checks
+
+| Service  | Endpoint                    |
+|----------|-----------------------------|
+| Backend  | `GET http://localhost:8000/health` |
+| Backend  | `GET http://localhost:8000/ready`  |
+| Frontend | `GET http://localhost:3000/api/health` |
+
+## API Keys (required from Phase 1 onward)
+
+| Key | Purpose | Get it |
+|-----|---------|--------|
+| `OPENAI_API_KEY` | LLM agents | [platform.openai.com](https://platform.openai.com) |
+| `TAVILY_API_KEY` | Live web research | [tavily.com](https://tavily.com) |
+| `FINNHUB_API_KEY` | Earnings calendar | [finnhub.io](https://finnhub.io) |
+| `PRISM_API_KEY` | Agent observability | Provided at hackathon |
+
+Phase 0 runs without API keys — health checks only.
+
+## Testing
+
+```bash
+cd backend
+pip install -r requirements.txt
+pytest
+```
+
+## Documentation
+
+- [Project Specification](docs/PROJECT_SPEC.md)
+- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
+
+## Implementation Phases
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| 0 | ✅ | Foundation — scaffold, models, health checks |
+| 1 | 🔜 | Data layer — Tavily, yfinance, Finnhub, EDGAR |
+| 2 | 🔜 | Analysis engines — reaction analyzer, peer map |
+| 3 | 🔜 | Agents — LangGraph orchestrator |
+| 4 | 🔜 | API — playbook generation + SSE streaming |
+| 5 | 🔜 | PRISM — observability integration |
+| 6 | 🔜 | Frontend — full UI |
+| 7 | 🔜 | Polish — export, calendar, demo seed |
+| 8 | 🔜 | Testing — E2E, backtest validation |
+| 9 | 🔜 | Deploy — production deployment |
+
+## Disclaimer
+
+Not financial advice. For informational and decision-support purposes only.
