@@ -23,9 +23,12 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    # CORS
+    # CORS — include 127.0.0.1 for CI/Playwright (GitHub Actions uses both hostnames)
     frontend_url: str = "http://localhost:3000"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
     # LLM
     openai_api_key: str | None = None
