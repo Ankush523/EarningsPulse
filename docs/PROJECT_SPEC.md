@@ -3,7 +3,7 @@
 **Hackathon:** [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre?tk=nHDjJJ)  
 **Date:** September 5, 2026 · New York City  
 **Track:** Money Intelligence  
-**Status:** Approved concept — ready for implementation
+**Status:** ✅ Implemented — all phases merged to `main` (September 3, 2026)
 
 ---
 

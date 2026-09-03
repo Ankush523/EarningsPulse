@@ -4,6 +4,9 @@
 **Companion doc:** [PROJECT_SPEC.md](./PROJECT_SPEC.md)  
 **Build approach:** Single AI agent (Cursor) executing all phases sequentially with user review at checkpoints.
 
+**Project status:** ✅ **All 10 phases complete** (Phases 0–9 merged to `main` · latest: Phase 9 PR #9 · commit `64016c7`).  
+**Remaining before hackathon:** deploy to Railway + Vercel, run `scripts/verify_deployment.sh`, rehearse [DEMO_SCRIPT.md](./DEMO_SCRIPT.md), tag `v1.0.0`.
+
 ---
 
 ## Table of Contents
@@ -273,21 +276,21 @@ REDIS_URL=...                 # Production cache
 ## 6. Implementation Phases
 
 
-| Phase | Name             | Deliverable                                       | Dependency |
-| ----- | ---------------- | ------------------------------------------------- | ---------- |
-| **0** | Foundation       | Repo scaffold, Docker, env, health checks         | None       |
-| **1** | Data layer       | Price, earnings, news, EDGAR services working     | Phase 0    |
-| **2** | Analysis engines | Reaction analyzer + peer map + pattern classifier | Phase 1    |
-| **3** | Agents           | All 5 agents + orchestrator via LangGraph         | Phase 2    |
-| **4** | API              | REST + SSE streaming endpoints                    | Phase 3    |
-| **5** | PRISM            | Observability integration + trace panel data      | Phase 4    |
-| **6** | Frontend         | Full UI — input, trace, playbook viewer           | Phase 4, 5 |
-| **7** | Polish           | Export, calendar, error states, loading UX        | Phase 6    |
-| **8** | Testing          | Unit, integration, E2E, backtest validation       | Phase 7    |
-| **9** | Deploy           | Production deployment + README + demo script      | Phase 8    |
+| Phase | Name             | Deliverable                                       | Dependency | Status |
+| ----- | ---------------- | ------------------------------------------------- | ---------- | ------ |
+| **0** | Foundation       | Repo scaffold, Docker, env, health checks         | None       | ✅ |
+| **1** | Data layer       | Price, earnings, news, EDGAR services working     | Phase 0    | ✅ |
+| **2** | Analysis engines | Reaction analyzer + peer map + pattern classifier | Phase 1    | ✅ |
+| **3** | Agents           | All 5 agents + orchestrator via LangGraph         | Phase 2    | ✅ |
+| **4** | API              | REST + SSE streaming endpoints                    | Phase 3    | ✅ |
+| **5** | PRISM            | Observability integration + trace panel data      | Phase 4    | ✅ |
+| **6** | Frontend         | Full UI — input, trace, playbook viewer           | Phase 4, 5 | ✅ |
+| **7** | Polish           | Export, calendar, error states, loading UX        | Phase 6    | ✅ |
+| **8** | Testing          | Unit, integration, E2E, backtest validation       | Phase 7    | ✅ |
+| **9** | Deploy           | Production configs, docs, demo script             | Phase 8    | ✅ |
 
 
-Phases are sequential. Each phase completes before the next begins.
+Phases are sequential. All phases merged to `main` as of September 3, 2026.
 
 ---
 
@@ -507,20 +510,30 @@ Phases are sequential. Each phase completes before the next begins.
 
 
 
-### Phase 9 — Deploy & Document
+### Phase 9 — Deploy & Document ✅
+
+**Merged:** PR #9 → `main` (`64016c7`)
+
+#### Code deliverables (complete)
 
 - [x] Deployment configs — Railway (`backend/railway.toml`), Render (`render.yaml`), Vercel (`frontend/vercel.json`), Docker production hardening
 - [x] Production env vars documented (`.env.example`, `docs/DEPLOYMENT.md`)
 - [x] CORS auto-includes `FRONTEND_URL` for production domains
 - [x] `scripts/verify_deployment.sh` — post-deploy health + demo verification
-- [ ] **User action:** Deploy backend to Railway (or Render)
-- [ ] **User action:** Deploy frontend to Vercel
-- [ ] **User action:** Configure production env vars and verify E2E on live URLs
 - [x] Final README — overview, architecture, API reference, deployment, demo
 - [x] `docs/DEMO_SCRIPT.md` — 3-minute pitch outline
-- [ ] **User action:** Tag release `v1.0.0` after production verified
+- [x] `docs/DEPLOYMENT.md` — Railway/Render + Vercel step-by-step guide
 
-**Exit criteria:** Production URL live; README complete; demo script ready.
+#### Post-merge checklist (user — before hackathon)
+
+- [ ] Deploy backend to Railway (or Render) — see [DEPLOYMENT.md](./DEPLOYMENT.md)
+- [ ] Deploy frontend to Vercel; set `NEXT_PUBLIC_BACKEND_URL`
+- [ ] Set `FRONTEND_URL` on backend to Vercel domain; redeploy backend
+- [ ] Run `./scripts/verify_deployment.sh <api-url> <vercel-url>`
+- [ ] Rehearse demo 3× using [DEMO_SCRIPT.md](./DEMO_SCRIPT.md)
+- [ ] Tag release `v1.0.0` after production verified
+
+**Exit criteria:** README and demo script complete ✅ · Production URL live (user deploy) · Demo rehearsed
 
 ---
 
@@ -745,7 +758,7 @@ class PrismClient:
 | **API**         | All endpoints + SSE format              | pytest + httpx AsyncClient             | ✅ |
 | **E2E**         | Full user flow                          | Playwright: demo AAPL → playbook sections | ✅ |
 | **Validation**  | Pattern accuracy                        | Backtest tests on 5 tickers (mocked)   | ✅ |
-| **Manual**      | Demo reliability                        | 3 consecutive live runs on demo ticker | 🔜 Phase 9 |
+| **Manual**      | Demo reliability                        | 3 consecutive live runs on demo ticker | 🔜 User (post-deploy) |
 
 
 
@@ -763,6 +776,9 @@ class PrismClient:
 
 
 ## 13. Production Readiness Checklist
+
+**Codebase:** ✅ complete (all phases merged to `main`).  
+**Go-live:** follow [DEPLOYMENT.md](./DEPLOYMENT.md) and the Phase 9 post-merge checklist below.
 
 
 
@@ -790,20 +806,20 @@ class PrismClient:
 
 ### Deployment
 
-- [ ] Backend deployed and healthy *(user deploys — configs ready)*
-- [ ] Frontend deployed and connected to backend *(user deploys)*
+- [ ] Backend deployed and healthy — [DEPLOYMENT.md](./DEPLOYMENT.md)
+- [ ] Frontend deployed and connected to backend
 - [x] Environment variables documented
 - [x] CORS configured correctly (FRONTEND_URL auto-merge)
-- [ ] HTTPS enabled *(provided by Vercel + Railway/Render)*
+- [ ] HTTPS enabled on live URLs (automatic via Vercel + Railway/Render)
 
 
 
 ### Demo
 
-- [x] Demo script written and rehearsed (`docs/DEMO_SCRIPT.md`)
-- [ ] Demo ticker pre-tested 3+ times successfully *(user verifies on production)*
+- [x] Demo script written (`docs/DEMO_SCRIPT.md`)
+- [ ] Demo ticker pre-tested 3+ times on production URL
 - [x] PRISM trace visible and narratable
-- [x] Fallback plan if live APIs fail during demo (cached playbook)
+- [x] Fallback plan if live APIs fail during demo (cached playbook — Demo AAPL)
 
 
 
@@ -850,7 +866,7 @@ The AI agent will pause for user review at these points:
 | **CP2**    | Phase 2     | Review backtest output on 5 tickers — do patterns look right?      |
 | **CP3**    | Phase 3     | Review sample Playbook JSON for one ticker — content quality check |
 | **CP4**    | Phase 6     | Review UI in browser — design and UX feedback                      |
-| **CP5**    | Phase 9     | Final production test + demo rehearsal                             |
+| **CP5**    | Phase 9     | Deploy to production, verify, rehearse demo, tag `v1.0.0`          |
 
 
 Between checkpoints, the agent proceeds autonomously.
@@ -904,11 +920,11 @@ Phase 7: Polish + export + demo seed
     ↓
 Phase 8: Tests + backtest validation
     ↓
-Phase 9: Deploy + docs + demo script ✅
-    ↓  ← CP5: Final review
-    ✅ Production-ready EarningsPulse
+Phase 9: Deploy + docs + demo script ✅  (merged PR #9)
+    ↓  ← CP5: Deploy + demo rehearsal (user)
+    ✅ Code-complete EarningsPulse — ready for hackathon
 ```
 
 ---
 
-*Document version: 1.0 · Created: September 3, 2026*
+*Document version: 1.1 · Created: September 3, 2026 · Updated: September 3, 2026 (Phase 9 merged)*

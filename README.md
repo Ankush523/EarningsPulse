@@ -6,6 +6,8 @@ AI-powered pre-earnings research agent that generates structured Earnings Playbo
 
 Built for the [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre) (Money Intelligence track).
 
+**Status:** ✅ Code-complete — all phases merged to `main`. Deploy with [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Demo with [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
 ## Overview
 
 EarningsPulse is a multi-agent system that prepares investors for after-hours earnings events. Before a company reports, it:
