@@ -81,6 +81,15 @@ npm run dev
 
 Phase 0 runs without API keys — health checks only.
 
+### Data services (Phase 1)
+
+| Service | Module | API Key |
+|---------|--------|---------|
+| Price data | `PriceDataService` | None (yfinance) |
+| Earnings calendar | `EarningsCalendarService` | `FINNHUB_API_KEY` (yfinance fallback) |
+| Web research | `TavilyClient` | `TAVILY_API_KEY` |
+| SEC filings | `EdgarClient` | `SEC_USER_AGENT` (email required by SEC) |
+
 ## Testing
 
 ```bash
@@ -99,7 +108,7 @@ pytest
 | Phase | Status | Description |
 |-------|--------|-------------|
 | 0 | ✅ | Foundation — scaffold, models, health checks |
-| 1 | 🔜 | Data layer — Tavily, yfinance, Finnhub, EDGAR |
+| 1 | ✅ | Data layer — Tavily, yfinance, Finnhub, EDGAR |
 | 2 | 🔜 | Analysis engines — reaction analyzer, peer map |
 | 3 | 🔜 | Agents — LangGraph orchestrator |
 | 4 | 🔜 | API — playbook generation + SSE streaming |
