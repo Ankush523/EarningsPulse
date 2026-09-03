@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     # PRISM (Block Convey)
     prism_api_key: str | None = None
     prism_project_id: str | None = None
+    prism_host: str = "https://api.prism.blockconvey.com"
+    trace_log_dir: str = "logs/traces"
 
     # Optional cache
     redis_url: str | None = None

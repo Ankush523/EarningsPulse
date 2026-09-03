@@ -43,3 +43,7 @@ next-env.d.ts
 # Misc
 .cache/
 *.pem
+
+# Local trace logs (Phase 5)
+backend/logs/
+logs/

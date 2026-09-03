@@ -23,5 +23,8 @@ pandas>=2.2.0
 pytest==8.3.4
 pytest-asyncio==0.25.0
 
+# PRISM observability (Phase 5) — optional at runtime if keys not set
+prismtrace-sdk>=0.4.1
+
 # Pin for Docker Python 3.12 compatibility
 typing-extensions>=4.12.0
