@@ -493,13 +493,13 @@ Phases are sequential. Each phase completes before the next begins.
 
 ### Phase 8 — Testing
 
-- [ ] **Unit tests:** reaction_analyzer, peer_map, confidence scoring
-- [ ] **Agent tests:** each agent with mocked tools
-- [ ] **Integration test:** full orchestrator run with mocked external APIs
-- [ ] **API tests:** all endpoints, SSE stream format
-- [ ] **E2E test (Playwright):** input ticker → wait for playbook → verify sections render
-- [ ] **Backtest validation:** run on 5 tickers, verify pattern labels are reasonable
-- [ ] Fix any failures
+- [x] **Unit tests:** reaction_analyzer, peer_map, confidence scoring
+- [x] **Agent tests:** each agent with mocked tools
+- [x] **Integration test:** full orchestrator run with mocked external APIs
+- [x] **API tests:** all endpoints, SSE stream format
+- [x] **E2E test (Playwright):** input ticker → wait for playbook → verify sections render
+- [x] **Backtest validation:** run on 5 tickers, verify pattern labels are reasonable
+- [x] Fix any failures
 
 **Exit criteria:** All tests pass; backtest output reviewed and sensible.
 
@@ -737,16 +737,17 @@ class PrismClient:
 
 ## 12. Testing Strategy
 
+**Status (Phase 8):** Implemented — see `backend/tests/`, `frontend/e2e/`, `.github/workflows/ci.yml`, and `scripts/run_tests.sh`.
 
-| Level           | What                                    | How                                    |
-| --------------- | --------------------------------------- | -------------------------------------- |
-| **Unit**        | Reaction analyzer, peer map, confidence | pytest with synthetic data             |
-| **Unit**        | Individual agent logic                  | pytest with mocked LLM + tools         |
-| **Integration** | Full orchestrator                       | pytest with mocked external APIs       |
-| **API**         | All endpoints + SSE format              | pytest + httpx AsyncClient             |
-| **E2E**         | Full user flow                          | Playwright: input → stream → playbook  |
-| **Validation**  | Pattern accuracy                        | Backtest script on 5 known tickers     |
-| **Manual**      | Demo reliability                        | 3 consecutive live runs on demo ticker |
+| Level           | What                                    | How                                    | Status |
+| --------------- | --------------------------------------- | -------------------------------------- | ------ |
+| **Unit**        | Reaction analyzer, peer map, confidence | pytest with synthetic data             | ✅ |
+| **Unit**        | Individual agent logic                  | pytest with mocked LLM + tools         | ✅ |
+| **Integration** | Full orchestrator                       | pytest with mocked external APIs       | ✅ |
+| **API**         | All endpoints + SSE format              | pytest + httpx AsyncClient             | ✅ |
+| **E2E**         | Full user flow                          | Playwright: demo AAPL → playbook sections | ✅ |
+| **Validation**  | Pattern accuracy                        | Backtest tests on 5 tickers (mocked)   | ✅ |
+| **Manual**      | Demo reliability                        | 3 consecutive live runs on demo ticker | 🔜 Phase 9 |
 
 
 

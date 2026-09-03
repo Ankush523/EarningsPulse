@@ -94,11 +94,47 @@ Phase 0 runs without API keys — health checks only.
 
 ## Testing
 
+### Backend (pytest)
+
 ```bash
 cd backend
 pip install -r requirements.txt
 pytest
 ```
+
+100+ tests cover unit logic, agents (mocked tools), API routes, SSE event mapping, and backtest validation (AAPL, NVDA, TSLA, JPM, AMZN with synthetic bars — no live network required).
+
+### Full test suite
+
+```bash
+chmod +x scripts/run_tests.sh
+./scripts/run_tests.sh
+```
+
+Runs backend pytest → frontend production build → Playwright E2E. Skip E2E locally with:
+
+```bash
+SKIP_E2E=1 ./scripts/run_tests.sh
+```
+
+### E2E (Playwright)
+
+```bash
+cd frontend
+npm install
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright starts the backend (port 8000) and frontend dev server (port 3000) automatically. Tests use the **Demo AAPL** instant path — no API keys required (`backend/demo/aapl.json` must exist; run `scripts/seed_demo.py --offline` if missing).
+
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
+
+- **backend** — pytest
+- **frontend** — lint + production build
+- **e2e** — Playwright against demo playbook flow
 
 ### Backtest reaction patterns (Phase 2)
 
@@ -232,7 +268,7 @@ python ../scripts/seed_demo.py --ticker AAPL
 | 5 | ✅ | PRISM — observability integration |
 | 6 | ✅ | Frontend — full UI |
 | 7 | ✅ | Polish — export, calendar, demo seed |
-| 8 | 🔜 | Testing — E2E, backtest validation |
+| 8 | ✅ | Testing — E2E, backtest validation, CI |
 | 9 | 🔜 | Deploy — production deployment |
 
 ## Disclaimer
