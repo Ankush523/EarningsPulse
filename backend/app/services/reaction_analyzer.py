@@ -1,0 +1,371 @@
+"""Earnings reaction pattern analysis engine."""
+
+from __future__ import annotations
+
+from datetime import date
+from statistics import mean, median
+
+from app.models.analysis import EarningsReactionEvent, ReactionPatternAnalysis
+from app.models.data import EarningsEvent, EarningsWindowPrices, OHLCVBar
+from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome
+from app.services.earnings_calendar import EarningsCalendarService
+from app.services.price_data import PriceDataService
+from app.utils.cache import TTLCache, app_cache
+from app.utils.confidence import score_from_data_quality
+
+ARCHETYPE_DESCRIPTIONS: dict[ReactionArchetype, str] = {
+    ReactionArchetype.DIP_THEN_RALLY: (
+        "Positive reactions often dip first before recovering — watch for reversal entry zones."
+    ),
+    ReactionArchetype.IMMEDIATE_RIP: (
+        "Positive reactions tend to rally immediately with limited initial dip."
+    ),
+    ReactionArchetype.SELL_THE_NEWS: (
+        "Positive reports often fade after an initial pop — avoid chasing extended after-hours highs."
+    ),
+    ReactionArchetype.GAP_AND_HOLD: (
+        "Negative reactions tend to gap down and stay under pressure."
+    ),
+    ReactionArchetype.VOLATILITY_PIN: (
+        "Reactions are mixed or range-bound — reduce size and wait for clarity."
+    ),
+    ReactionArchetype.INSUFFICIENT_DATA: (
+        "Not enough historical earnings reactions to classify a reliable pattern."
+    ),
+}
+
+POSITIVE_OUTCOMES = {ReportOutcome.BEAT, ReportOutcome.INLINE}
+DIP_THRESHOLD_PCT = -0.5
+RALLY_RECOVERY_MIN_PCT = 1.0
+IMMEDIATE_RIP_MIN_PCT = 2.0
+SELL_THE_NEWS_FADE_PCT = -1.0
+GAP_DOWN_THRESHOLD_PCT = -2.0
+VOLATILITY_BAND_PCT = 1.5
+
+
+class ReactionAnalyzer:
+    """Analyze historical earnings price reactions and classify patterns."""
+
+    def __init__(
+        self,
+        price_service: PriceDataService | None = None,
+        earnings_service: EarningsCalendarService | None = None,
+        cache: TTLCache | None = None,
+    ):
+        self._price = price_service or PriceDataService()
+        self._earnings = earnings_service or EarningsCalendarService()
+        self._cache = cache or app_cache
+
+    async def analyze_ticker(
+        self,
+        ticker: str,
+        *,
+        limit: int = 8,
+        window_days: int = 3,
+        use_cache: bool = True,
+    ) -> ReactionPatternAnalysis:
+        """Fetch historical earnings and analyze reaction patterns for a ticker."""
+        normalized = ticker.upper().strip()
+        cache_key = TTLCache.make_key(
+            "reaction_analysis", normalized, limit, window_days
+        )
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
+        historical = await self._earnings.get_historical_earnings(
+            normalized,
+            limit=limit,
+            use_cache=use_cache,
+        )
+
+        events: list[EarningsReactionEvent] = []
+        for earnings_event in historical.events:
+            analyzed = self.analyze_event(
+                normalized,
+                earnings_event,
+                window_days=window_days,
+                use_cache=use_cache,
+            )
+            if analyzed is not None:
+                events.append(analyzed)
+
+        result = self.aggregate_events(normalized, events)
+
+        if use_cache:
+            self._cache.set(cache_key, result, ttl_seconds=3600)
+
+        return result
+
+    def analyze_event(
+        self,
+        ticker: str,
+        earnings_event: EarningsEvent,
+        *,
+        window_days: int = 3,
+        use_cache: bool = True,
+    ) -> EarningsReactionEvent | None:
+        """Analyze a single earnings event from calendar data."""
+        try:
+            window = self._price.fetch_around_earnings(
+                ticker,
+                earnings_event.report_date,
+                window_days=window_days,
+                use_cache=use_cache,
+            )
+        except Exception:
+            return None
+
+        outcome = self._infer_report_outcome(earnings_event, window)
+        return self.analyze_window(
+            ticker,
+            earnings_event.report_date,
+            window.bars,
+            report_outcome=outcome,
+            window_days=window_days,
+        )
+
+    def analyze_window(
+        self,
+        ticker: str,
+        earnings_date: date,
+        bars: list[OHLCVBar],
+        *,
+        report_outcome: ReportOutcome | None = None,
+        window_days: int = 3,
+    ) -> EarningsReactionEvent | None:
+        """Analyze price bars around a single earnings date."""
+        if len(bars) < 2:
+            return None
+
+        metrics = self._price.calculate_dip_recovery(bars, earnings_date)
+        baseline = metrics.get("baseline_price")
+        dip_pct = metrics.get("dip_pct")
+        recovery_pct = metrics.get("recovery_pct")
+
+        initial_move_pct = self._calculate_initial_move(bars, earnings_date, baseline)
+        if initial_move_pct is None:
+            return None
+
+        outcome = report_outcome or self._outcome_from_move(initial_move_pct)
+        time_to_bottom_days = self._time_to_bottom_days(bars, earnings_date, baseline)
+
+        pattern = self.classify_single_reaction(
+            outcome=outcome,
+            initial_move_pct=initial_move_pct,
+            dip_pct=dip_pct,
+            recovery_pct=recovery_pct,
+        )
+
+        return EarningsReactionEvent(
+            ticker=ticker.upper().strip(),
+            earnings_date=earnings_date,
+            report_outcome=outcome,
+            initial_move_pct=round(initial_move_pct, 4),
+            dip_pct=dip_pct,
+            recovery_pct=recovery_pct,
+            time_to_bottom_days=time_to_bottom_days,
+            pattern=pattern,
+            baseline_price=baseline,
+            window_days=window_days,
+        )
+
+    @staticmethod
+    def classify_single_reaction(
+        *,
+        outcome: ReportOutcome,
+        initial_move_pct: float,
+        dip_pct: float | None,
+        recovery_pct: float | None,
+    ) -> ReactionArchetype:
+        """Classify a single earnings reaction into an archetype."""
+        if outcome == ReportOutcome.MISS:
+            if abs(initial_move_pct) <= VOLATILITY_BAND_PCT:
+                return ReactionArchetype.VOLATILITY_PIN
+            return ReactionArchetype.GAP_AND_HOLD
+
+        has_dip = dip_pct is not None and dip_pct <= DIP_THRESHOLD_PCT
+        has_recovery = recovery_pct is not None and recovery_pct >= RALLY_RECOVERY_MIN_PCT
+
+        # Dip-then-rally: positive outcome with initial dip followed by meaningful recovery.
+        if has_dip and has_recovery and recovery_pct > abs(dip_pct or 0):
+            return ReactionArchetype.DIP_THEN_RALLY
+
+        if initial_move_pct >= IMMEDIATE_RIP_MIN_PCT and not has_dip:
+            return ReactionArchetype.IMMEDIATE_RIP
+
+        if (
+            initial_move_pct > 0
+            and recovery_pct is not None
+            and recovery_pct < initial_move_pct + SELL_THE_NEWS_FADE_PCT
+        ):
+            return ReactionArchetype.SELL_THE_NEWS
+
+        if abs(initial_move_pct) <= VOLATILITY_BAND_PCT:
+            return ReactionArchetype.VOLATILITY_PIN
+
+        if initial_move_pct > 0:
+            return ReactionArchetype.IMMEDIATE_RIP
+
+        if outcome == ReportOutcome.INLINE:
+            return ReactionArchetype.VOLATILITY_PIN
+
+        return ReactionArchetype.GAP_AND_HOLD
+
+    def aggregate_events(
+        self,
+        ticker: str,
+        events: list[EarningsReactionEvent],
+    ) -> ReactionPatternAnalysis:
+        """Aggregate per-event reactions into a ticker-level pattern analysis."""
+        if not events:
+            return ReactionPatternAnalysis(
+                ticker=ticker.upper().strip(),
+                archetype=ReactionArchetype.INSUFFICIENT_DATA,
+                archetype_description=ARCHETYPE_DESCRIPTIONS[
+                    ReactionArchetype.INSUFFICIENT_DATA
+                ],
+                events_analyzed=0,
+                confidence=ConfidenceTier.LOW,
+            )
+
+        pattern_counts: dict[str, int] = {}
+        for event in events:
+            key = event.pattern.value
+            pattern_counts[key] = pattern_counts.get(key, 0) + 1
+
+        archetype = self._select_dominant_archetype(events, pattern_counts)
+        positive_events = [
+            e
+            for e in events
+            if e.report_outcome in POSITIVE_OUTCOMES
+            or e.initial_move_pct > 0
+        ]
+        dipped_positive = [
+            e
+            for e in positive_events
+            if e.dip_pct is not None and e.dip_pct <= DIP_THRESHOLD_PCT
+        ]
+
+        dip_values = [e.dip_pct for e in dipped_positive if e.dip_pct is not None]
+        recovery_values = [
+            e.recovery_pct
+            for e in positive_events
+            if e.recovery_pct is not None and e.recovery_pct > 0
+        ]
+
+        avg_dip = round(mean(dip_values), 4) if dip_values else None
+        avg_recovery = round(mean(recovery_values), 4) if recovery_values else None
+        dip_frequency = (
+            round(len(dipped_positive) / len(positive_events), 4)
+            if positive_events
+            else None
+        )
+
+        expected_dip_zone = None
+        if dip_values:
+            expected_dip_zone = {
+                "min": round(min(dip_values), 4),
+                "max": round(max(dip_values), 4),
+                "median": round(median(dip_values), 4),
+            }
+
+        has_estimates = any(e.report_outcome is not None for e in events)
+        confidence = score_from_data_quality(
+            sample_size=len(events),
+            has_estimates=has_estimates,
+        )
+
+        return ReactionPatternAnalysis(
+            ticker=ticker.upper().strip(),
+            archetype=archetype,
+            archetype_description=ARCHETYPE_DESCRIPTIONS[archetype],
+            events_analyzed=len(events),
+            events=sorted(events, key=lambda e: e.earnings_date, reverse=True),
+            pattern_counts=pattern_counts,
+            avg_dip_pct=avg_dip,
+            avg_recovery_pct=avg_recovery,
+            dip_frequency_on_positive=dip_frequency,
+            expected_dip_zone=expected_dip_zone,
+            confidence=confidence,
+        )
+
+    @staticmethod
+    def _select_dominant_archetype(
+        events: list[EarningsReactionEvent],
+        pattern_counts: dict[str, int],
+    ) -> ReactionArchetype:
+        """Pick dominant archetype with recency weighting."""
+        if not events:
+            return ReactionArchetype.INSUFFICIENT_DATA
+
+        weighted: dict[str, float] = {}
+        for idx, event in enumerate(sorted(events, key=lambda e: e.earnings_date, reverse=True)):
+            weight = max(1.0, len(events) - idx)
+            key = event.pattern.value
+            weighted[key] = weighted.get(key, 0.0) + weight
+
+        dominant_key = max(weighted, key=weighted.get)
+        return ReactionArchetype(dominant_key)
+
+    @staticmethod
+    def _infer_report_outcome(
+        earnings_event: EarningsEvent,
+        window: EarningsWindowPrices,
+    ) -> ReportOutcome | None:
+        """Infer beat/miss/inline from EPS data when available."""
+        estimate = earnings_event.eps_estimate
+        actual = earnings_event.eps_actual
+        if estimate is None or actual is None:
+            return None
+
+        surprise_pct = ((actual - estimate) / abs(estimate)) * 100 if estimate else 0
+        if surprise_pct > 2:
+            return ReportOutcome.BEAT
+        if surprise_pct < -2:
+            return ReportOutcome.MISS
+        return ReportOutcome.INLINE
+
+    @staticmethod
+    def _outcome_from_move(initial_move_pct: float) -> ReportOutcome:
+        if initial_move_pct > 1.0:
+            return ReportOutcome.BEAT
+        if initial_move_pct < -1.0:
+            return ReportOutcome.MISS
+        return ReportOutcome.INLINE
+
+    @staticmethod
+    def _calculate_initial_move(
+        bars: list[OHLCVBar],
+        earnings_date: date,
+        baseline: float | None,
+    ) -> float | None:
+        if baseline is None or baseline == 0:
+            return None
+
+        ordered = sorted(bars, key=lambda bar: bar.date)
+        post = [bar for bar in ordered if bar.date >= earnings_date]
+        if not post:
+            return None
+
+        # Use first post-earnings close as the initial reaction proxy.
+        first_post_close = post[0].close
+        return ((first_post_close - baseline) / baseline) * 100
+
+    @staticmethod
+    def _time_to_bottom_days(
+        bars: list[OHLCVBar],
+        earnings_date: date,
+        baseline: float | None,
+    ) -> int | None:
+        if baseline is None:
+            return None
+
+        ordered = sorted(bars, key=lambda bar: bar.date)
+        post = [bar for bar in ordered if bar.date >= earnings_date]
+        if not post:
+            return None
+
+        low_bar = min(post, key=lambda bar: bar.low)
+        return (low_bar.date - earnings_date).days

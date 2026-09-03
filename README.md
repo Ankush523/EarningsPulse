@@ -89,6 +89,8 @@ Phase 0 runs without API keys — health checks only.
 | Earnings calendar | `EarningsCalendarService` | `FINNHUB_API_KEY` (yfinance fallback) |
 | Web research | `TavilyClient` | `TAVILY_API_KEY` |
 | SEC filings | `EdgarClient` | `SEC_USER_AGENT` (email required by SEC) |
+| Reaction patterns | `ReactionAnalyzer` | None (uses Phase 1 services) |
+| Peer spillover | `PeerMapService` | None (Finnhub improves earnings dates) |
 
 ## Testing
 
@@ -97,6 +99,16 @@ cd backend
 pip install -r requirements.txt
 pytest
 ```
+
+### Backtest reaction patterns (Phase 2)
+
+```bash
+cd backend && source .venv/bin/activate
+python ../scripts/backtest_reactions.py
+python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA
+```
+
+Requires network access and Phase 1 env keys (`FINNHUB_API_KEY` recommended; yfinance fallback works for prices).
 
 ## Documentation
 
@@ -109,7 +121,7 @@ pytest
 |-------|--------|-------------|
 | 0 | ✅ | Foundation — scaffold, models, health checks |
 | 1 | ✅ | Data layer — Tavily, yfinance, Finnhub, EDGAR |
-| 2 | 🔜 | Analysis engines — reaction analyzer, peer map |
+| 2 | ✅ | Analysis engines — reaction analyzer, peer map |
 | 3 | 🔜 | Agents — LangGraph orchestrator |
 | 4 | 🔜 | API — playbook generation + SSE streaming |
 | 5 | 🔜 | PRISM — observability integration |
