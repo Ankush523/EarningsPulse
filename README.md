@@ -172,6 +172,23 @@ Trace logs are also persisted locally at `backend/logs/traces/<job_id>.json`.
 
 When `PRISM_API_KEY` and `PRISM_PROJECT_ID` are set, the full agent trajectory is synced to Block Convey PRISM on job completion (local trace always preserved).
 
+### Frontend (Phase 6)
+
+Start both services:
+
+```bash
+# Terminal 1 — backend
+cd backend && source .venv/bin/activate
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — frontend
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:3000 → enter a ticker → watch the live agent trace → view the full playbook.
+
+Ensure `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000` is set (see `.env.example`).
+
 ## Documentation
 
 - [Project Specification](docs/PROJECT_SPEC.md)
@@ -187,7 +204,7 @@ When `PRISM_API_KEY` and `PRISM_PROJECT_ID` are set, the full agent trajectory i
 | 3 | ✅ | Agents — LangGraph orchestrator + 5 agents |
 | 4 | ✅ | API — playbook generation + SSE streaming |
 | 5 | ✅ | PRISM — observability integration |
-| 6 | 🔜 | Frontend — full UI |
+| 6 | ✅ | Frontend — full UI |
 | 7 | 🔜 | Polish — export, calendar, demo seed |
 | 8 | 🔜 | Testing — E2E, backtest validation |
 | 9 | 🔜 | Deploy — production deployment |
