@@ -6,30 +6,94 @@ AI-powered pre-earnings research agent that generates structured Earnings Playbo
 
 Built for the [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre) (Money Intelligence track).
 
+## Overview
+
+EarningsPulse is a multi-agent system that prepares investors for after-hours earnings events. Before a company reports, it:
+
+1. **Researches** the ticker — news, filings, analyst context (Tavily + SEC EDGAR)
+2. **Forecasts** report sentiment — beat/miss probabilities with confidence tiers
+3. **Models reactions** — historical patterns including dip-then-rally
+4. **Maps spillover** — correlated peers likely to move in sympathy
+5. **Synthesizes** a structured **Earnings Playbook** with sources, scenarios, and export
+
+Every agent step is streamed live (SSE) and logged in PRISM-compatible trace format.
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Frontend["Frontend (Next.js 14)"]
+    Input[Ticker Input]
+    Trace[Agent Trace Panel]
+    Viewer[Playbook Viewer]
+  end
+
+  subgraph Backend["Backend (FastAPI + LangGraph)"]
+    API[REST + SSE API]
+    Orch[Orchestrator]
+    R[Research]
+    F[Forecast]
+    Rx[Reaction]
+    S[Spillover]
+    Syn[Synthesis]
+  end
+
+  subgraph External["Data & Observability"]
+    Tavily[Tavily]
+    YF[yfinance]
+    FH[Finnhub]
+    EDGAR[SEC EDGAR]
+    OAI[OpenAI]
+    PRISM[PRISM]
+  end
+
+  Input --> API
+  Trace --> API
+  Viewer --> API
+  API --> Orch
+  Orch --> R & F & Rx & S --> Syn
+  R --> Tavily & EDGAR
+  F --> OAI
+  Rx & S --> YF
+  Orch --> FH
+  Orch --> PRISM
+```
+
+| Layer | Stack |
+|-------|-------|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Backend | FastAPI, LangGraph, Pydantic v2 |
+| LLM | OpenAI GPT-4o |
+| Research | Tavily Search API |
+| Market data | yfinance, Finnhub |
+| Observability | PRISM (Block Convey) + local trace logs |
+
 ## Project Structure
 
 ```
 finance_hackathon/
-├── backend/          # FastAPI + LangGraph agents
-├── frontend/         # Next.js 14 web app
-├── docs/             # Project spec & implementation plan
-├── scripts/          # Backtest & demo utilities
-└── docker-compose.yml
+├── backend/              # FastAPI + LangGraph agents
+│   ├── app/              # Application code
+│   ├── demo/             # Pre-cached demo playbooks (AAPL)
+│   ├── Dockerfile        # Production container
+│   └── railway.toml      # Railway deploy config
+├── frontend/             # Next.js 14 web app
+│   ├── e2e/              # Playwright tests
+│   ├── Dockerfile        # Production container
+│   └── vercel.json       # Vercel deploy config
+├── docs/                 # Spec, plan, deployment, demo script
+├── scripts/              # Backtest, demo seed, test & verify utilities
+├── render.yaml           # Render blueprint (alternative to Railway)
+└── docker-compose.yml    # Local full-stack
 ```
 
-## Prerequisites
-
-- Python 3.12+
-- Node.js 20+
-- Docker & Docker Compose (optional, recommended)
-
-## Quick Start
+## Quick Start (local)
 
 ### 1. Clone and configure
 
 ```bash
 cp .env.example .env
-# Edit .env with your API keys (not required for Phase 0 health checks)
+# Edit .env with your API keys (not required for Demo AAPL)
 ```
 
 ### 2. Run with Docker (recommended)
@@ -62,199 +126,134 @@ npm install
 npm run dev
 ```
 
-## Health Checks
+## Production Deployment
 
-| Service  | Endpoint                    |
-|----------|-----------------------------|
-| Backend  | `GET http://localhost:8000/health` |
-| Backend  | `GET http://localhost:8000/ready`  |
-| Frontend | `GET http://localhost:3000/api/health` |
+Deploy **frontend → Vercel**, **backend → Railway or Render**.
 
-## API Keys (required from Phase 1 onward)
+Full step-by-step guide: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**
 
-| Key | Purpose | Get it |
-|-----|---------|--------|
-| `OPENAI_API_KEY` | LLM agents | [platform.openai.com](https://platform.openai.com) |
-| `TAVILY_API_KEY` | Live web research | [tavily.com](https://tavily.com) |
-| `FINNHUB_API_KEY` | Earnings calendar | [finnhub.io](https://finnhub.io) |
-| `PRISM_API_KEY` | Agent observability | Provided at hackathon |
+Quick checklist:
 
-Phase 0 runs without API keys — health checks only.
-
-### Data services (Phase 1)
-
-| Service | Module | API Key |
-|---------|--------|---------|
-| Price data | `PriceDataService` | None (yfinance) |
-| Earnings calendar | `EarningsCalendarService` | `FINNHUB_API_KEY` (yfinance fallback) |
-| Web research | `TavilyClient` | `TAVILY_API_KEY` |
-| SEC filings | `EdgarClient` | `SEC_USER_AGENT` (email required by SEC) |
-| Reaction patterns | `ReactionAnalyzer` | None (uses Phase 1 services) |
-| Peer spillover | `PeerMapService` | None (Finnhub improves earnings dates) |
-
-## Testing
-
-### Backend (pytest)
+1. Deploy backend from `backend/` (Dockerfile included)
+2. Set `FRONTEND_URL`, `OPENAI_API_KEY`, `TAVILY_API_KEY`, `FINNHUB_API_KEY`, `SEC_USER_AGENT`
+3. Deploy frontend from `frontend/` to Vercel
+4. Set `NEXT_PUBLIC_BACKEND_URL` to your backend URL
+5. Verify:
 
 ```bash
-cd backend
-pip install -r requirements.txt
-pytest
+./scripts/verify_deployment.sh https://your-api.up.railway.app https://your-app.vercel.app
 ```
 
-100+ tests cover unit logic, agents (mocked tools), API routes, SSE event mapping, and backtest validation (AAPL, NVDA, TSLA, JPM, AMZN with synthetic bars — no live network required).
-
-### Full test suite
+Tag release after verification:
 
 ```bash
-chmod +x scripts/run_tests.sh
-./scripts/run_tests.sh
+git tag -a v1.0.0 -m "EarningsPulse v1.0.0 — hackathon release"
+git push origin v1.0.0
 ```
 
-Runs backend pytest → frontend production build → Playwright E2E. Skip E2E locally with:
+## Demo
 
-```bash
-SKIP_E2E=1 ./scripts/run_tests.sh
-```
+**Instant demo (no API keys):** Click **Demo AAPL** on the home page.
 
-### E2E (Playwright)
+**3-minute pitch script:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
 
-```bash
-cd frontend
-npm install
-npx playwright install chromium
-npm run test:e2e
-```
-
-Playwright starts the backend (port 8000) and frontend dev server (port 3000) automatically. Tests use the **Demo AAPL** instant path — no API keys required (`backend/demo/aapl.json` must exist; run `scripts/seed_demo.py --offline` if missing).
-
-### CI
-
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
-
-- **backend** — pytest
-- **frontend** — lint + production build
-- **e2e** — Playwright against demo playbook flow
-
-### Backtest reaction patterns (Phase 2)
+**Seed / refresh demo cache:**
 
 ```bash
 cd backend && source .venv/bin/activate
-python ../scripts/backtest_reactions.py
-python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA
+python ../scripts/seed_demo.py --offline --ticker AAPL   # offline
+python ../scripts/seed_demo.py --ticker AAPL             # live agent run
 ```
 
-Requires network access and Phase 1 env keys (`FINNHUB_API_KEY` recommended; yfinance fallback works for prices).
+## API Reference
 
-### Generate a playbook (Phase 3)
+Interactive docs: `GET /docs` (Swagger UI)
 
-```python
-import asyncio
-from app.agents import PlaybookOrchestrator
-
-async def main():
-    orchestrator = PlaybookOrchestrator()
-    playbook = await orchestrator.run("AAPL")
-    print(playbook.executive_summary.primary_pattern)
-    print(playbook.executive_summary.beat_probability)
-
-asyncio.run(main())
-```
-
-Run from `backend/` with venv activated. Requires `OPENAI_API_KEY` for best forecast quality (heuristic fallback works without it).
-
-### REST API (Phase 4)
-
-Start a playbook generation job:
-
-```bash
-curl -X POST http://localhost:8000/api/playbook/generate \
-  -H "Content-Type: application/json" \
-  -d '{"ticker": "AAPL"}'
-```
-
-Stream agent progress (SSE):
-
-```bash
-curl -N http://localhost:8000/api/playbook/stream/<job_id>
-```
-
-Fetch completed playbook:
-
-```bash
-curl http://localhost:8000/api/playbook/<job_id>
-```
-
-Upcoming earnings calendar:
-
-```bash
-curl "http://localhost:8000/api/calendar?days=7"
-curl http://localhost:8000/api/calendar/AAPL
-```
-
-Interactive docs: http://localhost:8000/docs
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Liveness probe |
+| `GET` | `/ready` | Readiness + key configuration status |
+| `POST` | `/api/playbook/generate` | Start playbook generation `{ "ticker": "AAPL" }` |
+| `GET` | `/api/playbook/stream/{job_id}` | SSE agent progress stream |
+| `GET` | `/api/playbook/{job_id}` | Fetch completed playbook |
+| `GET` | `/api/playbook/{job_id}/export/json` | Download playbook JSON |
+| `GET` | `/api/playbook/{job_id}/export/bundle` | Download playbook + trace bundle |
+| `POST` | `/api/playbook/demo/{ticker}` | Instant demo from cache |
+| `GET` | `/api/playbook/demo` | List available demo tickers |
+| `GET` | `/api/calendar?days=7` | Upcoming earnings events |
+| `GET` | `/api/calendar/{ticker}` | Ticker-specific earnings dates |
+| `GET` | `/api/trace/{job_id}` | Full PRISM-compatible trace log |
 
 Rate limit: 10 playbook generation requests per minute per client IP.
 
-### Trace API (Phase 5)
-
-Fetch the full PRISM-compatible trace for a completed job:
+### Example — generate and stream
 
 ```bash
-curl http://localhost:8000/api/trace/<job_id>
+# Start job
+curl -X POST http://localhost:8000/api/playbook/generate \
+  -H "Content-Type: application/json" \
+  -d '{"ticker": "AAPL"}'
+
+# Stream progress (SSE)
+curl -N http://localhost:8000/api/playbook/stream/<job_id>
+
+# Fetch result
+curl http://localhost:8000/api/playbook/<job_id>
 ```
 
-Trace logs are also persisted locally at `backend/logs/traces/<job_id>.json`.
+## Health Checks
 
-When `PRISM_API_KEY` and `PRISM_PROJECT_ID` are set, the full agent trajectory is synced to Block Convey PRISM on job completion (local trace always preserved).
+| Service  | Endpoint |
+|----------|----------|
+| Backend  | `GET /health` |
+| Backend  | `GET /ready` |
+| Frontend | `GET /api/health` |
 
-### Frontend (Phase 6)
+## API Keys
 
-Start both services:
+| Key | Purpose | Required for |
+|-----|---------|--------------|
+| `OPENAI_API_KEY` | LLM agents | Live generation |
+| `TAVILY_API_KEY` | Live web research | Live generation |
+| `FINNHUB_API_KEY` | Earnings calendar | Live generation (yfinance fallback) |
+| `SEC_USER_AGENT` | SEC EDGAR access | Live generation |
+| `PRISM_API_KEY` + `PRISM_PROJECT_ID` | Agent observability | Optional |
+
+Demo AAPL and health checks work without any keys.
+
+## Testing
 
 ```bash
-# Terminal 1 — backend
+# Backend (100+ tests)
+cd backend && pytest
+
+# Full suite (pytest + build + E2E)
+./scripts/run_tests.sh
+
+# Skip E2E locally
+SKIP_E2E=1 ./scripts/run_tests.sh
+
+# E2E only
+cd frontend && npx playwright install chromium && npm run test:e2e
+```
+
+CI (GitHub Actions): backend pytest → frontend lint/build → Playwright E2E on every push/PR to `main`.
+
+Backtest validation:
+
+```bash
 cd backend && source .venv/bin/activate
-uvicorn app.main:app --reload --port 8000
-
-# Terminal 2 — frontend
-cd frontend && npm install && npm run dev
-```
-
-Open http://localhost:3000 → enter a ticker → watch the live agent trace → view the full playbook.
-
-Ensure `NEXT_PUBLIC_BACKEND_URL=http://localhost:8000` is set (see `.env.example`).
-
-### Export & demo (Phase 7)
-
-**Export** (on completed playbook page):
-- **JSON** — download playbook via `GET /api/playbook/{job_id}/export/json`
-- **JSON + Trace** — audit bundle via `GET /api/playbook/{job_id}/export/bundle`
-- **Print / PDF** — browser print with print-optimized stylesheet
-
-**Instant demo** (no API keys required):
-
-```bash
-cd backend && source .venv/bin/activate
-python ../scripts/seed_demo.py --offline --ticker AAPL
-```
-
-Then click **Demo AAPL** on the home page, or:
-
-```bash
-curl -X POST http://localhost:8000/api/playbook/demo/AAPL
-```
-
-For live demo data with real agent run:
-
-```bash
-python ../scripts/seed_demo.py --ticker AAPL
+python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA JPM AMZN
 ```
 
 ## Documentation
 
-- [Project Specification](docs/PROJECT_SPEC.md)
-- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
+| Doc | Description |
+|-----|-------------|
+| [PROJECT_SPEC.md](docs/PROJECT_SPEC.md) | Product specification |
+| [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Build plan & phases |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deploy guide |
+| [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | 3-minute hackathon pitch |
 
 ## Implementation Phases
 
@@ -269,7 +268,7 @@ python ../scripts/seed_demo.py --ticker AAPL
 | 6 | ✅ | Frontend — full UI |
 | 7 | ✅ | Polish — export, calendar, demo seed |
 | 8 | ✅ | Testing — E2E, backtest validation, CI |
-| 9 | 🔜 | Deploy — production deployment |
+| 9 | ✅ | Deploy — configs, docs, demo script |
 
 ## Disclaimer
 

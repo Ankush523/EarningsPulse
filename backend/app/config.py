@@ -1,5 +1,7 @@
 from functools import lru_cache
+from typing import Self
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -60,6 +62,15 @@ class Settings(BaseSettings):
     @property
     def prism_enabled(self) -> bool:
         return bool(self.prism_api_key and self.prism_project_id)
+
+    @model_validator(mode="after")
+    def ensure_frontend_in_cors(self) -> Self:
+        """Always allow the configured frontend URL (production Vercel domain)."""
+        frontend = self.frontend_url.rstrip("/")
+        normalized = {origin.rstrip("/") for origin in self.cors_origins}
+        if frontend and frontend not in normalized:
+            self.cors_origins = [*self.cors_origins, frontend]
+        return self
 
 
 @lru_cache

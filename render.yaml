@@ -1,0 +1,41 @@
+# Render Blueprint — deploy backend + frontend from one repo
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: earningspulse-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: SEC_USER_AGENT
+        sync: false
+      - key: PRISM_API_KEY
+        sync: false
+      - key: PRISM_PROJECT_ID
+        sync: false
+
+  - type: web
+    name: earningspulse-web
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NEXT_PUBLIC_BACKEND_URL
+        sync: false
