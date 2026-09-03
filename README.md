@@ -110,6 +110,23 @@ python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA
 
 Requires network access and Phase 1 env keys (`FINNHUB_API_KEY` recommended; yfinance fallback works for prices).
 
+### Generate a playbook (Phase 3)
+
+```python
+import asyncio
+from app.agents import PlaybookOrchestrator
+
+async def main():
+    orchestrator = PlaybookOrchestrator()
+    playbook = await orchestrator.run("AAPL")
+    print(playbook.executive_summary.primary_pattern)
+    print(playbook.executive_summary.beat_probability)
+
+asyncio.run(main())
+```
+
+Run from `backend/` with venv activated. Requires `OPENAI_API_KEY` for best forecast quality (heuristic fallback works without it).
+
 ## Documentation
 
 - [Project Specification](docs/PROJECT_SPEC.md)
@@ -122,7 +139,7 @@ Requires network access and Phase 1 env keys (`FINNHUB_API_KEY` recommended; yfi
 | 0 | ✅ | Foundation — scaffold, models, health checks |
 | 1 | ✅ | Data layer — Tavily, yfinance, Finnhub, EDGAR |
 | 2 | ✅ | Analysis engines — reaction analyzer, peer map |
-| 3 | 🔜 | Agents — LangGraph orchestrator |
+| 3 | ✅ | Agents — LangGraph orchestrator + 5 agents |
 | 4 | 🔜 | API — playbook generation + SSE streaming |
 | 5 | 🔜 | PRISM — observability integration |
 | 6 | 🔜 | Frontend — full UI |

@@ -1,12 +1,11 @@
 """LangGraph agent state schema."""
 
-from typing import Any, TypedDict
+from __future__ import annotations
 
-from app.models.playbook import (
-    Playbook,
-    ReactionAnalysisSummary,
-    SpilloverMap,
-)
+import operator
+from typing import Annotated, Any, TypedDict
+
+from app.models.playbook import Playbook, ReactionAnalysisSummary, SpilloverMap
 from app.models.trace import TraceEvent
 
 
@@ -16,11 +15,14 @@ class ResearchBundle(TypedDict, total=False):
     ticker: str
     company_name: str | None
     earnings_date: str | None
+    is_after_hours: bool
     last_earnings_summary: str
     recent_news: list[dict[str, Any]]
     filing_links: list[dict[str, str]]
     analyst_context: str
     sector_context: str
+    sector: str | None
+    industry: str | None
     sources: list[dict[str, Any]]
 
 
@@ -54,13 +56,24 @@ class AgentState(TypedDict, total=False):
     spillover: SpilloverMap | None
     playbook: Playbook | None
 
-    # Observability
-    trace_events: list[TraceEvent]
-    errors: list[str]
+    # Observability — reducers merge lists across parallel nodes
+    trace_events: Annotated[list[dict[str, Any]], operator.add]
+    errors: Annotated[list[str], operator.add]
 
-    # LangGraph message history (for LLM agents) — Annotated reducer added in Phase 3
-    messages: list[Any]
+    # LangGraph message history (optional, for future LLM tool loops)
+    messages: Annotated[list[Any], operator.add]
 
     # Control flow
     current_agent: str | None
     status: str
+
+
+def serialize_trace_events(events: list[dict[str, Any]] | list[TraceEvent]) -> list[TraceEvent]:
+    """Convert trace dicts back to TraceEvent models."""
+    parsed: list[TraceEvent] = []
+    for item in events:
+        if isinstance(item, TraceEvent):
+            parsed.append(item)
+        else:
+            parsed.append(TraceEvent.model_validate(item))
+    return parsed
