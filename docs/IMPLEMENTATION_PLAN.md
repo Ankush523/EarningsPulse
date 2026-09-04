@@ -136,7 +136,7 @@
 
 | Layer               | Choice                                | Rationale                                              |
 | ------------------- | ------------------------------------- | ------------------------------------------------------ |
-| **Frontend**        | Next.js 14 (App Router) + TypeScript  | Production-ready, fast SSR, easy Vercel deploy         |
+| **Frontend**        | Next.js 16 (App Router) + TypeScript 7 | Production-ready, Turbopack by default, easy Vercel deploy |
 | **UI**              | Tailwind CSS + shadcn/ui              | Polished finance UI quickly                            |
 | **Charts**          | Recharts                              | Earnings reaction timeline charts                      |
 | **Backend**         | Python 3.12 + FastAPI                 | Best ecosystem for finance data + AI agents            |
@@ -304,7 +304,7 @@ Phases are sequential. All phases merged to `main` as of September 3, 2026.
 
 - [x] Initialize monorepo with `backend/` and `frontend/` directories
 - [x] Set up Python virtual environment, `requirements.txt` (FastAPI, LangGraph, yfinance, httpx, pydantic, etc.)
-- [x] Set up Next.js 14 with TypeScript, Tailwind, shadcn/ui
+- [x] Set up Next.js 16 with TypeScript 7, Tailwind, shadcn/ui
 - [x] Create `.env.example` with all required keys documented
 - [x] Create `docker-compose.yml` for local dev (backend + frontend)
 - [x] Implement health check endpoints (`GET /health` on backend, frontend loads)

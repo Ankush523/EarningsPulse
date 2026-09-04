@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 import { generatePlaybook } from "@/lib/api";
 
@@ -19,7 +19,7 @@ export function TickerInput({ suggestions = POPULAR_TICKERS }: TickerInputProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const normalized = ticker.trim().toUpperCase();
     if (!normalized || loading) return;
