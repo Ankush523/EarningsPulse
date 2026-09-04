@@ -75,7 +75,7 @@ export interface HistoricalReaction {
   pattern: ReactionArchetype;
 }
 
-export interface MonteCarloPercentilePoint {
+interface MonteCarloPercentilePoint {
   day: number;
   label: string;
   p5: number;

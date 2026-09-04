@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 from app.models.playbook import (
     ConfidenceTier,
-    MonteCarloPercentilePoint,
     MonteCarloSimulation,
     PeerRelationship,
     ReactionArchetype,

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import numpy as np
 
-from app.models.analysis import MonteCarloPercentilePoint, MonteCarloSimulation
+from app.models.playbook import MonteCarloPercentilePoint, MonteCarloSimulation
 
 
 class MonteCarloSimulator:
