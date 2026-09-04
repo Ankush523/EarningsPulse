@@ -15,7 +15,7 @@ def test_fetch_ohlcv_returns_bars(cache, sample_price_history):
     mock_ticker = MagicMock()
     mock_ticker.history.return_value = sample_price_history
 
-    with patch("app.services.price_data.yf.Ticker", return_value=mock_ticker):
+    with patch("app.services.price_data.get_ticker", return_value=mock_ticker):
         bars = service.fetch_ohlcv("AAPL", date(2024, 1, 1), date(2024, 1, 5))
 
     assert len(bars) == 5
@@ -28,7 +28,7 @@ def test_fetch_ohlcv_uses_cache(cache, sample_price_history):
     mock_ticker = MagicMock()
     mock_ticker.history.return_value = sample_price_history
 
-    with patch("app.services.price_data.yf.Ticker", return_value=mock_ticker):
+    with patch("app.services.price_data.get_ticker", return_value=mock_ticker):
         first = service.fetch_ohlcv("AAPL", date(2024, 1, 1), date(2024, 1, 5))
         second = service.fetch_ohlcv("AAPL", date(2024, 1, 1), date(2024, 1, 5))
 
@@ -41,7 +41,7 @@ def test_fetch_ohlcv_empty_raises(cache):
     mock_ticker = MagicMock()
     mock_ticker.history.return_value = pd.DataFrame()
 
-    with patch("app.services.price_data.yf.Ticker", return_value=mock_ticker):
+    with patch("app.services.price_data.get_ticker", return_value=mock_ticker):
         with pytest.raises(DataNotFoundError):
             service.fetch_ohlcv("AAPL", date(2024, 1, 1), date(2024, 1, 5))
 
@@ -51,7 +51,7 @@ def test_fetch_around_earnings(cache, sample_price_history, earnings_date):
     mock_ticker = MagicMock()
     mock_ticker.history.return_value = sample_price_history
 
-    with patch("app.services.price_data.yf.Ticker", return_value=mock_ticker):
+    with patch("app.services.price_data.get_ticker", return_value=mock_ticker):
         window = service.fetch_around_earnings("AAPL", earnings_date, window_days=2)
 
     assert window.ticker == "AAPL"

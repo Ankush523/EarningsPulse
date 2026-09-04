@@ -78,7 +78,12 @@ async def test_get_historical_earnings_from_finnhub(settings, cache):
         client=mock_client,
     )
 
-    result = await service.get_historical_earnings("AAPL", limit=8)
+    with patch.object(
+        service,
+        "_fetch_historical_from_yfinance",
+        side_effect=DataNotFoundError("missing", service="yfinance"),
+    ):
+        result = await service.get_historical_earnings("AAPL", limit=8)
 
     assert result.ticker == "AAPL"
     assert result.source == "finnhub"
@@ -87,7 +92,39 @@ async def test_get_historical_earnings_from_finnhub(settings, cache):
 
 
 @pytest.mark.asyncio
-async def test_get_historical_earnings_yfinance_fallback(settings, cache):
+async def test_get_historical_earnings_finnhub_fallback(settings, cache):
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = [
+        {
+            "period": "2024-06-30",
+            "actual": 1.4,
+            "estimate": 1.35,
+        },
+    ]
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    service = EarningsCalendarService(
+        settings=settings,
+        cache=cache,
+        client=mock_client,
+    )
+
+    with patch.object(
+        service,
+        "_fetch_historical_from_yfinance",
+        side_effect=DataNotFoundError("missing", service="yfinance"),
+    ):
+        result = await service.get_historical_earnings("AAPL", limit=8)
+
+    assert result.source == "finnhub"
+    assert result.events[0].report_date == date(2024, 6, 30)
+
+
+@pytest.mark.asyncio
+async def test_get_historical_earnings_from_yfinance(settings, cache):
     earnings_df = pd.DataFrame(
         {
             "EPS Estimate": [1.2],
@@ -103,12 +140,11 @@ async def test_get_historical_earnings_yfinance_fallback(settings, cache):
     service = EarningsCalendarService(settings=settings, cache=cache)
 
     with (
-        patch.object(
-            service,
-            "_fetch_historical_from_finnhub",
-            side_effect=DataNotFoundError("missing", service="finnhub"),
+        patch("app.services.earnings_calendar.get_ticker", return_value=mock_ticker),
+        patch(
+            "app.services.earnings_calendar.call_with_retry",
+            side_effect=lambda _op, fn, *args, **kwargs: fn(*args, **kwargs),
         ),
-        patch("app.services.earnings_calendar.yf.Ticker", return_value=mock_ticker),
     ):
         result = await service.get_historical_earnings("AAPL", limit=8)
 
