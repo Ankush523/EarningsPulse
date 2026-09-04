@@ -34,7 +34,7 @@ export default defineConfig({
       },
     },
     {
-      command: "npm run dev -- --port 3000",
+      command: "bun run dev --port 3000",
       url: frontendUrl,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

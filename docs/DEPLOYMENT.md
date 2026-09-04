@@ -86,7 +86,7 @@ flowchart TB
 |----------|-------|
 | `NEXT_PUBLIC_BACKEND_URL` | `https://<your-railway-or-render-api-url>` |
 
-5. Deploy. Vercel uses `frontend/vercel.json` for build settings.
+5. Deploy. Vercel detects **Bun** from `frontend/bun.lock` and uses `frontend/vercel.json` (`bun install --frozen-lockfile`, then `bun run build` on Node). Do not enable the Bun Function runtime (`bunVersion`).
 
 ---
 

@@ -19,16 +19,16 @@ cd "$ROOT"
 
 echo "==> Frontend property tests (Hegel)"
 cd frontend
-npm run test:property
+bun run test:property
 
 echo "==> Frontend lint (oxlint)"
-npm run lint
+bun run lint
 
 echo "==> Frontend typecheck"
-npm run typecheck
+bun run typecheck
 
 echo "==> Frontend production build"
-npm run build
+bun run build
 cd "$ROOT"
 
 if [[ "${SKIP_E2E:-}" == "1" ]]; then
@@ -39,9 +39,9 @@ fi
 echo "==> Frontend E2E (Playwright)"
 cd frontend
 if [[ "${CI:-}" == "true" ]]; then
-  npx playwright install --with-deps chromium
+  bunx playwright install --with-deps chromium
 fi
-npm run test:e2e
+bun run test:e2e
 cd "$ROOT"
 
 echo "==> All tests passed"
