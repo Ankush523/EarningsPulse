@@ -11,6 +11,7 @@ except ImportError:
     def given(*args, **kwargs):
         return pytest.mark.skip(reason="hypothesis not installed")
 
+
 from app.models.playbook import MonteCarloSimulation
 from app.services.monte_carlo import MonteCarloSimulator
 

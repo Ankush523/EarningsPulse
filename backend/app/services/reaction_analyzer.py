@@ -279,9 +279,7 @@ class ReactionAnalyzer:
             if len(recent_bars) >= 5:
                 closes = [b.close for b in recent_bars if b.close > 0]
                 if len(closes) >= 5:
-                    log_rets = [
-                        math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))
-                    ]
+                    log_rets = [math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))]
                     mean_ret = sum(log_rets) / len(log_rets)
                     variance = sum((r - mean_ret) ** 2 for r in log_rets) / (len(log_rets) - 1)
                     realized_daily_vol_pct = round(math.sqrt(variance) * 100.0, 2)
@@ -298,8 +296,7 @@ class ReactionAnalyzer:
                 inlines = sum(
                     1
                     for e in events
-                    if e.report_outcome == ReportOutcome.INLINE
-                    or abs(e.initial_move_pct) <= 1.0
+                    if e.report_outcome == ReportOutcome.INLINE or abs(e.initial_move_pct) <= 1.0
                 )
                 misses = sum(
                     1
@@ -319,9 +316,7 @@ class ReactionAnalyzer:
             raw_implied = options_data.get("implied_move_pct") if options_data else None
             implied_pct = float(raw_implied) if isinstance(raw_implied, (int, float)) else None
             hist_move = (
-                round(mean(abs(event.initial_move_pct) for event in events), 2)
-                if events
-                else None
+                round(mean(abs(event.initial_move_pct) for event in events), 2) if events else None
             )
 
             return self._monte_carlo.simulate(
