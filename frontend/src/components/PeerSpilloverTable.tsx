@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { formatRelationship } from "@/lib/format";
+import { describeDirection, formatRelationship } from "@/lib/format";
 import type { PeerSpillover } from "@/lib/types";
 
 interface PeerSpilloverTableProps {
@@ -37,66 +37,64 @@ export function PeerSpilloverTable({ peers }: PeerSpilloverTableProps) {
 
   if (peers.length === 0) {
     return (
-      <p className="text-sm text-muted">No peer spillover data available.</p>
+      <p className="text-ink-soft">
+        No peers with a measurable report-day link were found.
+      </p>
     );
   }
 
+  const sortableHeader = (key: SortKey, label: string) => {
+    const active = sortKey === key;
+    return (
+      <th
+        className="pb-2.5 pr-4 font-normal"
+        aria-sort={active ? (sortAsc ? "ascending" : "descending") : "none"}
+      >
+        <SortButton
+          label={label}
+          active={active}
+          ascending={sortAsc}
+          onClick={() => toggleSort(key)}
+        />
+      </th>
+    );
+  };
+
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-sm">
+      <table className="w-full min-w-[640px] text-left text-[0.95rem]">
         <thead>
-          <tr className="border-b border-card-border text-xs text-muted">
-            <th className="pb-3 pr-4">
-              <SortButton label="Ticker" active={sortKey === "ticker"} onClick={() => toggleSort("ticker")} />
-            </th>
-            <th className="pb-3 pr-4">Company</th>
-            <th className="pb-3 pr-4">
-              <SortButton
-                label="Relationship"
-                active={sortKey === "relationship"}
-                onClick={() => toggleSort("relationship")}
-              />
-            </th>
-            <th className="pb-3 pr-4">
-              <SortButton
-                label="Correlation"
-                active={sortKey === "correlation_score"}
-                onClick={() => toggleSort("correlation_score")}
-              />
-            </th>
-            <th className="pb-3 pr-4">Direction</th>
-            <th className="pb-3">Rationale</th>
+          <tr className="border-b border-rule text-ink-soft">
+            {sortableHeader("ticker", "Ticker")}
+            <th className="pb-2.5 pr-4 font-normal">Company</th>
+            {sortableHeader("relationship", "Relationship")}
+            {sortableHeader("correlation_score", "Correlation")}
+            <th className="pb-2.5 pr-4 font-normal">Direction</th>
+            <th className="pb-2.5 font-normal">Why</th>
           </tr>
         </thead>
         <tbody>
           {sorted.map((peer) => (
-            <tr
-              key={peer.ticker}
-              className="border-b border-card-border/50 align-top"
-            >
+            <tr key={peer.ticker} className="border-b border-rule-soft align-top">
               <td className="py-3 pr-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold">{peer.ticker}</span>
-                  {peer.watch_flag && (
-                    <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[10px] text-accent">
-                      WATCH
-                    </span>
-                  )}
-                </div>
+                <span className="font-mono font-medium">{peer.ticker}</span>
+                {peer.watch_flag && (
+                  <span className="ml-2 rounded-sm bg-caution-wash px-1.5 py-px text-[0.75rem] text-caution">
+                    Watch
+                  </span>
+                )}
               </td>
-              <td className="py-3 pr-4 text-muted">
-                {peer.company_name ?? "—"}
-              </td>
-              <td className="py-3 pr-4 capitalize text-muted">
+              <td className="py-3 pr-4 text-ink-soft">{peer.company_name ?? "—"}</td>
+              <td className="py-3 pr-4 text-ink-soft">
                 {formatRelationship(peer.relationship)}
               </td>
               <td className="py-3 pr-4">
                 <CorrelationBar score={peer.correlation_score} />
               </td>
-              <td className="py-3 pr-4 capitalize text-muted">
-                {peer.expected_direction}
+              <td className="py-3 pr-4 text-ink-soft">
+                {describeDirection(peer.expected_direction)}
               </td>
-              <td className="py-3 text-muted">{peer.rationale}</td>
+              <td className="py-3 text-ink-soft">{peer.rationale}</td>
             </tr>
           ))}
         </tbody>
@@ -108,37 +106,38 @@ export function PeerSpilloverTable({ peers }: PeerSpilloverTableProps) {
 function SortButton({
   label,
   active,
+  ascending,
   onClick,
 }: {
   label: string;
   active: boolean;
+  ascending: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`font-medium uppercase tracking-wider transition hover:text-foreground ${active ? "text-accent" : ""}`}
+      className={`inline-flex items-center gap-1 transition hover:text-ink ${
+        active ? "text-ink" : ""
+      }`}
     >
       {label}
+      <span aria-hidden className="text-[0.7rem]">
+        {active ? (ascending ? "▲" : "▼") : ""}
+      </span>
     </button>
   );
 }
 
 function CorrelationBar({ score }: { score: number }) {
-  const pct = Math.abs(score) * 100;
-  const color =
-    score >= 0.5 ? "bg-success" : score >= 0.3 ? "bg-warning" : "bg-muted";
-
+  const pct = Math.min(Math.abs(score), 1) * 100;
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 w-24 overflow-hidden rounded-full bg-background">
-        <div
-          className={`h-full rounded-full ${color}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="font-mono text-xs">{score.toFixed(2)}</span>
-    </div>
+    <span className="flex items-center gap-3">
+      <span className="h-1.5 w-24 overflow-hidden rounded-sm bg-rule-soft">
+        <span className="block h-full bg-ink" style={{ width: `${pct}%` }} />
+      </span>
+      <span className="font-mono text-[0.9rem]">{score.toFixed(2)}</span>
+    </span>
   );
 }

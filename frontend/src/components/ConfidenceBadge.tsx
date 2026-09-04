@@ -1,9 +1,15 @@
 import type { ConfidenceTier } from "@/lib/types";
 
-const STYLES: Record<ConfidenceTier, string> = {
-  high: "border-success/40 bg-success/10 text-success",
-  medium: "border-warning/40 bg-warning/10 text-warning",
-  low: "border-danger/40 bg-danger/10 text-danger",
+const DOT: Record<ConfidenceTier, string> = {
+  high: "bg-up",
+  medium: "bg-caution",
+  low: "bg-down",
+};
+
+const LABEL: Record<ConfidenceTier, string> = {
+  high: "High confidence",
+  medium: "Medium confidence",
+  low: "Low confidence",
 };
 
 interface ConfidenceBadgeProps {
@@ -14,9 +20,10 @@ interface ConfidenceBadgeProps {
 export function ConfidenceBadge({ tier, className = "" }: ConfidenceBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STYLES[tier]} ${className}`}
+      className={`inline-flex items-center gap-2 text-[0.9rem] text-ink-soft ${className}`}
     >
-      {tier} confidence
+      <span className={`h-2 w-2 rounded-full ${DOT[tier]}`} aria-hidden />
+      {LABEL[tier]}
     </span>
   );
 }

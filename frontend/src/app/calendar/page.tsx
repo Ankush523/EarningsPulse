@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AppHeader } from "@/components/AppHeader";
-import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { SiteFooter } from "@/components/SiteFooter";
 import { fetchEarningsCalendar, generatePlaybook } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatReportTime } from "@/lib/format";
 import type { EarningsEvent } from "@/lib/types";
+
+const DAYS = 14;
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -20,7 +22,7 @@ export default function CalendarPage() {
   useEffect(() => {
     let mounted = true;
 
-    fetchEarningsCalendar(14)
+    fetchEarningsCalendar(DAYS)
       .then((data) => {
         if (mounted) {
           setEvents(
@@ -35,7 +37,7 @@ export default function CalendarPage() {
       .catch((err) => {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load calendar"
+            err instanceof Error ? err.message : "Could not load the calendar"
           );
         }
       })
@@ -55,92 +57,118 @@ export default function CalendarPage() {
       router.push(`/playbook/${response.job_id}`);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to start generation"
+        err instanceof Error ? err.message : "Could not start the playbook"
       );
       setGenerating(null);
     }
   };
 
   return (
-    <div className="min-h-screen">
-      <DisclaimerBanner />
+    <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 pb-8 pt-8">
         <Link
           href="/"
-          className="text-sm text-muted transition hover:text-accent"
+          className="text-[0.95rem] text-ink-soft underline decoration-rule underline-offset-4 transition hover:text-ink hover:decoration-ink"
         >
-          ← Back to home
+          Back to home
         </Link>
 
-        <h1 className="mt-4 mb-2 text-3xl font-bold">Earnings Calendar</h1>
-        <p className="mb-8 text-muted">Upcoming reports for the next 14 days</p>
+        <header className="mt-6 border-b border-ink pb-6">
+          <h1 className="text-[2.25rem] font-medium leading-[1.1] tracking-tight sm:text-[2.75rem]">
+            Earnings calendar
+          </h1>
+          <p className="mt-3 max-w-measure text-ink-soft">
+            Companies reporting in the next {DAYS} days. Pick one to start a
+            playbook.
+          </p>
+        </header>
 
-        <div className="rounded-xl border border-card-border bg-card overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-            </div>
-          ) : error ? (
-            <p className="px-6 py-12 text-center text-sm text-danger">{error}</p>
-          ) : events.length === 0 ? (
-            <p className="px-6 py-12 text-center text-sm text-muted">
-              No upcoming earnings found. Check that FINNHUB_API_KEY is configured
-              or try again later.
+        {loading ? (
+          <ul className="divide-y divide-rule-soft" aria-label="Loading calendar">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <li key={i} className="flex gap-6 py-4">
+                <span className="h-4 w-24 rounded-sm bg-rule-soft" />
+                <span className="h-4 w-16 rounded-sm bg-rule-soft" />
+                <span className="h-4 w-48 rounded-sm bg-rule-soft" />
+              </li>
+            ))}
+          </ul>
+        ) : error ? (
+          <p className="max-w-measure py-6 text-down">{error}</p>
+        ) : events.length === 0 ? (
+          <div className="max-w-measure py-6">
+            <p className="text-ink-soft">
+              No reports found for the next {DAYS} days. The calendar reads from
+              Finnhub, so the API needs a <span className="font-mono text-[0.95rem]">FINNHUB_API_KEY</span> to
+              fill it in.
             </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-card-border bg-background/50 text-xs uppercase tracking-wider text-muted">
-                    <th className="px-6 py-3 font-medium">Ticker</th>
-                    <th className="px-6 py-3 font-medium">Company</th>
-                    <th className="px-6 py-3 font-medium">Report Date</th>
-                    <th className="px-6 py-3 font-medium">Time</th>
-                    <th className="px-6 py-3 font-medium">EPS Est.</th>
-                    <th className="px-6 py-3 text-right font-medium">Playbook</th>
+            <p className="mt-3 text-ink-soft">
+              You can still{" "}
+              <Link
+                href="/"
+                className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
+              >
+                generate a playbook for any ticker
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left">
+              <thead>
+                <tr className="border-b border-rule text-[0.95rem] text-ink-soft">
+                  <th className="py-3 pr-4 font-normal">Report date</th>
+                  <th className="py-3 pr-4 font-normal">Ticker</th>
+                  <th className="py-3 pr-4 font-normal">Company</th>
+                  <th className="py-3 pr-4 font-normal">When</th>
+                  <th className="py-3 pr-4 text-right font-normal">EPS estimate</th>
+                  <th className="py-3 text-right font-normal">
+                    <span className="sr-only">Generate playbook</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((event) => (
+                  <tr
+                    key={`${event.ticker}-${event.report_date}`}
+                    id={event.ticker}
+                    className="border-b border-rule-soft"
+                  >
+                    <td className="py-3.5 pr-4 font-mono text-[0.95rem] text-ink-soft">
+                      {formatDate(event.report_date)}
+                    </td>
+                    <td className="py-3.5 pr-4 font-mono font-medium">{event.ticker}</td>
+                    <td className="py-3.5 pr-4 text-ink-soft">
+                      {event.company_name ?? "—"}
+                    </td>
+                    <td className="py-3.5 pr-4 text-ink-soft">
+                      {formatReportTime(event.report_time)}
+                    </td>
+                    <td className="py-3.5 pr-4 text-right font-mono">
+                      {event.eps_estimate?.toFixed(2) ?? "—"}
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <button
+                        type="button"
+                        disabled={generating === event.ticker}
+                        onClick={() => handleGenerate(event.ticker)}
+                        className="rounded border border-ink px-3 py-1 text-[0.9rem] font-medium transition hover:bg-ink hover:text-paper disabled:opacity-50"
+                      >
+                        {generating === event.ticker ? "Starting" : "Generate"}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {events.map((event) => (
-                    <tr
-                      key={`${event.ticker}-${event.report_date}`}
-                      className="border-b border-card-border/50"
-                    >
-                      <td className="px-6 py-4 font-mono font-semibold">
-                        {event.ticker}
-                      </td>
-                      <td className="px-6 py-4 text-muted">
-                        {event.company_name ?? "—"}
-                      </td>
-                      <td className="px-6 py-4">{formatDate(event.report_date)}</td>
-                      <td className="px-6 py-4 font-mono text-xs uppercase text-muted">
-                        {event.report_time ?? "—"}
-                      </td>
-                      <td className="px-6 py-4 font-mono">
-                        {event.eps_estimate?.toFixed(2) ?? "—"}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          type="button"
-                          disabled={generating === event.ticker}
-                          onClick={() => handleGenerate(event.ticker)}
-                          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent-hover disabled:opacity-50"
-                        >
-                          {generating === event.ticker
-                            ? "Starting…"
-                            : "Generate"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

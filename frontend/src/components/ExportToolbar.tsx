@@ -68,6 +68,9 @@ async function downloadServerExport(
   downloadBlob(match?.[1] ?? fallbackFilename(kind, ticker, jobId), blob);
 }
 
+const QUIET_BUTTON =
+  "rounded border border-rule bg-panel px-3.5 py-1.5 text-[0.9rem] transition hover:border-ink disabled:opacity-50";
+
 export function ExportToolbar({
   jobId,
   ticker,
@@ -85,8 +88,8 @@ export function ExportToolbar({
         saveLocalFallback(kind, jobId, ticker, playbook, traceLog);
         setError(
           err instanceof Error
-            ? `${err.message} — saved locally instead`
-            : "Saved locally instead"
+            ? `${err.message}. Saved a local copy instead.`
+            : "Saved a local copy instead."
         );
       })
       .finally(() => {
@@ -95,38 +98,36 @@ export function ExportToolbar({
   };
 
   return (
-    <div className="no-print mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-card-border bg-card p-4">
-      <p className="mr-auto text-sm font-medium">Export playbook</p>
+    <div className="no-print flex flex-wrap items-center gap-x-3 gap-y-2">
+      <span className="mr-1 text-[0.95rem] text-ink-soft">Export playbook</span>
 
       <button
         type="button"
         disabled={loading !== null}
         onClick={() => handleServerExport("json")}
-        className="rounded-lg border border-card-border bg-background px-4 py-2 text-sm transition hover:border-accent disabled:opacity-50"
+        className={QUIET_BUTTON}
       >
-        {loading === "json" ? "Exporting…" : "JSON"}
+        {loading === "json" ? "Exporting" : "JSON"}
       </button>
 
       <button
         type="button"
         disabled={loading !== null}
         onClick={() => handleServerExport("bundle")}
-        className="rounded-lg border border-card-border bg-background px-4 py-2 text-sm transition hover:border-accent disabled:opacity-50"
+        className={QUIET_BUTTON}
       >
-        {loading === "bundle" ? "Exporting…" : "JSON + Trace"}
+        {loading === "bundle" ? "Exporting" : "JSON + trace"}
       </button>
 
       <button
         type="button"
         onClick={printPlaybook}
-        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-hover"
+        className="rounded bg-ink px-3.5 py-1.5 text-[0.9rem] font-medium text-paper transition hover:bg-ink/90"
       >
         Print / PDF
       </button>
 
-      {error && (
-        <p className="w-full text-xs text-warning">{error}</p>
-      )}
+      {error && <p className="w-full text-[0.9rem] text-caution">{error}</p>}
     </div>
   );
 }
