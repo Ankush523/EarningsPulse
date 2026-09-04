@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
+    "doctor": "bunx react-doctor@latest --verbose .",
     "typecheck": "tsc --noEmit",
     "test:property": "vitest run --dir tests",
     "test:e2e": "playwright test",

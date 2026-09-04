@@ -77,6 +77,23 @@ function eventTimestamp(event: SSEEvent | TraceEvent): string {
   return formatDateTime(ts);
 }
 
+function eventKey(event: SSEEvent | TraceEvent): string {
+  if ("event_id" in event && event.event_id) {
+    return event.event_id;
+  }
+  if ("trace" in event && event.trace?.event_id) {
+    return event.trace.event_id;
+  }
+  const type = "type" in event ? event.type : event.event_type;
+  const timestamp =
+    "timestamp" in event && event.timestamp ? event.timestamp : "";
+  const agent =
+    "agent_name" in event && event.agent_name ? event.agent_name : "";
+  const tool = "tool_name" in event && event.tool_name ? event.tool_name : "";
+  const message = "message" in event && event.message ? event.message : "";
+  return `${type}|${timestamp}|${agent}|${tool}|${message}`;
+}
+
 export function AgentTracePanel({
   status,
   events,
@@ -124,11 +141,8 @@ export function AgentTracePanel({
           </div>
         ) : (
           <ol className="space-y-2">
-            {displayEvents.map((event, index) => {
-              const id =
-                "event_id" in event
-                  ? event.event_id
-                  : `${event.type}-${index}`;
+            {displayEvents.map((event) => {
+              const id = eventKey(event);
               const type =
                 "type" in event ? event.type : (event as TraceEvent).event_type;
               const isExpanded = expandedId === id;
