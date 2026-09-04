@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, Response, StreamingResponse
@@ -14,7 +14,6 @@ from app.api.deps import get_job_runner, get_job_store
 from app.api.rate_limit import client_key, playbook_rate_limiter
 from app.models.playbook import (
     JobStatus,
-    Playbook,
     PlaybookGenerateRequest,
     PlaybookGenerateResponse,
     PlaybookStatus,
@@ -38,9 +37,7 @@ async def generate_playbook(
     """Start asynchronous playbook generation for a ticker."""
     await playbook_rate_limiter.check(client_key(request))
 
-    earnings_date = (
-        body.earnings_date.isoformat() if body.earnings_date else None
-    )
+    earnings_date = body.earnings_date.isoformat() if body.earnings_date else None
     job_id = await runner.start_job(
         body.ticker,
         earnings_date=earnings_date,
@@ -94,7 +91,7 @@ async def export_playbook_bundle(
     trace_store = TraceStore(store=store)
     trace_log = trace_store.build_trace_log(job)
     bundle = {
-        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "exported_at": datetime.now(UTC).isoformat(),
         "job_id": job_id,
         "ticker": job.ticker,
         "playbook": job.playbook.model_dump(mode="json"),
@@ -137,7 +134,7 @@ async def stream_playbook_events(
         while True:
             try:
                 event = await asyncio.wait_for(job.event_queue.get(), timeout=120.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield _format_sse(
                     {
                         "type": "heartbeat",

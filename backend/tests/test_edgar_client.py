@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.models.data import FilingType
 from app.services.edgar_client import EdgarClient
 from app.services.errors import DataNotFoundError

@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.agents.mappers import parse_confidence
 from app.agents.trace_utils import make_trace_event, trace_to_dict
 from app.models.agent_state import AgentState, ForecastResult, ResearchBundle
-from app.models.trace import TraceEventType
 from app.models.playbook import (
     ActionPlaybook,
     ActionRule,
@@ -23,6 +22,7 @@ from app.models.playbook import (
     Source,
     SpilloverMap,
 )
+from app.models.trace import TraceEventType
 from app.utils.confidence import combine_confidence
 
 AGENT_NAME = "synthesis"
@@ -200,9 +200,7 @@ def _build_top_drivers(
         drivers.append(f"Watch {forecast['key_metrics'][0]['name']}")
     drivers.append(f"Historical pattern: {reaction.archetype.value.replace('_', ' ')}")
     if reaction.dip_frequency_on_positive is not None:
-        drivers.append(
-            f"Dip-on-positive frequency: {reaction.dip_frequency_on_positive:.0%}"
-        )
+        drivers.append(f"Dip-on-positive frequency: {reaction.dip_frequency_on_positive:.0%}")
     if forecast.get("bull_case"):
         drivers.append(forecast["bull_case"][:120])
     return drivers[:5] or ["Earnings sentiment", "Historical reaction pattern", "Sector context"]
@@ -243,11 +241,11 @@ def _parse_earnings_datetime(value: str | None) -> datetime | None:
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
         if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=timezone.utc)
+            parsed = parsed.replace(tzinfo=UTC)
         return parsed
     except ValueError:
         try:
-            parsed = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            parsed = datetime.strptime(value, "%Y-%m-%d").replace(tzinfo=UTC)
             return parsed
         except ValueError:
             return None

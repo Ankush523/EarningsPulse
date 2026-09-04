@@ -5,9 +5,8 @@ from __future__ import annotations
 from datetime import date, timedelta
 from statistics import mean
 
-import yfinance as yf
-
 from app.models.analysis import PeerCandidate, PeerMapResult
+from app.models.data import OHLCVBar
 from app.models.playbook import ConfidenceTier, PeerRelationship
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.price_data import PriceDataService
@@ -18,15 +17,43 @@ from app.utils.confidence import score_from_data_quality
 # Keys are canonical group names; values are ticker lists.
 SECTOR_PEER_GROUPS: dict[str, list[str]] = {
     "semiconductors": [
-        "NVDA", "AMD", "INTC", "AVGO", "MRVL", "MU", "QCOM", "TXN", "ASML", "ARM",
-        "LRCX", "KLAC", "AMAT", "ON", "MCHP",
+        "NVDA",
+        "AMD",
+        "INTC",
+        "AVGO",
+        "MRVL",
+        "MU",
+        "QCOM",
+        "TXN",
+        "ASML",
+        "ARM",
+        "LRCX",
+        "KLAC",
+        "AMAT",
+        "ON",
+        "MCHP",
     ],
     "storage": ["WDC", "STX", "MU", "NTAP", "PSTG"],
     "cloud_software": [
-        "MSFT", "AMZN", "GOOGL", "META", "CRM", "ORCL", "SNOW", "DDOG", "NET",
+        "MSFT",
+        "AMZN",
+        "GOOGL",
+        "META",
+        "CRM",
+        "ORCL",
+        "SNOW",
+        "DDOG",
+        "NET",
     ],
     "enterprise_software": [
-        "MSFT", "ORCL", "CRM", "ADBE", "NOW", "INTU", "PANW", "CRWD",
+        "MSFT",
+        "ORCL",
+        "CRM",
+        "ADBE",
+        "NOW",
+        "INTU",
+        "PANW",
+        "CRWD",
     ],
     "consumer_tech": ["AAPL", "SSNLF", "SONY", "QCOM", "SWKS"],
     "financials": ["JPM", "BAC", "WFC", "C", "GS", "MS", "BLK", "SCHW"],
@@ -34,7 +61,14 @@ SECTOR_PEER_GROUPS: dict[str, list[str]] = {
     "retail_ecommerce": ["AMZN", "WMT", "COST", "TGT", "SHOP", "EBAY", "ETSY"],
     "automotive_ev": ["TSLA", "F", "GM", "RIVN", "LCID", "NIO", "LI"],
     "ai_infrastructure": [
-        "NVDA", "AMD", "SMCI", "DELL", "HPE", "ANET", "MRVL", "AVGO",
+        "NVDA",
+        "AMD",
+        "SMCI",
+        "DELL",
+        "HPE",
+        "ANET",
+        "MRVL",
+        "AVGO",
     ],
     "networking": ["CSCO", "ANET", "JNPR", "FFIV", "MSFT", "AMZN"],
     "healthcare_pharma": ["JNJ", "PFE", "MRK", "ABBV", "LLY", "BMY", "AMGN"],
@@ -87,11 +121,7 @@ THEMATIC_LINKS: dict[str, list[tuple[str, PeerRelationship, str]]] = {
 def find_groups_for_ticker(ticker: str) -> list[str]:
     """Return sector group names that include the ticker."""
     normalized = ticker.upper().strip()
-    return [
-        group
-        for group, members in SECTOR_PEER_GROUPS.items()
-        if normalized in members
-    ]
+    return [group for group, members in SECTOR_PEER_GROUPS.items() if normalized in members]
 
 
 def get_static_peers(ticker: str) -> list[tuple[str, PeerRelationship, str, str | None]]:
@@ -148,15 +178,15 @@ class PeerMapService:
     ) -> PeerMapResult:
         """Build a ranked peer map for the reporting ticker."""
         normalized = ticker.upper().strip()
-        cache_key = TTLCache.make_key(
-            "peer_map", normalized, max_peers, earnings_limit
-        )
+        cache_key = TTLCache.make_key("peer_map", normalized, max_peers, earnings_limit)
         if use_cache:
             cached = self._cache.get(cache_key)
             if cached is not None:
                 return cached
 
-        sector, industry = self._lookup_sector_industry(normalized)
+        groups = find_groups_for_ticker(normalized)
+        sector = groups[0] if groups else None
+        industry = groups[-1] if groups else None
         static_peers = get_static_peers(normalized)
 
         historical = await self._earnings.get_historical_earnings(
@@ -164,7 +194,19 @@ class PeerMapService:
             limit=earnings_limit,
             use_cache=use_cache,
         )
-        earnings_dates = [event.report_date for event in historical.events]
+        earnings_dates = [
+            event.report_date
+            for event in historical.events
+            if event.report_date <= date.today()
+        ]
+
+        peer_tickers = [peer for peer, _, _, _ in static_peers]
+        bars_by_ticker = self._load_correlation_bars(
+            normalized,
+            peer_tickers,
+            earnings_dates,
+            use_cache=use_cache,
+        )
 
         candidates: list[PeerCandidate] = []
         for peer, relationship, rationale, group in static_peers:
@@ -172,7 +214,7 @@ class PeerMapService:
                 normalized,
                 peer,
                 earnings_dates,
-                use_cache=use_cache,
+                bars_by_ticker,
             )
             candidates.append(
                 PeerCandidate(
@@ -196,9 +238,7 @@ class PeerMapService:
 
         confidence = score_from_data_quality(
             sample_size=len(peers),
-            has_correlation=any(
-                p.earnings_events_used >= MIN_CORRELATION_EVENTS for p in peers
-            ),
+            has_correlation=any(p.earnings_events_used >= MIN_CORRELATION_EVENTS for p in peers),
         )
 
         result = PeerMapResult(
@@ -214,15 +254,34 @@ class PeerMapService:
 
         return result
 
+    def _load_correlation_bars(
+        self,
+        reporting_ticker: str,
+        peer_tickers: list[str],
+        earnings_dates: list[date],
+        *,
+        use_cache: bool = True,
+    ) -> dict[str, list[OHLCVBar]]:
+        """Fetch one OHLCV window per ticker covering all earnings dates."""
+        if not earnings_dates:
+            return {reporting_ticker: [], **{t: [] for t in peer_tickers}}
+
+        start = min(earnings_dates) - timedelta(days=5)
+        end = max(earnings_dates) + timedelta(days=CORRELATION_WINDOW_DAYS + 1)
+        tickers = [reporting_ticker, *peer_tickers]
+        return self._price.fetch_ohlcv_many(tickers, start, end, use_cache=use_cache)
+
     def _compute_earnings_correlation(
         self,
         reporting_ticker: str,
         peer_ticker: str,
         earnings_dates: list[date],
+        bars_by_ticker: dict[str, list[OHLCVBar]],
         *,
         use_cache: bool = True,
     ) -> dict:
         """Compute return correlation around reporting ticker earnings dates."""
+        del use_cache  # bars already loaded in bulk
         if not earnings_dates:
             return {
                 "score": 0.0,
@@ -233,18 +292,16 @@ class PeerMapService:
 
         reporting_returns: list[float] = []
         peer_returns: list[float] = []
+        reporting_bars = bars_by_ticker.get(reporting_ticker, [])
+        peer_bars = bars_by_ticker.get(peer_ticker, [])
 
         for earnings_date in earnings_dates:
-            pair = self._window_returns(
-                reporting_ticker,
-                peer_ticker,
-                earnings_date,
-                use_cache=use_cache,
-            )
-            if pair is None:
+            reporting_return = self._earnings_window_return(reporting_bars, earnings_date)
+            peer_return = self._earnings_window_return(peer_bars, earnings_date)
+            if reporting_return is None or peer_return is None:
                 continue
-            reporting_returns.append(pair[0])
-            peer_returns.append(pair[1])
+            reporting_returns.append(reporting_return)
+            peer_returns.append(peer_return)
 
         events_used = len(reporting_returns)
         if events_used < MIN_CORRELATION_EVENTS:
@@ -264,37 +321,8 @@ class PeerMapService:
             "events_used": events_used,
         }
 
-    def _window_returns(
-        self,
-        reporting_ticker: str,
-        peer_ticker: str,
-        earnings_date: date,
-        *,
-        use_cache: bool = True,
-    ) -> tuple[float, float] | None:
-        start = earnings_date - timedelta(days=1)
-        end = earnings_date + timedelta(days=CORRELATION_WINDOW_DAYS)
-
-        try:
-            reporting_bars = self._price.fetch_ohlcv(
-                reporting_ticker, start, end, use_cache=use_cache
-            )
-            peer_bars = self._price.fetch_ohlcv(
-                peer_ticker, start, end, use_cache=use_cache
-            )
-        except Exception:
-            return None
-
-        reporting_return = self._earnings_window_return(reporting_bars, earnings_date)
-        peer_return = self._earnings_window_return(peer_bars, earnings_date)
-
-        if reporting_return is None or peer_return is None:
-            return None
-
-        return reporting_return, peer_return
-
     @staticmethod
-    def _earnings_window_return(bars: list, earnings_date: date) -> float | None:
+    def _earnings_window_return(bars: list[OHLCVBar], earnings_date: date) -> float | None:
         ordered = sorted(bars, key=lambda bar: bar.date)
         pre = [bar for bar in ordered if bar.date < earnings_date]
         post = [bar for bar in ordered if bar.date >= earnings_date]
@@ -315,7 +343,7 @@ class PeerMapService:
 
         mean_x = mean(x)
         mean_y = mean(y)
-        num = sum((a - mean_x) * (b - mean_y) for a, b in zip(x, y))
+        num = sum((a - mean_x) * (b - mean_y) for a, b in zip(x, y, strict=True))
         den_x = sum((a - mean_x) ** 2 for a in x) ** 0.5
         den_y = sum((b - mean_y) ** 2 for b in y) ** 0.5
         if den_x == 0 or den_y == 0:
@@ -345,11 +373,3 @@ class PeerMapService:
                     return 0.4
                 return 0.3
         return 0.15
-
-    @staticmethod
-    def _lookup_sector_industry(ticker: str) -> tuple[str | None, str | None]:
-        try:
-            info = yf.Ticker(ticker).info
-            return info.get("sector"), info.get("industry")
-        except Exception:
-            return None, None

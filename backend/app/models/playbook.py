@@ -1,8 +1,7 @@
 """Pydantic schemas for the Earnings Playbook deliverable."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -40,10 +39,8 @@ class Source(BaseModel):
 
     title: str
     url: str
-    source_type: str = Field(
-        description="Type: filing, news, price_data, estimate, tavily, edgar"
-    )
-    accessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    source_type: str = Field(description="Type: filing, news, price_data, estimate, tavily, edgar")
+    accessed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class ExecutiveSummary(BaseModel):
@@ -165,16 +162,14 @@ class ActionPlaybook(BaseModel):
     """Section E — Action playbook (decision support)."""
 
     rules: list[ActionRule] = Field(default_factory=list)
-    disclaimer: str = (
-        "Not financial advice. For informational and decision-support purposes only."
-    )
+    disclaimer: str = "Not financial advice. For informational and decision-support purposes only."
 
 
 class PlaybookMetadata(BaseModel):
     """Metadata about playbook generation."""
 
     job_id: str
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     generation_time_ms: int | None = None
     model_version: str = "0.1.0"
     data_sources_used: list[str] = Field(default_factory=list)
@@ -224,5 +219,5 @@ class JobStatus(BaseModel):
     status: PlaybookStatus
     playbook: Playbook | None = None
     error: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None

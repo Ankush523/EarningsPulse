@@ -76,9 +76,7 @@ class ResearchAgent:
             async with traced_tool(
                 job_id, AGENT_NAME, "tavily_company_news", {"ticker": ticker}
             ) as tool_events:
-                news = await self._tavily.search_company_news(
-                    ticker, company_name, days=90
-                )
+                news = await self._tavily.search_company_news(ticker, company_name, days=90)
                 trace_events.extend(trace_to_dict(e) for e in tool_events)
             recent_news = [
                 {
@@ -92,9 +90,7 @@ class ResearchAgent:
             if news.answer:
                 analyst_context = news.answer
             for r in news.results[:5]:
-                sources.append(
-                    {"title": r.title, "url": r.url, "source_type": "tavily"}
-                )
+                sources.append({"title": r.title, "url": r.url, "source_type": "tavily"})
         except (ConfigurationError, ServiceError) as exc:
             errors.append(f"tavily_news: {exc}")
             recent_news = _fallback_news(ticker, company_name)
@@ -113,9 +109,7 @@ class ResearchAgent:
                     else preview.answer
                 )
             for r in preview.results[:3]:
-                sources.append(
-                    {"title": r.title, "url": r.url, "source_type": "tavily"}
-                )
+                sources.append({"title": r.title, "url": r.url, "source_type": "tavily"})
         except (ConfigurationError, ServiceError) as exc:
             errors.append(f"tavily_preview: {exc}")
 
@@ -170,9 +164,7 @@ class ResearchAgent:
                 trace_events.extend(trace_to_dict(e) for e in tool_events)
             sector_context = sector_search.answer or ""
             for r in sector_search.results[:2]:
-                sources.append(
-                    {"title": r.title, "url": r.url, "source_type": "tavily"}
-                )
+                sources.append({"title": r.title, "url": r.url, "source_type": "tavily"})
         except (ConfigurationError, ServiceError) as exc:
             errors.append(f"tavily_sector: {exc}")
 
@@ -222,7 +214,10 @@ def _fallback_news(ticker: str, company_name: str | None) -> list[dict[str, Any]
         {
             "title": f"{name} pre-earnings context",
             "url": f"https://finance.yahoo.com/quote/{ticker}",
-            "content": f"Monitor {name} ahead of upcoming earnings for estimate revisions and sector trends.",
+            "content": (
+                f"Monitor {name} ahead of upcoming earnings "
+                "for estimate revisions and sector trends."
+            ),
             "score": None,
         }
     ]

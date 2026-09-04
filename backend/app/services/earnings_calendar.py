@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 import httpx
-import yfinance as yf
+import pandas as pd
 
 from app.config import Settings, get_settings
 from app.models.data import (
@@ -14,6 +14,7 @@ from app.models.data import (
     HistoricalEarningsResponse,
 )
 from app.services.errors import ConfigurationError, DataNotFoundError, ServiceError
+from app.services.yfinance_client import call_with_retry, get_ticker
 from app.utils.cache import TTLCache, app_cache
 
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
@@ -125,19 +126,39 @@ class EarningsCalendarService:
             if cached is not None:
                 return cached
 
+        # Prefer yfinance — Finnhub `period` is fiscal quarter-end, not report date.
+        try:
+            result = self._fetch_historical_from_yfinance(normalized, limit)
+            if use_cache:
+                self._cache.set(cache_key, result, ttl_seconds=3600)
+            return result
+        except (ServiceError, DataNotFoundError):
+            pass
+
         if self._settings.finnhub_api_key:
             try:
                 result = await self._fetch_historical_from_finnhub(normalized, limit)
-                if use_cache:
-                    self._cache.set(cache_key, result, ttl_seconds=3600)
-                return result
+                past_events = [
+                    event
+                    for event in result.events
+                    if event.report_date <= date.today()
+                ]
+                if past_events:
+                    result = HistoricalEarningsResponse(
+                        ticker=normalized,
+                        events=past_events[:limit],
+                        source=result.source,
+                    )
+                    if use_cache:
+                        self._cache.set(cache_key, result, ttl_seconds=3600)
+                    return result
             except (ServiceError, DataNotFoundError):
                 pass
 
-        result = self._fetch_historical_from_yfinance(normalized, limit)
-        if use_cache:
-            self._cache.set(cache_key, result, ttl_seconds=3600)
-        return result
+        raise DataNotFoundError(
+            f"No historical earnings found for {normalized}",
+            service="earnings_calendar",
+        )
 
     async def get_next_earnings_date(self, ticker: str) -> date | None:
         """Return the next scheduled earnings date for a ticker, if known."""
@@ -147,9 +168,7 @@ class EarningsCalendarService:
             try:
                 upcoming = await self.get_upcoming_earnings(days=30, use_cache=True)
                 ticker_events = [
-                    event
-                    for event in upcoming.events
-                    if event.ticker.upper() == normalized
+                    event for event in upcoming.events if event.ticker.upper() == normalized
                 ]
                 if ticker_events:
                     return min(event.report_date for event in ticker_events)
@@ -232,8 +251,11 @@ class EarningsCalendarService:
         limit: int,
     ) -> HistoricalEarningsResponse:
         try:
-            stock = yf.Ticker(ticker)
-            earnings_dates = stock.earnings_dates
+            stock = get_ticker(ticker)
+            earnings_dates = call_with_retry(
+                f"earnings_dates:{ticker}",
+                lambda: stock.earnings_dates,
+            )
         except Exception as exc:
             raise ServiceError(
                 f"yfinance earnings lookup failed for {ticker}: {exc}",
@@ -248,8 +270,10 @@ class EarningsCalendarService:
             )
 
         events: list[EarningsEvent] = []
-        for idx, row in earnings_dates.head(limit).iterrows():
+        for idx, row in earnings_dates.iterrows():
             report_date = idx.date() if hasattr(idx, "date") else idx
+            if report_date > date.today():
+                continue
             events.append(
                 EarningsEvent(
                     ticker=ticker,
@@ -258,6 +282,14 @@ class EarningsCalendarService:
                     eps_estimate=self._safe_float(row.get("EPS Estimate")),
                     eps_actual=self._safe_float(row.get("Reported EPS")),
                 )
+            )
+            if len(events) >= limit:
+                break
+
+        if not events:
+            raise DataNotFoundError(
+                f"No past earnings dates found for {ticker} via yfinance",
+                service="yfinance",
             )
 
         return HistoricalEarningsResponse(
@@ -269,7 +301,10 @@ class EarningsCalendarService:
     @staticmethod
     def _get_next_earnings_from_yfinance(ticker: str) -> date | None:
         try:
-            calendar = yf.Ticker(ticker).calendar
+            calendar = call_with_retry(
+                f"calendar:{ticker}",
+                lambda: get_ticker(ticker).calendar,
+            )
             if isinstance(calendar, dict):
                 raw = calendar.get("Earnings Date")
                 if isinstance(raw, list) and raw:

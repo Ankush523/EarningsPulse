@@ -1,0 +1,53 @@
+[project]
+name = "earningspulse-backend"
+version = "0.1.0"
+description = "EarningsPulse FastAPI backend"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "pydantic==2.10.4",
+    "pydantic-settings==2.7.0",
+    "python-dotenv==1.0.1",
+    "httpx==0.28.1",
+    "langgraph==0.2.60",
+    "langchain-core==0.3.28",
+    "langchain-openai==0.2.14",
+    "google-generativeai>=0.8.0",
+    "yfinance>=0.2.58",
+    "curl_cffi>=0.7.0",
+    "pandas>=2.2.0",
+    "prismtrace-sdk>=0.4.1",
+    "typing-extensions>=4.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.0",
+    "hypothesis==6.138.5",
+    "ruff>=0.8.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"app/api/**" = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,6 +1,6 @@
 """Pydantic schemas for analysis engine outputs."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from pydantic import BaseModel, Field
 
@@ -46,7 +46,7 @@ class ReactionPatternAnalysis(BaseModel):
         description="min/max expected dip % on positive outcomes",
     )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
-    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class PeerCandidate(BaseModel):
@@ -71,4 +71,4 @@ class PeerMapResult(BaseModel):
     industry: str | None = None
     peers: list[PeerCandidate] = Field(default_factory=list)
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
-    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

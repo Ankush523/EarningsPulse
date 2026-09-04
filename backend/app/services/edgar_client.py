@@ -76,7 +76,11 @@ class EdgarClient:
 
         filings: list[EdgarFiling] = []
         for idx, form in enumerate(forms):
-            if form not in {FilingType.TEN_Q.value, FilingType.TEN_K.value, FilingType.EIGHT_K.value}:
+            if form not in {
+                FilingType.TEN_Q.value,
+                FilingType.TEN_K.value,
+                FilingType.EIGHT_K.value,
+            }:
                 continue
 
             filing_date = self._parse_date(filing_dates[idx])
@@ -94,7 +98,9 @@ class EdgarClient:
                     company_name=company["title"],
                     form_type=FilingType(form),
                     filing_date=filing_date,
-                    report_date=self._parse_date(report_dates[idx]) if idx < len(report_dates) else None,
+                    report_date=self._parse_date(report_dates[idx])
+                    if idx < len(report_dates)
+                    else None,
                     accession_number=accession,
                     document_url=SEC_FILING_URL.format(
                         cik_numeric=cik_numeric,

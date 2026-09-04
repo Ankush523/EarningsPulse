@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.services.errors import ConfigurationError
 from app.services.tavily_client import TavilyClient
 

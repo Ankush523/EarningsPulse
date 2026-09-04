@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import httpx
 
 from app.config import Settings, get_settings
@@ -146,10 +144,7 @@ class TavilyClient:
     ) -> TavilySearchResponse:
         """Search earnings preview and analyst context."""
         name_part = company_name or ticker
-        query = (
-            f"{name_part} ({ticker}) earnings preview analyst estimates "
-            "revenue EPS guidance"
-        )
+        query = f"{name_part} ({ticker}) earnings preview analyst estimates revenue EPS guidance"
         return await self.search(
             query,
             max_results=8,
