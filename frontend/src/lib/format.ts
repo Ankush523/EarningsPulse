@@ -9,9 +9,24 @@ export function formatPctMove(value: number, digits = 1): string {
   return `${sign}${value.toFixed(digits)}%`;
 }
 
+/** YYYY-MM-DD is a calendar date; `new Date("YYYY-MM-DD")` is UTC midnight and shifts west of UTC. */
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function parseDisplayDate(value: string): Date {
+  const dateOnly = DATE_ONLY.exec(value);
+  if (dateOnly) {
+    return new Date(
+      Number(dateOnly[1]),
+      Number(dateOnly[2]) - 1,
+      Number(dateOnly[3])
+    );
+  }
+  return new Date(value);
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
-  const date = new Date(value);
+  const date = parseDisplayDate(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, {
     month: "short",
