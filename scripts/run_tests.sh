@@ -14,6 +14,12 @@ echo "==> Frontend property tests (Hegel)"
 cd frontend
 npm run test:property
 
+echo "==> Frontend lint (oxlint)"
+npm run lint
+
+echo "==> Frontend typecheck"
+npm run typecheck
+
 echo "==> Frontend production build"
 npm run build
 cd "$ROOT"

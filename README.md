@@ -63,7 +63,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Frontend | Next.js 15, TypeScript 5.9, Tailwind CSS, oxlint |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |
@@ -83,6 +83,7 @@ finance_hackathon/
 │   └── railway.toml      # Railway deploy config
 ├── frontend/             # Next.js 15 web app
 │   ├── e2e/              # Playwright tests
+│   ├── .oxlintrc.json    # oxlint (primary frontend linter)
 │   ├── Dockerfile        # Production container
 │   └── vercel.json       # Vercel deploy config
 ├── docs/                 # Spec, plan, deployment, demo script
@@ -239,6 +240,12 @@ cd backend && uv run ruff check app tests && uv run ruff format --check app test
 # Frontend property tests (Hegel via Vitest)
 cd frontend && npm run test:property
 
+# Lint frontend (oxlint — ESLint/next lint retired)
+cd frontend && npm run lint
+
+# Typecheck frontend (TypeScript 5.9 / tsc)
+cd frontend && npm run typecheck
+
 # Full suite (pytest + property tests + build + E2E)
 ./scripts/run_tests.sh
 
@@ -249,7 +256,9 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && npx playwright install chromium && npm run test:e2e
 ```
 
-CI (GitHub Actions): backend ruff + pytest → frontend property tests/lint/build → Playwright E2E on every push/PR to `main`.
+CI (GitHub Actions): backend ruff + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
+
+TypeScript native (Go / `tsgo`) is **not** wired into `next build` yet: Next.js 15 still requires the JavaScript `typescript` package and its compiler plugin. Stay on TypeScript **5.9.3** until Next exposes a stable TypeScript 7 / `useTypeScriptCli` path for this app.
 
 Backtest validation:
 

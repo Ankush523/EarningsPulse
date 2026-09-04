@@ -65,7 +65,9 @@ export function TickerInput({ suggestions = POPULAR_TICKERS }: TickerInputProps)
           />
           <datalist id="ticker-suggestions">
             {Array.from(new Set([...suggestions, ...POPULAR_TICKERS])).map((s) => (
-              <option key={s} value={s} />
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </datalist>
         </div>
