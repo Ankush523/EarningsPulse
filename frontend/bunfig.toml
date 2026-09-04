@@ -1,0 +1,4 @@
+# Bun is the frontend package manager. Next.js 16.3 still runs on Node
+# for `next build` / Vercel Functions / the standalone Docker server.
+[run]
+bun = false

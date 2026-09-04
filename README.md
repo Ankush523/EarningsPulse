@@ -63,7 +63,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint |
+| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint, Bun |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |
@@ -83,6 +83,8 @@ finance_hackathon/
 │   └── railway.toml      # Railway deploy config
 ├── frontend/             # Next.js 16 web app
 │   ├── e2e/              # Playwright tests
+│   ├── bun.lock          # Bun lockfile
+│   ├── bunfig.toml       # Bun as package manager; Node as Next runtime
 │   ├── .oxlintrc.json    # oxlint (primary frontend linter)
 │   ├── Dockerfile        # Production container
 │   └── vercel.json       # Vercel deploy config
@@ -127,9 +129,13 @@ Install [uv](https://docs.astral.sh/uv/) if needed: `curl -LsSf https://astral.s
 
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
+
+Install [Bun](https://bun.sh/) if needed: `curl -fsSL https://bun.sh/install | bash`
+
+Bun is the **package manager** only. Next.js 16.3 still builds and runs on Node (Vercel Functions, `next start`, and the standalone Docker image). Do not set `bunVersion` in `vercel.json` or `bun run --bun next build` — Next 16.2/16.3 still has Bun-runtime regressions on Vercel.
 
 ## Production Deployment
 
@@ -239,13 +245,13 @@ cd backend && uv run ruff check app tests && uv run ruff format --check app test
 cd backend && uv run ty check
 
 # Frontend property tests (Hegel via Vitest)
-cd frontend && npm run test:property
+cd frontend && bun run test:property
 
 # Lint frontend (oxlint — ESLint/next lint retired)
-cd frontend && npm run lint
+cd frontend && bun run lint
 
 # Typecheck frontend (TypeScript 7 / tsc)
-cd frontend && npm run typecheck
+cd frontend && bun run typecheck
 
 # Full suite (pytest + property tests + build + E2E)
 ./scripts/run_tests.sh
@@ -254,12 +260,14 @@ cd frontend && npm run typecheck
 SKIP_E2E=1 ./scripts/run_tests.sh
 
 # E2E only
-cd frontend && npx playwright install chromium && npm run test:e2e
+cd frontend && bunx playwright install chromium && bun run test:e2e
 ```
 
 CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
 
-Toolchain: **uv** + **ruff** + **ty** (backend) and **oxc/oxlint** + TypeScript 7 (frontend).
+Toolchain: **uv** + **ruff** + **ty** (backend) and **Bun** + **oxc/oxlint** + TypeScript 7 (frontend).
+
+oxlint is Vercel-compatible: it is a CI/dev linter, not a deploy runtime. Next 16's Turbopack already uses oxc as its parser. Turborepo is a supported pairing with oxlint, but this repo does not use it — the JS side is a single Next app, and the backend is Python/uv, so Turbo would not orchestrate anything Vercel or uv do not already handle.
 
 Next.js 16.3 type-checks `next build` with the project-local TypeScript 7 `tsc` CLI (the JavaScript compiler API is no longer required).
 
