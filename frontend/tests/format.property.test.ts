@@ -161,6 +161,26 @@ test("date formatters match Intl output for valid timestamps", () =>
     );
   }, settings));
 
+test("formatDate keeps YYYY-MM-DD on the same local calendar day", () =>
+  hegel.test((tc) => {
+    const year = tc.draw(gs.integers({ minValue: 2000, maxValue: 2030 }));
+    const month = tc.draw(gs.integers({ minValue: 1, maxValue: 12 }));
+    // Cap at 28 so every month is a valid local calendar date.
+    const day = tc.draw(gs.integers({ minValue: 1, maxValue: 28 }));
+    const value = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const local = new Date(year, month - 1, day);
+    const expected = new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(local);
+
+    assert(
+      formatDate(value) === expected,
+      `date-only ${value} became ${formatDate(value)}, expected ${expected}`
+    );
+  }, settings));
+
 test("date formatters use the placeholder for absent values", () =>
   hegel.test((tc) => {
     const absent = tc.draw(gs.sampledFrom([null, undefined, ""] as const));
