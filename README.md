@@ -24,7 +24,7 @@ Every agent step is streamed live (SSE) and logged in PRISM-compatible trace for
 
 ```mermaid
 flowchart TB
-  subgraph Frontend["Frontend (Next.js 15)"]
+  subgraph Frontend["Frontend (Next.js 16)"]
     Input[Ticker Input]
     Trace[Agent Trace Panel]
     Viewer[Playbook Viewer]
@@ -63,7 +63,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 15, TypeScript 5.9, Tailwind CSS, oxlint |
+| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |
@@ -81,7 +81,7 @@ finance_hackathon/
 │   ├── uv.lock           # Locked dependency versions
 │   ├── Dockerfile        # Production container
 │   └── railway.toml      # Railway deploy config
-├── frontend/             # Next.js 15 web app
+├── frontend/             # Next.js 16 web app
 │   ├── e2e/              # Playwright tests
 │   ├── .oxlintrc.json    # oxlint (primary frontend linter)
 │   ├── Dockerfile        # Production container
@@ -244,7 +244,7 @@ cd frontend && npm run test:property
 # Lint frontend (oxlint — ESLint/next lint retired)
 cd frontend && npm run lint
 
-# Typecheck frontend (TypeScript 5.9 / tsc)
+# Typecheck frontend (TypeScript 7 / tsc)
 cd frontend && npm run typecheck
 
 # Full suite (pytest + property tests + build + E2E)
@@ -259,9 +259,9 @@ cd frontend && npx playwright install chromium && npm run test:e2e
 
 CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
 
-Toolchain: **uv** + **ruff** + **ty** (backend) and **oxc/oxlint** + TypeScript 5.9 (frontend).
+Toolchain: **uv** + **ruff** + **ty** (backend) and **oxc/oxlint** + TypeScript 7 (frontend).
 
-TypeScript native (Go / `tsgo`) is **not** wired into `next build` yet: Next.js 15 still requires the JavaScript `typescript` package and its compiler plugin. Stay on TypeScript **5.9.3** until Next exposes a stable TypeScript 7 / `useTypeScriptCli` path for this app.
+Next.js 16.3 type-checks `next build` with the project-local TypeScript 7 `tsc` CLI (the JavaScript compiler API is no longer required).
 
 Backtest validation:
 

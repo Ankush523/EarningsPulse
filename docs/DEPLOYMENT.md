@@ -8,7 +8,7 @@ Production deployment uses **Vercel** (frontend) + **Railway** or **Render** (ba
 
 ```mermaid
 flowchart TB
-  User[Browser] --> Vercel[Vercel — Next.js 14]
+  User[Browser] --> Vercel[Vercel — Next.js 16]
   Vercel -->|REST + SSE| API[Railway / Render — FastAPI]
   API --> Orchestrator[LangGraph Orchestrator]
   Orchestrator --> Research[Research Agent]
