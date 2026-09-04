@@ -165,3 +165,62 @@ async def test_analyze_ticker_with_mocks(settings, cache):
     assert result.ticker == "AAPL"
     assert result.events_analyzed == 1
     assert result.archetype == ReactionArchetype.DIP_THEN_RALLY
+
+
+def test_aggregate_with_options_implied_move_overpriced():
+    from app.models.analysis import EarningsReactionEvent
+
+    analyzer = ReactionAnalyzer()
+    events = [
+        EarningsReactionEvent(
+            ticker="AAPL",
+            earnings_date=date(2024, 1, 3),
+            report_outcome=ReportOutcome.BEAT,
+            initial_move_pct=3.0,
+            dip_pct=-2.0,
+            recovery_pct=5.0,
+            pattern=ReactionArchetype.DIP_THEN_RALLY,
+        ),
+        EarningsReactionEvent(
+            ticker="AAPL",
+            earnings_date=date(2023, 10, 3),
+            report_outcome=ReportOutcome.BEAT,
+            initial_move_pct=-3.0,
+            dip_pct=-3.5,
+            recovery_pct=4.0,
+            pattern=ReactionArchetype.DIP_THEN_RALLY,
+        ),
+    ]
+    options_data = {
+        "implied_move_pct": 5.5,
+        "atm_strike": 150.0,
+    }
+    result = analyzer.aggregate_events("AAPL", events, options_data=options_data)
+    assert result.historical_move_pct == 3.0
+    assert result.implied_move_pct == 5.5
+    assert result.volatility_assessment == "OVERPRICED"
+    assert "volatility overpriced" in result.options_summary
+
+
+def test_aggregate_with_options_implied_move_underpriced():
+    from app.models.analysis import EarningsReactionEvent
+
+    analyzer = ReactionAnalyzer()
+    events = [
+        EarningsReactionEvent(
+            ticker="AAPL",
+            earnings_date=date(2024, 1, 3),
+            report_outcome=ReportOutcome.BEAT,
+            initial_move_pct=6.0,
+            pattern=ReactionArchetype.IMMEDIATE_RIP,
+        ),
+    ]
+    options_data = {
+        "implied_move_pct": 3.0,
+    }
+    result = analyzer.aggregate_events("AAPL", events, options_data=options_data)
+    assert result.historical_move_pct == 6.0
+    assert result.implied_move_pct == 3.0
+    assert result.volatility_assessment == "UNDERPRICED"
+    assert "volatility underpriced" in result.options_summary
+

@@ -260,3 +260,109 @@ class PriceDataService:
     def get_company_name(ticker: str) -> str | None:
         """Best-effort company name without Yahoo quoteSummary (.info) calls."""
         return lookup_company_name(ticker)
+
+    def get_options_implied_move(
+        self,
+        ticker: str,
+        target_date: date | None = None,
+        *,
+        use_cache: bool = True,
+    ) -> dict[str, Any] | None:
+        """
+        Estimate options-implied move % from the ATM straddle.
+
+        Uses the nearest expiration on or after target_date (or the closest upcoming expiration).
+        Formula: (ATM Call + ATM Put) / Underlying Price * 0.85 * 100.
+        """
+        normalized = ticker.upper().strip()
+        cache_key = TTLCache.make_key("implied_move", normalized, target_date)
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
+        try:
+            t = get_ticker(normalized)
+            expirations = getattr(t, "options", None)
+            if not expirations:
+                return None
+
+            selected_exp = expirations[0]
+            if target_date:
+                target_str = target_date.isoformat()
+                future_exps = [e for e in expirations if e >= target_str]
+                if future_exps:
+                    selected_exp = future_exps[0]
+
+            chain = call_with_retry(
+                f"option_chain:{normalized}:{selected_exp}",
+                lambda: t.option_chain(selected_exp),
+            )
+            calls = getattr(chain, "calls", None)
+            puts = getattr(chain, "puts", None)
+
+            if calls is None or puts is None or calls.empty or puts.empty:
+                return None
+
+            underlying_price = None
+            fast_info = getattr(t, "fast_info", None)
+            if fast_info:
+                underlying_price = getattr(fast_info, "last_price", None) or getattr(fast_info, "previous_close", None)
+
+            if not underlying_price:
+                try:
+                    recent = self.fetch_ohlcv(
+                        normalized,
+                        date.today() - timedelta(days=7),
+                        date.today(),
+                        use_cache=use_cache,
+                    )
+                    if recent:
+                        underlying_price = recent[-1].close
+                except Exception:
+                    pass
+
+            if not underlying_price or underlying_price <= 0:
+                return None
+
+            calls_copy = calls.copy()
+            puts_copy = puts.copy()
+
+            calls_copy["strike_diff"] = (calls_copy["strike"] - underlying_price).abs()
+            atm_call = calls_copy.loc[calls_copy["strike_diff"].idxmin()]
+
+            puts_copy["strike_diff"] = (puts_copy["strike"] - underlying_price).abs()
+            atm_put = puts_copy.loc[puts_copy["strike_diff"].idxmin()]
+
+            def extract_price(row: Any) -> float:
+                bid = float(row.get("bid", 0) or 0)
+                ask = float(row.get("ask", 0) or 0)
+                if bid > 0 and ask > 0:
+                    return (bid + ask) / 2.0
+                return float(row.get("lastPrice", 0) or 0)
+
+            call_price = extract_price(atm_call)
+            put_price = extract_price(atm_put)
+            straddle_price = call_price + put_price
+
+            if straddle_price <= 0:
+                return None
+
+            implied_move_pct = round((straddle_price / underlying_price) * 0.85 * 100, 2)
+
+            result = {
+                "ticker": normalized,
+                "expiration_date": selected_exp,
+                "atm_strike": float(atm_call["strike"]),
+                "underlying_price": round(float(underlying_price), 2),
+                "straddle_price": round(float(straddle_price), 2),
+                "implied_move_pct": implied_move_pct,
+            }
+
+            if use_cache:
+                self._cache.set(cache_key, result, ttl_seconds=1800)
+
+            return result
+        except Exception:
+            return None
+

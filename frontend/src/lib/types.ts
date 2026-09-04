@@ -84,6 +84,10 @@ export interface ReactionAnalysisSummary {
   avg_recovery_pct?: number | null;
   dip_frequency_on_positive?: number | null;
   expected_dip_zone?: Record<string, number> | null;
+  implied_move_pct?: number | null;
+  historical_move_pct?: number | null;
+  volatility_assessment?: string | null;
+  options_summary?: string | null;
   confidence: ConfidenceTier;
   sources: Source[];
 }

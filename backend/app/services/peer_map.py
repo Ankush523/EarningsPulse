@@ -160,6 +160,27 @@ class PeerMapService:
         industry = groups[-1] if groups else None
         static_peers = get_static_peers(normalized)
 
+        # Dynamic peer discovery via Finnhub
+        dynamic_peers: list[tuple[str, PeerRelationship, str, str | None]] = []
+        try:
+            finnhub_peers = await self._earnings.get_peers(normalized, use_cache=use_cache)
+            known_tickers = {p for p, _, _, _ in static_peers} | {normalized}
+            for fp in finnhub_peers:
+                if fp not in known_tickers:
+                    dynamic_peers.append(
+                        (
+                            fp,
+                            PeerRelationship.DIRECT_PEER,
+                            "Identified via Finnhub market peer graph",
+                            sector,
+                        )
+                    )
+                    known_tickers.add(fp)
+        except Exception:
+            pass
+
+        all_candidate_peers = static_peers + dynamic_peers
+
         historical = await self._earnings.get_historical_earnings(
             normalized,
             limit=earnings_limit,
@@ -171,7 +192,7 @@ class PeerMapService:
             if event.report_date <= date.today()
         ]
 
-        peer_tickers = [peer for peer, _, _, _ in static_peers]
+        peer_tickers = [peer for peer, _, _, _ in all_candidate_peers]
         bars_by_ticker = self._load_correlation_bars(
             normalized,
             peer_tickers,
@@ -180,7 +201,7 @@ class PeerMapService:
         )
 
         candidates: list[PeerCandidate] = []
-        for peer, relationship, rationale, group in static_peers:
+        for peer, relationship, rationale, group in all_candidate_peers:
             correlation = self._compute_earnings_correlation(
                 normalized,
                 peer,

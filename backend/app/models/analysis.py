@@ -45,6 +45,22 @@ class ReactionPatternAnalysis(BaseModel):
         default=None,
         description="min/max expected dip % on positive outcomes",
     )
+    implied_move_pct: float | None = Field(
+        default=None,
+        description="Options market priced-in implied move % (ATM straddle)",
+    )
+    historical_move_pct: float | None = Field(
+        default=None,
+        description="Historical average realized absolute move % on earnings",
+    )
+    volatility_assessment: str | None = Field(
+        default=None,
+        description="Comparison: OVERPRICED, UNDERPRICED, or INLINE",
+    )
+    options_summary: str | None = Field(
+        default=None,
+        description="Summary of options implied move vs historical realized move",
+    )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
     analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

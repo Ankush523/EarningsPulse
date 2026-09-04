@@ -127,6 +127,22 @@ class ReactionAnalysisSummary(BaseModel):
         default=None,
         description="min/max expected dip % if beat",
     )
+    implied_move_pct: float | None = Field(
+        default=None,
+        description="Options market priced-in implied move % (ATM straddle)",
+    )
+    historical_move_pct: float | None = Field(
+        default=None,
+        description="Historical average realized move % on past earnings",
+    )
+    volatility_assessment: str | None = Field(
+        default=None,
+        description="Comparison: OVERPRICED, UNDERPRICED, or INLINE",
+    )
+    options_summary: str | None = Field(
+        default=None,
+        description="Summary of options implied move vs historical realized move",
+    )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
     sources: list[Source] = Field(default_factory=list)
 
