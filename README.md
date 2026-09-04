@@ -1,24 +1,22 @@
 # EarningsPulse
 
-**Know the report. Read the reaction. Watch the ripple.**
+Know the report. Read the reaction. Watch the ripple.
 
-AI-powered pre-earnings research agent that generates structured Earnings Playbooks — forecasting report sentiment, modeling price reaction scenarios, and mapping peer spillover.
+Pre-earnings research agent that builds an Earnings Playbook covering report sentiment, price-reaction scenarios, and peer spillover. Built for the [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre) (Money Intelligence track).
 
-Built for the [AI x FINANCE HACKATHON – MONEY TALKS](https://luma.com/vljpdtre) (Money Intelligence track).
-
-**Status:** ✅ Code-complete — all phases merged to `main`. Deploy with [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) · Demo with [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+All build phases are on `main`. Deploy with [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Demo with [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
 ## Overview
 
-EarningsPulse is a multi-agent system that prepares investors for after-hours earnings events. Before a company reports, it:
+EarningsPulse prepares investors for after-hours earnings. Before a company reports, it:
 
-1. **Researches** the ticker — news, filings, analyst context (Tavily + SEC EDGAR)
-2. **Forecasts** report sentiment — beat/miss probabilities with confidence tiers
-3. **Models reactions** — historical patterns including dip-then-rally
-4. **Maps spillover** — correlated peers likely to move in sympathy
-5. **Synthesizes** a structured **Earnings Playbook** with sources, scenarios, and export
+1. Researches the ticker (news, filings, analyst context via Tavily and SEC EDGAR)
+2. Forecasts report sentiment (beat/miss probabilities with confidence tiers)
+3. Models reactions from historical patterns, including dip-then-rally
+4. Maps peers that tend to move in sympathy
+5. Synthesizes a structured Earnings Playbook with sources, scenarios, and export
 
-Every agent step is streamed live (SSE) and logged in PRISM-compatible trace format.
+Each agent step streams over SSE and is logged in PRISM-compatible trace format.
 
 ## Architecture
 
@@ -70,10 +68,10 @@ flowchart TB
 | Market data | yfinance, Finnhub |
 | Observability | PRISM (Block Convey) + local trace logs |
 
-## Project Structure
+## Project structure
 
 ```
-finance_hackathon/
+EarningsPulse/
 ├── backend/              # FastAPI + LangGraph agents
 │   ├── app/              # Application code
 │   ├── demo/             # Pre-cached demo playbooks (AAPL)
@@ -95,7 +93,7 @@ finance_hackathon/
 └── docker-compose.yml    # Local full-stack
 ```
 
-## Quick Start (local)
+## Quick start (local)
 
 ### 1. Clone and configure
 
@@ -116,7 +114,7 @@ docker compose up --build
 
 ### 3. Run locally (development)
 
-**Backend:**
+Backend:
 
 ```bash
 cd backend
@@ -126,7 +124,7 @@ uv run uvicorn app.main:app --reload --port 8000
 
 Install [uv](https://docs.astral.sh/uv/) if needed: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
-**Frontend:**
+Frontend:
 
 ```bash
 cd frontend
@@ -136,15 +134,15 @@ bun run dev
 
 Install [Bun](https://bun.sh/) if needed: `curl -fsSL https://bun.sh/install | bash`
 
-Bun is the **package manager** only. Next.js 16.3 still builds and runs on Node (Vercel Functions, `next start`, and the standalone Docker image). Do not set `bunVersion` in `vercel.json` or `bun run --bun next build` — Next 16.2/16.3 still has Bun-runtime regressions on Vercel.
+Bun is the package manager only. Next.js 16.3 still builds and runs on Node (Vercel Functions, `next start`, and the standalone Docker image). Do not set `bunVersion` in `vercel.json` or use `bun run --bun next build`. Next 16.2/16.3 still has Bun-runtime regressions on Vercel.
 
-## Production Deployment
+## Production deployment
 
-Deploy **frontend → Vercel**, **backend → Railway or Render**.
+Deploy the frontend to Vercel and the backend to Railway or Render.
 
-Full step-by-step guide: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**
+Full guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
-Quick checklist:
+Checklist:
 
 1. Deploy backend from `backend/` (Dockerfile included)
 2. Set `FRONTEND_URL`, `OPENAI_API_KEY`, `TAVILY_API_KEY`, `FINNHUB_API_KEY`, `SEC_USER_AGENT`
@@ -156,20 +154,20 @@ Quick checklist:
 ./scripts/verify_deployment.sh https://your-api.up.railway.app https://your-app.vercel.app
 ```
 
-Tag release after verification:
+Tag a release after verification:
 
 ```bash
-git tag -a v1.0.0 -m "EarningsPulse v1.0.0 — hackathon release"
+git tag -a v1.0.0 -m "EarningsPulse v1.0.0 hackathon release"
 git push origin v1.0.0
 ```
 
 ## Demo
 
-**Instant demo (no API keys):** Click **Demo AAPL** on the home page.
+Instant demo (no API keys): click Demo AAPL on the home page.
 
-**3-minute pitch script:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
+3-minute pitch script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md)
 
-**Seed / refresh demo cache:**
+Seed or refresh the demo cache:
 
 ```bash
 cd backend
@@ -177,7 +175,7 @@ uv run python ../scripts/seed_demo.py --offline --ticker AAPL   # offline
 uv run python ../scripts/seed_demo.py --ticker AAPL             # live agent run
 ```
 
-## API Reference
+## API reference
 
 Interactive docs: `GET /docs` (Swagger UI)
 
@@ -198,7 +196,7 @@ Interactive docs: `GET /docs` (Swagger UI)
 
 Rate limit: 10 playbook generation requests per minute per client IP.
 
-### Example — generate and stream
+### Example: generate and stream
 
 ```bash
 # Start job
@@ -213,7 +211,7 @@ curl -N http://localhost:8000/api/playbook/stream/<job_id>
 curl http://localhost:8000/api/playbook/<job_id>
 ```
 
-## Health Checks
+## Health checks
 
 | Service  | Endpoint |
 |----------|----------|
@@ -221,7 +219,7 @@ curl http://localhost:8000/api/playbook/<job_id>
 | Backend  | `GET /ready` |
 | Frontend | `GET /api/health` |
 
-## API Keys
+## API keys
 
 | Key | Purpose | Required for |
 |-----|---------|--------------|
@@ -235,7 +233,7 @@ Demo AAPL and health checks work without any keys.
 
 ## Testing
 
-Property-based tests use [Hypothesis](https://hypothesis.readthedocs.io/) (backend) and [Hegel](https://hegel.dev/typescript) (frontend). Agent guidance for writing Hegel tests lives in `.cursor/skills/hegel/`.
+Property-based tests use [Hypothesis](https://hypothesis.readthedocs.io/) (backend) and [Hegel](https://hegel.dev/typescript) (frontend). Agent guidance for Hegel tests is in `.cursor/skills/hegel/`.
 
 ```bash
 # Backend (unit + Hypothesis property tests)
@@ -248,13 +246,13 @@ cd backend && uv run ty check
 # Frontend property tests (Hegel via Vitest)
 cd frontend && bun run test:property
 
-# Lint frontend (oxlint — ESLint/next lint retired)
+# Lint frontend (oxlint)
 cd frontend && bun run lint
 
 # Unused files, dependencies, and exports (Knip)
 cd frontend && bun run knip
 
-# React Doctor health scan (Bun equivalent of npx react-doctor@latest)
+# React Doctor health scan
 cd frontend && bun run doctor
 
 # Vercel plugin for Cursor/Claude (skills, /deploy, /env, /status)
@@ -273,13 +271,13 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && bunx playwright install chromium && bun run test:e2e
 ```
 
-CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / Knip / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`. A separate [React Doctor](https://www.react.doctor/ci) workflow scans `frontend/` on PRs (advisory, changed-files only).
+CI (GitHub Actions) on every push/PR to `main`: backend ruff + ty + pytest, then frontend property tests / oxlint / Knip / `tsc --noEmit` / build, then Playwright E2E. A separate [React Doctor](https://www.react.doctor/ci) workflow scans `frontend/` on PRs (advisory, changed-files only).
 
-Toolchain: **uv** + **ruff** + **ty** (backend) and **Bun** + **oxc/oxlint** + [Knip](https://github.com/webpro-nl/knip) + TypeScript 7 (frontend).
+Toolchain: uv + ruff + ty on the backend; Bun + oxc/oxlint + [Knip](https://github.com/webpro-nl/knip) + TypeScript 7 on the frontend.
 
-oxlint is Vercel-compatible: it is a CI/dev linter, not a deploy runtime. Next 16's Turbopack already uses oxc as its parser. Turborepo is a supported pairing with oxlint, but this repo does not use it — the JS side is a single Next app, and the backend is Python/uv, so Turbo would not orchestrate anything Vercel or uv do not already handle.
+oxlint is a CI/dev linter, not a deploy runtime. Next 16 Turbopack already uses oxc as its parser. This repo is a single Next app plus a Python/uv backend, so Turborepo would not orchestrate anything Vercel or uv do not already handle.
 
-Next.js 16.3 type-checks `next build` with the project-local TypeScript 7 `tsc` CLI (the JavaScript compiler API is no longer required).
+Next.js 16.3 type-checks `next build` with the project-local TypeScript 7 `tsc` CLI.
 
 Backtest validation:
 
@@ -293,24 +291,24 @@ uv run python ../scripts/backtest_reactions.py --tickers AAPL NVDA TSLA JPM AMZN
 | Doc | Description |
 |-----|-------------|
 | [PROJECT_SPEC.md](docs/PROJECT_SPEC.md) | Product specification |
-| [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Build plan & phases |
+| [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Build plan and phases |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deploy guide |
 | [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | 3-minute hackathon pitch |
 
-## Implementation Phases
+## Implementation phases
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| 0 | ✅ | Foundation — scaffold, models, health checks |
-| 1 | ✅ | Data layer — Tavily, yfinance, Finnhub, EDGAR |
-| 2 | ✅ | Analysis engines — reaction analyzer, peer map |
-| 3 | ✅ | Agents — LangGraph orchestrator + 5 agents |
-| 4 | ✅ | API — playbook generation + SSE streaming |
-| 5 | ✅ | PRISM — observability integration |
-| 6 | ✅ | Frontend — full UI |
-| 7 | ✅ | Polish — export, calendar, demo seed |
-| 8 | ✅ | Testing — E2E, backtest validation, CI |
-| 9 | ✅ | Deploy — configs, docs, demo script |
+| 0 | Done | Foundation: scaffold, models, health checks |
+| 1 | Done | Data layer: Tavily, yfinance, Finnhub, EDGAR |
+| 2 | Done | Analysis engines: reaction analyzer, peer map |
+| 3 | Done | Agents: LangGraph orchestrator + 5 agents |
+| 4 | Done | API: playbook generation + SSE streaming |
+| 5 | Done | PRISM observability integration |
+| 6 | Done | Frontend UI |
+| 7 | Done | Polish: export, calendar, demo seed |
+| 8 | Done | Testing: E2E, backtest validation, CI |
+| 9 | Done | Deploy: configs, docs, demo script |
 
 ## Disclaimer
 
