@@ -78,7 +78,7 @@ flowchart TB
 ## Step 2 — Deploy frontend (Vercel)
 
 1. Import the repo at [vercel.com](https://vercel.com).
-2. Set **Root Directory** to `frontend`.
+2. Set **Root Directory** to `frontend`. If that setting is left empty, the repo-root `vercel.json` plus the `frontend/` pointers still let Git deploys detect Next.js. Prefer the dashboard setting so file tracing stays inside `frontend/`.
 3. Framework preset: **Next.js** (auto-detected).
 4. Set environment variable:
 
@@ -86,7 +86,7 @@ flowchart TB
 |----------|-------|
 | `NEXT_PUBLIC_BACKEND_URL` | `https://<your-railway-or-render-api-url>` |
 
-5. Deploy. Vercel detects **Bun** from `frontend/bun.lock` and uses `frontend/vercel.json` (`bun install --frozen-lockfile`, then `bun run build` on Node). Do not enable the Bun Function runtime (`bunVersion`).
+5. Deploy. Vercel detects **Bun** from `frontend/bun.lock` and uses `frontend/vercel.json` (`npm exec bun@1.4.0 install --frozen-lockfile`, then `next build` on Node). Do not enable the Bun Function runtime (`bunVersion`). Vercel's default installer is still Bun 1.3.x, which cannot read this lockfile (`lockfileVersion` 3).
 
 ---
 
@@ -199,6 +199,7 @@ git push origin v1.0.0
 |---------|-----|
 | CORS error in browser | Set `FRONTEND_URL` on backend to exact Vercel URL; redeploy backend |
 | Demo AAPL 404 | Ensure `backend/demo/aapl.json` is in the Docker image (included in Dockerfile) |
+| Vercel platform `NOT_FOUND` (black error page, not the Next.js 404) | The Git project built the repo root with no Next.js app. Set Root Directory to `frontend` and Redeploy, or keep the repo-root `package.json` / `next.config.ts` pointers so zero-config can see the app |
 | Frontend can't reach API | Check `NEXT_PUBLIC_BACKEND_URL`; redeploy Vercel after changing it |
 | Generation fails | Check `/ready` for missing keys; verify OpenAI/Tavily quotas |
 | SSE stream disconnects | Confirm backend URL is HTTPS; some proxies need longer timeouts |

@@ -63,7 +63,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint, Bun |
+| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint, Knip, Bun |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |
@@ -86,6 +86,7 @@ finance_hackathon/
 │   ├── bun.lock          # Bun lockfile
 │   ├── bunfig.toml       # Bun as package manager; Node as Next runtime
 │   ├── .oxlintrc.json    # oxlint (primary frontend linter)
+│   ├── knip.json         # unused files, deps, and exports
 │   ├── Dockerfile        # Production container
 │   └── vercel.json       # Vercel deploy config
 ├── docs/                 # Spec, plan, deployment, demo script
@@ -250,6 +251,9 @@ cd frontend && bun run test:property
 # Lint frontend (oxlint — ESLint/next lint retired)
 cd frontend && bun run lint
 
+# Unused files, dependencies, and exports (Knip)
+cd frontend && bun run knip
+
 # React Doctor health scan (Bun equivalent of npx react-doctor@latest)
 cd frontend && bun run doctor
 
@@ -269,9 +273,9 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && bunx playwright install chromium && bun run test:e2e
 ```
 
-CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`. A separate [React Doctor](https://www.react.doctor/ci) workflow scans `frontend/` on PRs (advisory, changed-files only).
+CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / Knip / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`. A separate [React Doctor](https://www.react.doctor/ci) workflow scans `frontend/` on PRs (advisory, changed-files only).
 
-Toolchain: **uv** + **ruff** + **ty** (backend) and **Bun** + **oxc/oxlint** + TypeScript 7 (frontend).
+Toolchain: **uv** + **ruff** + **ty** (backend) and **Bun** + **oxc/oxlint** + [Knip](https://github.com/webpro-nl/knip) + TypeScript 7 (frontend).
 
 oxlint is Vercel-compatible: it is a CI/dev linter, not a deploy runtime. Next 16's Turbopack already uses oxc as its parser. Turborepo is a supported pairing with oxlint, but this repo does not use it — the JS side is a single Next app, and the backend is Python/uv, so Turbo would not orchestrate anything Vercel or uv do not already handle.
 
