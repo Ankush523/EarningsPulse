@@ -73,7 +73,7 @@ export function MonteCarloChart({ simulation, ticker }: MonteCarloChartProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded border border-rule-soft bg-paper-light p-4 sm:p-5">
+      <div className="rounded border border-rule-soft bg-paper p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-rule-soft pb-3">
           <div>
             <h4 className="text-[1.05rem] font-medium">
@@ -146,15 +146,15 @@ export function MonteCarloChart({ simulation, ticker }: MonteCarloChartProps) {
           {/* 90% confidence corridor (P5 to P95) */}
           <polygon
             points={corridor90}
-            fill="currentColor"
-            className="text-ink text-opacity-5"
+            fill="var(--ink)"
+            fillOpacity={0.06}
           />
 
           {/* 50% interquartile corridor (P25 to P75) */}
           <polygon
             points={corridor50}
-            fill="currentColor"
-            className="text-ink text-opacity-10"
+            fill="var(--ink)"
+            fillOpacity={0.12}
           />
 
           {/* Median path */}
@@ -197,11 +197,17 @@ export function MonteCarloChart({ simulation, ticker }: MonteCarloChartProps) {
               Median ($P_{50}$)
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-4 rounded-sm bg-ink bg-opacity-10" />
+              <span
+                className="inline-block h-2.5 w-4 rounded-sm border border-rule-soft"
+                style={{ backgroundColor: "var(--ink)", opacity: 0.16 }}
+              />
               50% Range ($P_{25}–P_{75}$)
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-4 rounded-sm bg-ink bg-opacity-5" />
+              <span
+                className="inline-block h-2.5 w-4 rounded-sm border border-rule-soft"
+                style={{ backgroundColor: "var(--ink)", opacity: 0.08 }}
+              />
               90% Corridor ($P_5–P_{95}$)
             </span>
             <span className="flex items-center gap-1.5">

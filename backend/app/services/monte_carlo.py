@@ -161,7 +161,7 @@ class MonteCarloSimulator:
             f"the median price settles at ${median_price:.2f} ({sign}{median_return:.1f}%). "
             f"Win probability is {prob_positive:.1f}%, with a 90% confidence corridor ranging from "
             f"${p5_price:.2f} ({var_95:.1f}%) to ${p95_price:.2f} "
-            f"(+{trajectories[-1].p95_return_pct:.1f}%). "
+            f"({trajectories[-1].p95_return_pct:+.1f}%). "
             f"95% Value-at-Risk (VaR) is {var_95:.1f}% (CVaR {cvar_95:.1f}%)."
         )
 
