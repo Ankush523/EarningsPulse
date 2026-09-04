@@ -41,6 +41,9 @@ jobs:
       - name: Ruff format check
         run: uv run --frozen ruff format --check app tests
 
+      - name: Unused dependencies (deptry)
+        run: uv run --frozen deptry . --github-output
+
       - name: Type check (ty)
         run: uv run --frozen ty check
 

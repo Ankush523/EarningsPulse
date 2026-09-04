@@ -35,11 +35,8 @@ def test_call_with_retry_raises_non_rate_limit_immediately():
         yfinance_client.call_with_retry("test", fail)
 
 
-def test_get_session_uses_curl_cffi_when_available():
-    with (
-        patch.object(yfinance_client, "_HAS_CURL_CFFI", True),
-        patch.object(yfinance_client, "curl_requests") as mock_curl,
-    ):
+def test_get_session_uses_curl_cffi_chrome_impersonation():
+    with patch.object(yfinance_client, "curl_requests") as mock_curl:
         mock_curl.Session.return_value = MagicMock()
         yfinance_client._session = None
         session = yfinance_client.get_session()

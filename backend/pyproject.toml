@@ -18,7 +18,6 @@ dependencies = [
     "curl_cffi>=0.7.0",
     "pandas>=2.2.0",
     "prismtrace-sdk>=0.4.1",
-    "typing-extensions>=4.12.0",
 ]
 
 [dependency-groups]
@@ -28,10 +27,16 @@ dev = [
     "hypothesis==6.138.5",
     "ruff>=0.8.0",
     "ty>=0.0.78",
+    "deptry>=0.25.1",
 ]
 
 [tool.uv]
 package = false
+# Local is macOS, CI is Linux. No Windows runtime.
+environments = [
+    "sys_platform == 'darwin'",
+    "sys_platform == 'linux'",
+]
 
 [tool.ruff]
 target-version = "py312"
@@ -59,3 +64,7 @@ root = ["."]
 
 [tool.ty.src]
 include = ["app", "tests"]
+
+[tool.deptry.per_rule_ignores]
+# uvicorn is the ASGI process. python-dotenv is loaded via pydantic-settings env_file.
+DEP002 = ["uvicorn", "python-dotenv"]
