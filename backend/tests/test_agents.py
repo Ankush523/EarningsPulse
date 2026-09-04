@@ -1,5 +1,6 @@
 """Integration tests for multi-agent orchestrator."""
 
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -10,6 +11,7 @@ from app.agents.reaction import ReactionAgent
 from app.agents.research import ResearchAgent
 from app.agents.spillover import SpilloverAgent
 from app.agents.synthesis import SynthesisAgent
+from app.models.agent_state import AgentState
 from app.models.playbook import (
     Playbook,
     ReactionArchetype,
@@ -163,7 +165,9 @@ async def test_research_agent_fallback_without_keys(cache, settings):
     agent._price_data.get_company_name = MagicMock(return_value="Apple Inc.")
     agent._earnings.get_next_earnings_date = AsyncMock(return_value=None)
 
-    state = {"job_id": "job-r1", "ticker": "AAPL", "trace_events": [], "errors": []}
+    state = cast(
+        AgentState, {"job_id": "job-r1", "ticker": "AAPL", "trace_events": [], "errors": []}
+    )
     result = await agent.run(state)
 
     assert result["research"]["ticker"] == "AAPL"
@@ -174,16 +178,19 @@ async def test_research_agent_fallback_without_keys(cache, settings):
 async def test_forecast_agent_heuristic_fallback(settings):
     settings_no_llm = settings.model_copy(update={"openai_api_key": None})
     agent = ForecastAgent(llm=LLMClient(settings=settings_no_llm))
-    state = {
-        "job_id": "job-f1",
-        "ticker": "AAPL",
-        "research": {
+    state = cast(
+        AgentState,
+        {
+            "job_id": "job-f1",
             "ticker": "AAPL",
-            "recent_news": [{"title": "Apple beat estimates", "content": "strong growth"}],
-            "analyst_context": "beat expected",
-            "sector_context": "",
+            "research": {
+                "ticker": "AAPL",
+                "recent_news": [{"title": "Apple beat estimates", "content": "strong growth"}],
+                "analyst_context": "beat expected",
+                "sector_context": "",
+            },
         },
-    }
+    )
     result = await agent.run(state)
     forecast = result["forecast"]
     total = (
@@ -199,7 +206,7 @@ async def test_reaction_agent_with_mock_analyzer(mock_reaction_analysis):
     analyzer.analyze_ticker = AsyncMock(return_value=mock_reaction_analysis)
 
     agent = ReactionAgent(analyzer=analyzer)
-    result = await agent.run({"job_id": "job-react", "ticker": "AAPL"})
+    result = await agent.run(cast(AgentState, {"job_id": "job-react", "ticker": "AAPL"}))
 
     assert result["reaction"].archetype == ReactionArchetype.DIP_THEN_RALLY
 
@@ -215,15 +222,18 @@ async def test_spillover_agent_with_mock_peer_map(cache, mock_peer_map_result):
     agent = SpilloverAgent(peer_map=service)
     agent._tavily.search_sector_context = AsyncMock(return_value=[])
 
-    state = {
-        "job_id": "job-spill",
-        "ticker": "AAPL",
-        "research": {
+    state = cast(
+        AgentState,
+        {
+            "job_id": "job-spill",
             "ticker": "AAPL",
-            "sector": "Technology",
-            "industry": "Consumer Electronics",
+            "research": {
+                "ticker": "AAPL",
+                "sector": "Technology",
+                "industry": "Consumer Electronics",
+            },
         },
-    }
+    )
     result = await agent.run(state)
 
     spillover = result["spillover"]
@@ -245,31 +255,34 @@ async def test_synthesis_agent_builds_playbook(
     from app.agents.synthesis import SynthesisAgent
 
     agent = SynthesisAgent()
-    state = {
-        "job_id": "job-synth",
-        "ticker": "AAPL",
-        "research": mock_research_bundle,
-        "forecast": {
-            "beat_probability": 0.5,
-            "inline_probability": 0.3,
-            "miss_probability": 0.2,
-            "key_metrics": [
-                {
-                    "name": "Services",
-                    "description": "Growth driver",
-                    "importance": "high",
-                }
-            ],
-            "bull_case": "Beat case",
-            "base_case": "Base case",
-            "bear_case": "Bear case",
-            "positive_surprises": ["Services beat"],
-            "negative_surprises": [],
-            "confidence": "medium",
+    state = cast(
+        AgentState,
+        {
+            "job_id": "job-synth",
+            "ticker": "AAPL",
+            "research": mock_research_bundle,
+            "forecast": {
+                "beat_probability": 0.5,
+                "inline_probability": 0.3,
+                "miss_probability": 0.2,
+                "key_metrics": [
+                    {
+                        "name": "Services",
+                        "description": "Growth driver",
+                        "importance": "high",
+                    }
+                ],
+                "bull_case": "Beat case",
+                "base_case": "Base case",
+                "bear_case": "Bear case",
+                "positive_surprises": ["Services beat"],
+                "negative_surprises": [],
+                "confidence": "medium",
+            },
+            "reaction": reaction_analysis_to_summary(mock_reaction_analysis),
+            "spillover": peer_map_to_spillover(mock_peer_map_result),
         },
-        "reaction": reaction_analysis_to_summary(mock_reaction_analysis),
-        "spillover": peer_map_to_spillover(mock_peer_map_result),
-    }
+    )
 
     result = await agent.run(state)
     playbook = result["playbook"]

@@ -48,9 +48,15 @@ class PrismClient:
         try:
             from prismtrace import PRISMtrace
 
+            api_key = self._settings.prism_api_key
+            project_id = self._settings.prism_project_id
+            if not api_key or not project_id:
+                self._local_mode = True
+                return
+
             self._sdk = PRISMtrace(
-                api_key=self._settings.prism_api_key,
-                project_id=self._settings.prism_project_id,
+                api_key=api_key,
+                project_id=project_id,
                 host=self._settings.prism_host,
             )
             logger.info("PRISM SDK initialized (host=%s)", self._settings.prism_host)

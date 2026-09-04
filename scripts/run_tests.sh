@@ -5,8 +5,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> Backend tests (pytest)"
+echo "==> Backend lint (ruff)"
 cd backend
+uv run --frozen ruff check app tests
+uv run --frozen ruff format --check app tests
+
+echo "==> Backend type check (ty)"
+uv run --frozen ty check
+
+echo "==> Backend tests (pytest)"
 uv run --frozen python -m pytest tests/ -q
 cd "$ROOT"
 

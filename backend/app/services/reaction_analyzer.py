@@ -13,6 +13,11 @@ from app.services.price_data import PriceDataService
 from app.utils.cache import TTLCache, app_cache
 from app.utils.confidence import score_from_data_quality
 
+
+def _earnings_date(event: EarningsReactionEvent) -> date:
+    return event.earnings_date
+
+
 ARCHETYPE_DESCRIPTIONS: dict[ReactionArchetype, str] = {
     ReactionArchetype.DIP_THEN_RALLY: (
         "Positive reactions often dip first before recovering — watch for reversal entry zones."
@@ -272,7 +277,7 @@ class ReactionAnalyzer:
             archetype=archetype,
             archetype_description=ARCHETYPE_DESCRIPTIONS[archetype],
             events_analyzed=len(events),
-            events=sorted(events, key=lambda e: e.earnings_date, reverse=True),
+            events=sorted(events, key=_earnings_date, reverse=True),
             pattern_counts=pattern_counts,
             avg_dip_pct=avg_dip,
             avg_recovery_pct=avg_recovery,
@@ -291,12 +296,12 @@ class ReactionAnalyzer:
             return ReactionArchetype.INSUFFICIENT_DATA
 
         weighted: dict[str, float] = {}
-        for idx, event in enumerate(sorted(events, key=lambda e: e.earnings_date, reverse=True)):
+        for idx, event in enumerate(sorted(events, key=_earnings_date, reverse=True)):
             weight = max(1.0, len(events) - idx)
             key = event.pattern.value
             weighted[key] = weighted.get(key, 0.0) + weight
 
-        dominant_key = max(weighted, key=weighted.get)
+        dominant_key = max(weighted, key=lambda key: weighted[key])
         return ReactionArchetype(dominant_key)
 
     @staticmethod
