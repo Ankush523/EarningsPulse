@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 
 import httpx
-import pandas as pd
 
 from app.config import Settings, get_settings
 from app.models.data import (
@@ -139,9 +138,7 @@ class EarningsCalendarService:
             try:
                 result = await self._fetch_historical_from_finnhub(normalized, limit)
                 past_events = [
-                    event
-                    for event in result.events
-                    if event.report_date <= date.today()
+                    event for event in result.events if event.report_date <= date.today()
                 ]
                 if past_events:
                     result = HistoricalEarningsResponse(

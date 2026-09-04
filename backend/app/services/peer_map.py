@@ -195,9 +195,7 @@ class PeerMapService:
             use_cache=use_cache,
         )
         earnings_dates = [
-            event.report_date
-            for event in historical.events
-            if event.report_date <= date.today()
+            event.report_date for event in historical.events if event.report_date <= date.today()
         ]
 
         peer_tickers = [peer for peer, _, _, _ in static_peers]

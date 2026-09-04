@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-from hypothesis import given, settings, strategies as st
-from pydantic import ValidationError
-
 from app.models.agent_state import serialize_trace_events
 from app.models.playbook import PlaybookGenerateRequest
 from app.models.trace import TraceEvent, TraceEventType
-
+from hypothesis import given, settings
+from hypothesis import strategies as st
+from pydantic import ValidationError
 
 VALID_TICKER_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-"
 INVALID_TICKER_CHARS = "0123456789_ /+$"
@@ -81,7 +80,7 @@ def test_trace_event_json_round_trip_preserves_data(
         event_id="evt_property",
         job_id="job_property",
         event_type=event_type,
-        timestamp=datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc),
+        timestamp=datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC),
         message="property event",
         input_summary=input_summary,
         output_summary=output_summary,
@@ -103,15 +102,12 @@ def test_serialize_trace_events_accepts_any_mix_of_models_and_dicts(
             event_id=f"evt_{index}",
             job_id="job_property",
             event_type=TraceEventType.RUN_STARTED,
-            timestamp=datetime(2026, 1, 2, tzinfo=timezone.utc),
+            timestamp=datetime(2026, 1, 2, tzinfo=UTC),
             message="event",
             metadata=metadata,
         )
         for index, metadata in enumerate(metadata_items)
     ]
-    mixed = [
-        model if index % 2 == 0 else model.model_dump()
-        for index, model in enumerate(models)
-    ]
+    mixed = [model if index % 2 == 0 else model.model_dump() for index, model in enumerate(models)]
 
     assert serialize_trace_events(mixed) == models

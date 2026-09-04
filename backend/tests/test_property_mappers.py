@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import date, timezone
+from datetime import UTC, date
 
 import pytest
-from hypothesis import given, settings, strategies as st
-
 from app.agents.mappers import (
     _build_scenarios,
     parse_confidence,
@@ -25,6 +23,8 @@ from app.models.playbook import (
     PeerRelationship,
     ReactionArchetype,
 )
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 
 @settings(max_examples=40)
@@ -107,10 +107,6 @@ def test_peer_mapping_preserves_correlation_and_watch_threshold(
     assert mapped.peers[0].watch_flag is (abs(correlation) >= 0.25)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="zero days currently maps to None instead of zero minutes",
-)
 @settings(max_examples=40)
 @given(days=st.integers(min_value=0, max_value=30))
 def test_reaction_mapping_converts_trading_days_to_minutes(days: int) -> None:
@@ -134,5 +130,5 @@ def test_reaction_mapping_converts_trading_days_to_minutes(days: int) -> None:
     mapped = reaction_analysis_to_summary(analysis).historical_reactions[0]
 
     assert mapped.earnings_date.date() == event_date
-    assert mapped.earnings_date.tzinfo is timezone.utc
+    assert mapped.earnings_date.tzinfo is UTC
     assert mapped.time_to_bottom_minutes == days * 390

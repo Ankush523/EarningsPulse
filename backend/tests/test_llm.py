@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from app.agents.llm import GOOGLE_MODEL_FALLBACKS, LLMClient
 from app.config import Settings
 
@@ -59,11 +58,15 @@ async def test_invoke_json_openai_fails_google_succeeds(fallback):
     mock_openai.ainvoke = AsyncMock(side_effect=Exception("credit_balance_exhausted"))
 
     mock_model = MagicMock()
-    mock_model.generate_content = MagicMock(return_value=MagicMock(text='{"beat_probability": 0.7}'))
+    mock_model.generate_content = MagicMock(
+        return_value=MagicMock(text='{"beat_probability": 0.7}')
+    )
 
-    with patch("langchain_openai.ChatOpenAI", return_value=mock_openai), patch(
-        "google.generativeai.GenerativeModel", return_value=mock_model
-    ), patch("google.generativeai.configure"):
+    with (
+        patch("langchain_openai.ChatOpenAI", return_value=mock_openai),
+        patch("google.generativeai.GenerativeModel", return_value=mock_model),
+        patch("google.generativeai.configure"),
+    ):
         result = await client.invoke_json(
             system_prompt="sys",
             user_prompt="user",
@@ -85,9 +88,11 @@ async def test_invoke_json_both_fail_uses_fallback(fallback):
     mock_model = MagicMock()
     mock_model.generate_content = MagicMock(side_effect=Exception("google down"))
 
-    with patch("langchain_openai.ChatOpenAI", return_value=mock_openai), patch(
-        "google.generativeai.GenerativeModel", return_value=mock_model
-    ), patch("google.generativeai.configure"):
+    with (
+        patch("langchain_openai.ChatOpenAI", return_value=mock_openai),
+        patch("google.generativeai.GenerativeModel", return_value=mock_model),
+        patch("google.generativeai.configure"),
+    ):
         result = await client.invoke_json(
             system_prompt="sys",
             user_prompt="user",
@@ -105,10 +110,13 @@ async def test_invoke_json_google_only(fallback):
     assert client.enabled
 
     mock_model = MagicMock()
-    mock_model.generate_content = MagicMock(return_value=MagicMock(text='{"inline_probability": 0.4}'))
+    mock_model.generate_content = MagicMock(
+        return_value=MagicMock(text='{"inline_probability": 0.4}')
+    )
 
-    with patch("google.generativeai.GenerativeModel", return_value=mock_model), patch(
-        "google.generativeai.configure"
+    with (
+        patch("google.generativeai.GenerativeModel", return_value=mock_model),
+        patch("google.generativeai.configure"),
     ):
         result = await client.invoke_json(
             system_prompt="sys",
@@ -121,12 +129,16 @@ async def test_invoke_json_google_only(fallback):
 
 @pytest.mark.asyncio
 async def test_invoke_json_google_tries_next_model_on_404(fallback):
-    settings = Settings(openai_api_key=None, google_api_key="google-test", google_llm_model="gemma-3-27b-it")
+    settings = Settings(
+        openai_api_key=None, google_api_key="google-test", google_llm_model="gemma-3-27b-it"
+    )
     client = LLMClient(settings=settings)
 
     unavailable = Exception("404 models/gemma-3-27b-it is not found")
     success_model = MagicMock()
-    success_model.generate_content = MagicMock(return_value=MagicMock(text='{"beat_probability": 0.6}'))
+    success_model.generate_content = MagicMock(
+        return_value=MagicMock(text='{"beat_probability": 0.6}')
+    )
 
     def make_model(*, model_name: str, **kwargs):
         if model_name == "gemma-3-27b-it":
@@ -137,8 +149,9 @@ async def test_invoke_json_google_tries_next_model_on_404(fallback):
             return success_model
         raise AssertionError(f"unexpected model {model_name}")
 
-    with patch("google.generativeai.GenerativeModel", side_effect=make_model), patch(
-        "google.generativeai.configure"
+    with (
+        patch("google.generativeai.GenerativeModel", side_effect=make_model),
+        patch("google.generativeai.configure"),
     ):
         result = await client.invoke_json(
             system_prompt="sys",

@@ -5,12 +5,11 @@ from __future__ import annotations
 import re
 from unittest.mock import patch
 
-from hypothesis import given, settings, strategies as st
-
 from app.models.playbook import ConfidenceTier
-from app.utils.confidence import combine_confidence, score_from_sample_size
 from app.utils.cache import TTLCache
-
+from app.utils.confidence import combine_confidence, score_from_sample_size
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 TIER_RANK = {
     ConfidenceTier.LOW: 1,
@@ -104,9 +103,7 @@ def test_cache_never_exceeds_capacity_and_keeps_newest_entries(
 
     retained = keys[-max_entries:]
     assert len(cache._store) <= max_entries
-    assert [cache.get(key) for key in retained] == list(
-        range(len(keys) - len(retained), len(keys))
-    )
+    assert [cache.get(key) for key in retained] == list(range(len(keys) - len(retained), len(keys)))
 
 
 @settings(max_examples=40)

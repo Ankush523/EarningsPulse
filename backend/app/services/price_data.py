@@ -89,9 +89,7 @@ class PriceDataService:
         result: dict[str, list[OHLCVBar]] = {t: [] for t in normalized}
 
         if len(normalized) == 1:
-            result[normalized[0]] = self.fetch_ohlcv(
-                normalized[0], start, end, use_cache=use_cache
-            )
+            result[normalized[0]] = self.fetch_ohlcv(normalized[0], start, end, use_cache=use_cache)
             return result
 
         try:
@@ -103,13 +101,11 @@ class PriceDataService:
                     end=(end + timedelta(days=1)).isoformat(),
                 ),
             )
-        except Exception as exc:
+        except Exception:
             # Fall back to sequential single-ticker fetches.
             for ticker in normalized:
                 try:
-                    result[ticker] = self.fetch_ohlcv(
-                        ticker, start, end, use_cache=use_cache
-                    )
+                    result[ticker] = self.fetch_ohlcv(ticker, start, end, use_cache=use_cache)
                 except Exception:
                     result[ticker] = []
             return result
@@ -148,11 +144,7 @@ class PriceDataService:
                         high=float(row["High"]),
                         low=float(row["Low"]),
                         close=float(row["Close"]),
-                        volume=(
-                            int(row["Volume"])
-                            if row["Volume"] == row["Volume"]
-                            else None
-                        ),
+                        volume=(int(row["Volume"]) if row["Volume"] == row["Volume"] else None),
                     )
                 )
             except (KeyError, TypeError, ValueError):

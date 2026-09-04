@@ -4,14 +4,12 @@ from datetime import date
 from statistics import mean, median
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
-
 from app.models.analysis import EarningsReactionEvent
 from app.models.playbook import ReactionArchetype, ReportOutcome
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.reaction_analyzer import VOLATILITY_BAND_PCT, ReactionAnalyzer
-
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 finite_percentages = st.floats(
     min_value=-100,
@@ -60,9 +58,7 @@ def reaction_events(draw: st.DrawFn) -> list[EarningsReactionEvent]:
     dip_pct=optional_percentages,
     recovery_pct=optional_percentages,
 )
-def test_miss_classification_depends_only_on_initial_move(
-    initial_move_pct, dip_pct, recovery_pct
-):
+def test_miss_classification_depends_only_on_initial_move(initial_move_pct, dip_pct, recovery_pct):
     result = ReactionAnalyzer.classify_single_reaction(
         outcome=ReportOutcome.MISS,
         initial_move_pct=initial_move_pct,
@@ -103,11 +99,7 @@ def test_aggregate_events_is_order_independent_and_matches_summary_statistics(ev
         if event.report_outcome in {ReportOutcome.BEAT, ReportOutcome.INLINE}
         or event.initial_move_pct > 0
     ]
-    dipped = [
-        event
-        for event in positive
-        if event.dip_pct is not None and event.dip_pct <= -0.5
-    ]
+    dipped = [event for event in positive if event.dip_pct is not None and event.dip_pct <= -0.5]
     dip_values = [event.dip_pct for event in dipped if event.dip_pct is not None]
     recovery_values = [
         event.recovery_pct
@@ -124,9 +116,7 @@ def test_aggregate_events_is_order_independent_and_matches_summary_statistics(ev
     assert result.avg_recovery_pct == reversed_result.avg_recovery_pct
     assert result.dip_frequency_on_positive == reversed_result.dip_frequency_on_positive
     assert result.expected_dip_zone == reversed_result.expected_dip_zone
-    assert result.avg_dip_pct == (
-        pytest.approx(round(mean(dip_values), 4)) if dip_values else None
-    )
+    assert result.avg_dip_pct == (pytest.approx(round(mean(dip_values), 4)) if dip_values else None)
     assert result.avg_recovery_pct == (
         pytest.approx(round(mean(recovery_values), 4)) if recovery_values else None
     )
@@ -178,8 +168,6 @@ def test_report_time_aliases_are_case_and_whitespace_insensitive(
     rendered = alias.upper() if uppercase else alias
 
     assert (
-        EarningsCalendarService._normalize_report_time(
-            f"{left_padding}{rendered}{right_padding}"
-        )
+        EarningsCalendarService._normalize_report_time(f"{left_padding}{rendered}{right_padding}")
         == canonical
     )

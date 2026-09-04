@@ -31,9 +31,7 @@ def reaction_analysis_to_summary(
             dip_pct=event.dip_pct,
             recovery_pct=event.recovery_pct,
             time_to_bottom_minutes=(
-                event.time_to_bottom_days * 390
-                if event.time_to_bottom_days is not None
-                else None
+                event.time_to_bottom_days * 390 if event.time_to_bottom_days is not None else None
             ),
             pattern=event.pattern,
         )

@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from app.services import yfinance_client
 
 
@@ -37,9 +36,10 @@ def test_call_with_retry_raises_non_rate_limit_immediately():
 
 
 def test_get_session_uses_curl_cffi_when_available():
-    with patch.object(yfinance_client, "_HAS_CURL_CFFI", True), patch.object(
-        yfinance_client, "curl_requests"
-    ) as mock_curl:
+    with (
+        patch.object(yfinance_client, "_HAS_CURL_CFFI", True),
+        patch.object(yfinance_client, "curl_requests") as mock_curl,
+    ):
         mock_curl.Session.return_value = MagicMock()
         yfinance_client._session = None
         session = yfinance_client.get_session()

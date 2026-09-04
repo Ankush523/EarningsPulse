@@ -147,8 +147,7 @@ def _is_google_model_unavailable(exc: Exception) -> bool:
 def _content_to_text(content: Any) -> str:
     if isinstance(content, list):
         return "".join(
-            block.get("text", "") if isinstance(block, dict) else str(block)
-            for block in content
+            block.get("text", "") if isinstance(block, dict) else str(block) for block in content
         )
     return str(content)
 

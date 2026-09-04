@@ -3,12 +3,10 @@
 from datetime import date, timedelta
 
 import pytest
-from hypothesis import given, settings
-from hypothesis import strategies as st
-
 from app.models.data import OHLCVBar
 from app.services.price_data import PriceDataService
-
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 BASE_DATE = date(2024, 1, 15)
 
@@ -59,7 +57,7 @@ def price_windows(draw: st.DrawFn) -> list[OHLCVBar]:
     return [
         _bar(offset, close, low_offset, high_offset)
         for offset, close, low_offset, high_offset in zip(
-            offsets, closes, low_offsets, high_offsets
+            offsets, closes, low_offsets, high_offsets, strict=True
         )
     ]
 
@@ -68,9 +66,7 @@ def price_windows(draw: st.DrawFn) -> list[OHLCVBar]:
 def earnings_windows(draw: st.DrawFn) -> list[OHLCVBar]:
     extra_offsets = draw(
         st.lists(
-            st.integers(min_value=-7, max_value=7).filter(
-                lambda offset: offset not in {-1, 0}
-            ),
+            st.integers(min_value=-7, max_value=7).filter(lambda offset: offset not in {-1, 0}),
             max_size=8,
             unique=True,
         )
@@ -100,7 +96,7 @@ def earnings_windows(draw: st.DrawFn) -> list[OHLCVBar]:
     return [
         _bar(offset, close, low_offset, high_offset)
         for offset, close, low_offset, high_offset in zip(
-            offsets, closes, low_offsets, high_offsets
+            offsets, closes, low_offsets, high_offsets, strict=True
         )
     ]
 
@@ -117,12 +113,8 @@ def test_window_metrics_match_direct_calculation_regardless_of_input_order(bars)
         "high_price": max(bar.high for bar in ordered),
         "low_price": min(bar.low for bar in ordered),
         "total_return_pct": round(((end - start) / start) * 100, 4),
-        "max_drawdown_pct": round(
-            ((min(bar.low for bar in ordered) - start) / start) * 100, 4
-        ),
-        "max_gain_pct": round(
-            ((max(bar.high for bar in ordered) - start) / start) * 100, 4
-        ),
+        "max_drawdown_pct": round(((min(bar.low for bar in ordered) - start) / start) * 100, 4),
+        "max_gain_pct": round(((max(bar.high for bar in ordered) - start) / start) * 100, 4),
     }
 
     metrics = PriceDataService.calculate_window_metrics(bars)
@@ -141,14 +133,10 @@ def test_dip_recovery_uses_latest_pre_earnings_close_and_post_extrema(bars):
     baseline = [bar for bar in ordered if bar.date < BASE_DATE][-1].close
     post = [bar for bar in ordered if bar.date >= BASE_DATE]
     expected_dip = round(((min(bar.low for bar in post) - baseline) / baseline) * 100, 4)
-    expected_recovery = round(
-        ((max(bar.high for bar in post) - baseline) / baseline) * 100, 4
-    )
+    expected_recovery = round(((max(bar.high for bar in post) - baseline) / baseline) * 100, 4)
 
     result = PriceDataService().calculate_dip_recovery(bars, BASE_DATE)
-    reversed_result = PriceDataService().calculate_dip_recovery(
-        list(reversed(bars)), BASE_DATE
-    )
+    reversed_result = PriceDataService().calculate_dip_recovery(list(reversed(bars)), BASE_DATE)
 
     assert reversed_result == result
     assert result["baseline_price"] == baseline
