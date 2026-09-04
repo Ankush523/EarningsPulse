@@ -4,7 +4,6 @@ from datetime import date
 
 import pandas as pd
 import pytest
-
 from app.config import Settings
 from app.models.analysis import PeerMapResult, ReactionPatternAnalysis
 from app.models.playbook import ConfidenceTier, PeerRelationship, ReactionArchetype, ReportOutcome
@@ -62,9 +61,7 @@ def mock_research_bundle():
                 "score": 0.9,
             }
         ],
-        "filing_links": [
-            {"form": "10-Q", "url": "https://sec.gov/aapl", "date": "2024-08-01"}
-        ],
+        "filing_links": [{"form": "10-Q", "url": "https://sec.gov/aapl", "date": "2024-08-01"}],
         "analyst_context": "Consensus expects modest beat.",
         "sector_context": "Consumer tech demand stable.",
         "sector": "Technology",

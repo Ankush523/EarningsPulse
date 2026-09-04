@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -65,7 +65,7 @@ async def load_demo_playbook(
         job = await job_store.get(job_id)
         job.playbook = entry.playbook
         job.status = PlaybookStatus.COMPLETED
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         job.error = None
     except JobNotFoundError:
         await job_store.create(job_id, normalized)
@@ -77,9 +77,7 @@ async def load_demo_playbook(
 
     if entry.trace_log:
         job = await job_store.get(job_id)
-        job.trace_events = [
-            event.model_dump(mode="json") for event in entry.trace_log.events
-        ]
+        job.trace_events = [event.model_dump(mode="json") for event in entry.trace_log.events]
 
     return DemoLoadResponse(
         job_id=job_id,

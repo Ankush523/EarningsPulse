@@ -7,11 +7,7 @@ cd "$ROOT"
 
 echo "==> Backend tests (pytest)"
 cd backend
-if [[ -d .venv ]]; then
-  # shellcheck disable=SC1091
-  source .venv/bin/activate
-fi
-python -m pytest tests/ -q
+uv run --frozen python -m pytest tests/ -q
 cd "$ROOT"
 
 echo "==> Frontend production build"

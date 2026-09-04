@@ -214,9 +214,7 @@ class PlaybookOrchestrator:
         """Run Research and Reaction agents in parallel."""
         research_task = self._research.run(state)
         reaction_task = self._reaction.run(state)
-        research_result, reaction_result = await asyncio.gather(
-            research_task, reaction_task
-        )
+        research_result, reaction_result = await asyncio.gather(research_task, reaction_task)
         return _merge_updates(research_result, reaction_result)
 
     async def _forecast_node(self, state: AgentState) -> dict[str, Any]:

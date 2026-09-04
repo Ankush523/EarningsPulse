@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ class DemoCacheEntry(BaseModel):
     job_id: str
     playbook: Playbook
     trace_log: TraceLog | None = None
-    seeded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    seeded_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     source: str = "live"
 
 

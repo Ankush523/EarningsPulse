@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import get_settings
 from app.api.errors import register_exception_handlers
 from app.api.routes import calendar, demo, health, playbook, trace
+from app.config import get_settings
 
 
 @asynccontextmanager

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.playbook import Playbook, PlaybookStatus
@@ -21,7 +21,7 @@ class PlaybookJob:
     error: str | None = None
     trace_events: list[dict[str, Any]] = field(default_factory=list)
     event_queue: asyncio.Queue[dict[str, Any]] = field(default_factory=asyncio.Queue)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
     earnings_date: str | None = None
     prism_synced: bool = False
@@ -76,7 +76,7 @@ class JobStore:
         if error is not None:
             job.error = error
         if status in {PlaybookStatus.COMPLETED, PlaybookStatus.FAILED}:
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
         return job
 
     async def mark_prism_synced(self, job_id: str, synced: bool = True) -> None:

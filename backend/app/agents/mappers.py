@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.models.analysis import PeerMapResult, ReactionPatternAnalysis
 from app.models.playbook import (
@@ -25,9 +25,7 @@ def reaction_analysis_to_summary(
     """Map ReactionPatternAnalysis to playbook ReactionAnalysisSummary."""
     historical = [
         HistoricalReaction(
-            earnings_date=datetime.combine(
-                event.earnings_date, datetime.min.time(), tzinfo=timezone.utc
-            ),
+            earnings_date=datetime.combine(event.earnings_date, datetime.min.time(), tzinfo=UTC),
             report_outcome=event.report_outcome,
             initial_move_pct=event.initial_move_pct,
             dip_pct=event.dip_pct,

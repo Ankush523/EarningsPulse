@@ -34,8 +34,8 @@ class LLMClient:
             return fallback
 
         try:
-            from langchain_openai import ChatOpenAI
             from langchain_core.messages import HumanMessage, SystemMessage
+            from langchain_openai import ChatOpenAI
 
             llm = ChatOpenAI(
                 model=self._settings.llm_model,

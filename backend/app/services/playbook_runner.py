@@ -86,16 +86,12 @@ class PlaybookJobRunner:
             if completed_event["event_id"] not in seen_trace_ids:
                 seen_trace_ids.add(completed_event["event_id"])
                 await self._store.append_trace(job_id, completed_event)
-                await self._store.publish_event(
-                    job_id, trace_event_to_sse(completed_event)
-                )
+                await self._store.publish_event(job_id, trace_event_to_sse(completed_event))
                 await self._prism.emit(completed_event)
 
             ready = playbook_ready_event(job_id, job.ticker)
             await self._store.publish_event(job_id, ready)
-            await self._store.update_status(
-                job_id, PlaybookStatus.COMPLETED, playbook=playbook
-            )
+            await self._store.update_status(job_id, PlaybookStatus.COMPLETED, playbook=playbook)
             await self._finalize_trace(job_id)
         except Exception as exc:
             logger.exception("Job %s failed: %s", job_id, exc)
@@ -112,9 +108,7 @@ class PlaybookJobRunner:
             await self._store.publish_event(job_id, trace_event_to_sse(fail_event))
             await self._prism.emit(fail_event)
             await self._store.publish_event(job_id, error_event(job_id, str(exc)))
-            await self._store.update_status(
-                job_id, PlaybookStatus.FAILED, error=str(exc)
-            )
+            await self._store.update_status(job_id, PlaybookStatus.FAILED, error=str(exc))
             await self._finalize_trace(job_id)
 
     async def _finalize_trace(self, job_id: str) -> None:

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from app.api.deps import get_earnings_service
-from app.models.data import EarningsCalendarResponse, EarningsEvent
+from app.models.data import EarningsCalendarResponse
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.errors import ConfigurationError
 

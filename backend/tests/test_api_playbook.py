@@ -1,11 +1,9 @@
 """API route tests for playbook and calendar endpoints."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from app.agents.orchestrator import PlaybookOrchestrator
 from app.api.deps import get_job_runner
 from app.main import app
@@ -21,6 +19,7 @@ from app.models.playbook import (
 )
 from app.services.job_store import job_store
 from app.services.playbook_runner import PlaybookJobRunner
+from httpx import ASGITransport, AsyncClient
 
 
 def _sample_playbook(job_id: str = "job_test") -> Playbook:
@@ -142,7 +141,7 @@ async def test_stream_playbook_events(client):
             "event_type": "agent_started",
             "message": "Research started",
             "agent_name": "research",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         },
     )
     job.status = PlaybookStatus.COMPLETED

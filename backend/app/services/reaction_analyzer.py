@@ -21,7 +21,8 @@ ARCHETYPE_DESCRIPTIONS: dict[ReactionArchetype, str] = {
         "Positive reactions tend to rally immediately with limited initial dip."
     ),
     ReactionArchetype.SELL_THE_NEWS: (
-        "Positive reports often fade after an initial pop — avoid chasing extended after-hours highs."
+        "Positive reports often fade after an initial pop — "
+        "avoid chasing extended after-hours highs."
     ),
     ReactionArchetype.GAP_AND_HOLD: (
         "Negative reactions tend to gap down and stay under pressure."
@@ -66,9 +67,7 @@ class ReactionAnalyzer:
     ) -> ReactionPatternAnalysis:
         """Fetch historical earnings and analyze reaction patterns for a ticker."""
         normalized = ticker.upper().strip()
-        cache_key = TTLCache.make_key(
-            "reaction_analysis", normalized, limit, window_days
-        )
+        cache_key = TTLCache.make_key("reaction_analysis", normalized, limit, window_days)
         if use_cache:
             cached = self._cache.get(cache_key)
             if cached is not None:
@@ -223,9 +222,7 @@ class ReactionAnalyzer:
             return ReactionPatternAnalysis(
                 ticker=ticker.upper().strip(),
                 archetype=ReactionArchetype.INSUFFICIENT_DATA,
-                archetype_description=ARCHETYPE_DESCRIPTIONS[
-                    ReactionArchetype.INSUFFICIENT_DATA
-                ],
+                archetype_description=ARCHETYPE_DESCRIPTIONS[ReactionArchetype.INSUFFICIENT_DATA],
                 events_analyzed=0,
                 confidence=ConfidenceTier.LOW,
             )
@@ -237,15 +234,10 @@ class ReactionAnalyzer:
 
         archetype = self._select_dominant_archetype(events, pattern_counts)
         positive_events = [
-            e
-            for e in events
-            if e.report_outcome in POSITIVE_OUTCOMES
-            or e.initial_move_pct > 0
+            e for e in events if e.report_outcome in POSITIVE_OUTCOMES or e.initial_move_pct > 0
         ]
         dipped_positive = [
-            e
-            for e in positive_events
-            if e.dip_pct is not None and e.dip_pct <= DIP_THRESHOLD_PCT
+            e for e in positive_events if e.dip_pct is not None and e.dip_pct <= DIP_THRESHOLD_PCT
         ]
 
         dip_values = [e.dip_pct for e in dipped_positive if e.dip_pct is not None]
@@ -258,9 +250,7 @@ class ReactionAnalyzer:
         avg_dip = round(mean(dip_values), 4) if dip_values else None
         avg_recovery = round(mean(recovery_values), 4) if recovery_values else None
         dip_frequency = (
-            round(len(dipped_positive) / len(positive_events), 4)
-            if positive_events
-            else None
+            round(len(dipped_positive) / len(positive_events), 4) if positive_events else None
         )
 
         expected_dip_zone = None

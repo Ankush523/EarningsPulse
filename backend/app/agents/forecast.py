@@ -63,9 +63,10 @@ class ForecastAgent:
         ]
 
         fallback = _heuristic_forecast(research)
-        headlines = "\n".join(
-            f"- {n.get('title', '')}" for n in research.get("recent_news", [])[:5]
-        ) or "- No recent headlines"
+        headlines = (
+            "\n".join(f"- {n.get('title', '')}" for n in research.get("recent_news", [])[:5])
+            or "- No recent headlines"
+        )
 
         user_prompt = FORECAST_USER_TEMPLATE.format(
             ticker=ticker,
@@ -124,7 +125,10 @@ def _heuristic_forecast(research: ResearchBundle) -> dict[str, Any]:
 
     if pos > neg + 1:
         beat, inline, miss = 0.55, 0.28, 0.17
-        bull = f"{ticker} likely benefits from positive sector momentum and recent constructive headlines."
+        bull = (
+            f"{ticker} likely benefits from positive sector momentum "
+            "and recent constructive headlines."
+        )
     elif neg > pos + 1:
         beat, inline, miss = 0.22, 0.33, 0.45
         bull = f"{ticker} could still beat lowered expectations if guidance stabilizes."
@@ -168,7 +172,11 @@ def _normalize_forecast(result: dict[str, Any], fallback: dict[str, Any]) -> For
     miss = float(result.get("miss_probability", fallback["miss_probability"]))
     total = beat + inline + miss
     if total <= 0:
-        beat, inline, miss = fallback["beat_probability"], fallback["inline_probability"], fallback["miss_probability"]
+        beat, inline, miss = (
+            fallback["beat_probability"],
+            fallback["inline_probability"],
+            fallback["miss_probability"],
+        )
     else:
         beat, inline, miss = beat / total, inline / total, miss / total
 

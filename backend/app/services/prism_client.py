@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from app.config import Settings, get_settings
-from app.models.trace import TraceEvent, TraceEventType, TraceLog
+from app.models.trace import TraceEvent, TraceLog
 from app.services.trace_store import trace_event_to_prism_step
 
 logger = logging.getLogger(__name__)
@@ -55,9 +55,7 @@ class PrismClient:
             )
             logger.info("PRISM SDK initialized (host=%s)", self._settings.prism_host)
         except ImportError:
-            logger.info(
-                "prismtrace-sdk not installed — using REST fallback for PRISM sync"
-            )
+            logger.info("prismtrace-sdk not installed — using REST fallback for PRISM sync")
         except Exception as exc:
             logger.warning("PRISM SDK initialization failed: %s", exc)
             self._local_mode = True
@@ -158,9 +156,7 @@ class PrismClient:
         }
         response = await client.post(url, json=payload, headers=headers, timeout=30.0)
         if response.status_code >= 400:
-            raise RuntimeError(
-                f"PRISM API returned {response.status_code}: {response.text[:500]}"
-            )
+            raise RuntimeError(f"PRISM API returned {response.status_code}: {response.text[:500]}")
 
     async def _get_http_client(self) -> httpx.AsyncClient:
         if self._http is None or self._http.is_closed:

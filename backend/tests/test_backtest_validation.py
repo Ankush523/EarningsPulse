@@ -4,7 +4,6 @@ from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from app.models.analysis import PeerMapResult
 from app.models.data import EarningsEvent, EarningsWindowPrices, HistoricalEarningsResponse
 from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome

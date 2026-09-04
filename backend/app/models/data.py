@@ -1,6 +1,6 @@
 """Pydantic schemas for data layer service responses."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -119,6 +119,4 @@ class EdgarFilingsResponse(BaseModel):
     latest_quarterly: EdgarFiling | None = None
     latest_annual: EdgarFiling | None = None
     recent_filings: list[EdgarFiling] = Field(default_factory=list)
-    fetched_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
 import pytest
-
 from app.config import Settings
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.errors import ConfigurationError, DataNotFoundError
@@ -103,11 +102,14 @@ async def test_get_historical_earnings_yfinance_fallback(settings, cache):
 
     service = EarningsCalendarService(settings=settings, cache=cache)
 
-    with patch.object(
-        service,
-        "_fetch_historical_from_finnhub",
-        side_effect=DataNotFoundError("missing", service="finnhub"),
-    ), patch("app.services.earnings_calendar.yf.Ticker", return_value=mock_ticker):
+    with (
+        patch.object(
+            service,
+            "_fetch_historical_from_finnhub",
+            side_effect=DataNotFoundError("missing", service="finnhub"),
+        ),
+        patch("app.services.earnings_calendar.yf.Ticker", return_value=mock_ticker),
+    ):
         result = await service.get_historical_earnings("AAPL", limit=8)
 
     assert result.source == "yfinance"
