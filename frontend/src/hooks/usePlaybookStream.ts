@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { fetchPlaybookJob, getPlaybookStreamUrl } from "@/lib/api";
+import { fetchPlaybookJob, fetchTraceLog, getPlaybookStreamUrl } from "@/lib/api";
 import type { JobStatus, Playbook, SSEEvent, TraceEvent } from "@/lib/types";
 
 export type StreamStatus = "idle" | "connecting" | "streaming" | "completed" | "failed";
@@ -63,56 +63,37 @@ function mapSseTypeToTraceType(
   }
 }
 
+function isTerminalJob(status: JobStatus["status"]): boolean {
+  return status === "completed" || status === "failed";
+}
+
 export function usePlaybookStream(jobId: string): UsePlaybookStreamResult {
-  const [status, setStatus] = useState<StreamStatus>("idle");
+  const [status, setStatus] = useState<StreamStatus>("connecting");
   const [events, setEvents] = useState<SSEEvent[]>([]);
   const [traceEvents, setTraceEvents] = useState<TraceEvent[]>([]);
   const [playbook, setPlaybook] = useState<Playbook | null>(null);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const sourceRef = useRef<EventSource | null>(null);
-  const completedRef = useRef(false);
+  const [reconnectToken, setReconnectToken] = useState(0);
 
-  const loadJob = useCallback(async () => {
-    try {
-      const jobStatus = await fetchPlaybookJob(jobId);
-      setJob(jobStatus);
-      if (jobStatus.playbook) {
-        setPlaybook(jobStatus.playbook);
-      }
-      if (jobStatus.status === "completed") {
-        setStatus("completed");
-        completedRef.current = true;
-      } else if (jobStatus.status === "failed") {
-        setStatus("failed");
-        setError(jobStatus.error ?? "Playbook generation failed");
-        completedRef.current = true;
-      }
-      return jobStatus;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load job status";
-      setError(message);
-      setStatus("failed");
-      return null;
-    }
-  }, [jobId]);
-
-  const connect = useCallback(() => {
-    if (completedRef.current) return;
-
-    sourceRef.current?.close();
-    setStatus("connecting");
-    setError(null);
-
+  useEffect(() => {
+    let cancelled = false;
+    let finished = false;
+    let allowStreamStatus = false;
     const source = new EventSource(getPlaybookStreamUrl(jobId));
-    sourceRef.current = source;
+
+    const closeSource = () => {
+      finished = true;
+      source.close();
+    };
 
     source.onopen = () => {
+      if (cancelled || finished || !allowStreamStatus) return;
       setStatus("streaming");
     };
 
     source.onmessage = (message) => {
+      if (cancelled || finished) return;
       try {
         const parsed: SSEEvent = JSON.parse(message.data);
         if (parsed.type === "heartbeat") return;
@@ -122,25 +103,42 @@ export function usePlaybookStream(jobId: string): UsePlaybookStreamResult {
         const trace = extractTraceEvent(parsed);
         if (trace) {
           setTraceEvents((prev) => {
-            const exists = prev.some((e) => e.event_id === trace.event_id);
-            if (exists) return prev;
+            if (prev.some((e) => e.event_id === trace.event_id)) return prev;
             return [...prev, trace];
           });
         }
 
         if (parsed.type === "playbook_ready") {
-          completedRef.current = true;
+          closeSource();
           setStatus("completed");
-          source.close();
-          void loadJob();
+          void fetchPlaybookJob(jobId)
+            .then((jobStatus) => {
+              if (cancelled) return;
+              setJob(jobStatus);
+              if (jobStatus.playbook) {
+                setPlaybook(jobStatus.playbook);
+              }
+            })
+            .catch(() => {
+              /* playbook_ready already marked the run complete */
+            });
         }
 
         if (parsed.type === "error") {
-          completedRef.current = true;
+          closeSource();
           setStatus("failed");
           setError(parsed.error ?? parsed.message ?? "Generation failed");
-          source.close();
-          void loadJob();
+          void fetchPlaybookJob(jobId)
+            .then((jobStatus) => {
+              if (cancelled) return;
+              setJob(jobStatus);
+              if (jobStatus.playbook) {
+                setPlaybook(jobStatus.playbook);
+              }
+            })
+            .catch(() => {
+              /* stream error already recorded */
+            });
         }
       } catch {
         // Ignore malformed SSE payloads
@@ -148,52 +146,87 @@ export function usePlaybookStream(jobId: string): UsePlaybookStreamResult {
     };
 
     source.onerror = () => {
-      source.close();
-      if (!completedRef.current) {
-        void loadJob().then((jobStatus) => {
-          if (jobStatus?.status === "completed") {
-            completedRef.current = true;
+      if (cancelled || finished) return;
+      closeSource();
+      void fetchPlaybookJob(jobId)
+        .then((jobStatus) => {
+          if (cancelled) return;
+          setJob(jobStatus);
+          if (jobStatus.playbook) {
+            setPlaybook(jobStatus.playbook);
+          }
+          if (jobStatus.status === "completed") {
             setStatus("completed");
-          } else if (jobStatus?.status === "failed") {
-            completedRef.current = true;
+          } else if (jobStatus.status === "failed") {
             setStatus("failed");
-          } else if (!completedRef.current) {
+            setError(jobStatus.error ?? "Playbook generation failed");
+          } else {
             setError("Lost connection to agent stream");
             setStatus("failed");
           }
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          setError(
+            err instanceof Error ? err.message : "Lost connection to agent stream"
+          );
+          setStatus("failed");
         });
-      }
     };
-  }, [jobId, loadJob]);
 
-  useEffect(() => {
-    completedRef.current = false;
-    setEvents([]);
-    setTraceEvents([]);
-    setPlaybook(null);
-    setJob(null);
-    setError(null);
-
-    void loadJob().then((jobStatus) => {
-      if (jobStatus?.status === "completed" || jobStatus?.status === "failed") {
-        return;
-      }
-      connect();
-    });
+    void fetchPlaybookJob(jobId)
+      .then((jobStatus) => {
+        if (cancelled) return;
+        setJob(jobStatus);
+        if (jobStatus.playbook) {
+          setPlaybook(jobStatus.playbook);
+        }
+        if (isTerminalJob(jobStatus.status)) {
+          if (jobStatus.status === "failed") {
+            setStatus("failed");
+            setError(jobStatus.error ?? "Playbook generation failed");
+          } else {
+            setStatus("completed");
+          }
+          closeSource();
+          void fetchTraceLog(jobId)
+            .then((log) => {
+              if (cancelled) return;
+              setTraceEvents(log.events);
+            })
+            .catch(() => {
+              /* completed jobs can still render without a stored trace */
+            });
+          return;
+        }
+        allowStreamStatus = true;
+        if (source.readyState === EventSource.OPEN) {
+          setStatus("streaming");
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        closeSource();
+        setError(
+          err instanceof Error ? err.message : "Failed to load job status"
+        );
+        setStatus("failed");
+      });
 
     return () => {
-      sourceRef.current?.close();
+      cancelled = true;
+      source.close();
     };
-  }, [connect, jobId, loadJob]);
+  }, [jobId, reconnectToken]);
 
-  const reconnect = useCallback(() => {
-    completedRef.current = false;
+  const reconnect = () => {
     setEvents([]);
     setTraceEvents([]);
     setPlaybook(null);
     setError(null);
-    connect();
-  }, [connect]);
+    setStatus("connecting");
+    setReconnectToken((token) => token + 1);
+  };
 
   return {
     status,

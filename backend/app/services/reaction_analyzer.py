@@ -7,7 +7,7 @@ from statistics import mean, median
 from typing import Any
 
 from app.models.analysis import EarningsReactionEvent, ReactionPatternAnalysis
-from app.models.data import EarningsEvent, EarningsWindowPrices, OHLCVBar
+from app.models.data import EarningsEvent, OHLCVBar
 from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.price_data import PriceDataService
@@ -123,7 +123,7 @@ class ReactionAnalyzer:
         except Exception:
             return None
 
-        outcome = self._infer_report_outcome(earnings_event, window)
+        outcome = self._infer_report_outcome(earnings_event)
         return self.analyze_window(
             ticker,
             earnings_event.report_date,
@@ -241,7 +241,7 @@ class ReactionAnalyzer:
             key = event.pattern.value
             pattern_counts[key] = pattern_counts.get(key, 0) + 1
 
-        archetype = self._select_dominant_archetype(events, pattern_counts)
+        archetype = self._select_dominant_archetype(events)
         positive_events = [
             e for e in events if e.report_outcome in POSITIVE_OUTCOMES or e.initial_move_pct > 0
         ]
@@ -270,10 +270,7 @@ class ReactionAnalyzer:
                 "median": round(median(dip_values), 4),
             }
 
-        # Historical realized move % (average absolute initial move on earnings)
-        historical_move_pct = (
-            round(mean(abs(event.initial_move_pct) for event in events), 2) if events else None
-        )
+        historical_move_pct = round(mean(abs(event.initial_move_pct) for event in events), 2)
 
         implied_move_pct: float | None = None
         volatility_assessment: str | None = None
@@ -340,7 +337,6 @@ class ReactionAnalyzer:
     @staticmethod
     def _select_dominant_archetype(
         events: list[EarningsReactionEvent],
-        pattern_counts: dict[str, int],
     ) -> ReactionArchetype:
         """Pick dominant archetype with recency weighting."""
         if not events:
@@ -358,7 +354,6 @@ class ReactionAnalyzer:
     @staticmethod
     def _infer_report_outcome(
         earnings_event: EarningsEvent,
-        window: EarningsWindowPrices,
     ) -> ReportOutcome | None:
         """Infer beat/miss/inline from EPS data when available."""
         estimate = earnings_event.eps_estimate

@@ -7,11 +7,10 @@ from typing import Any
 
 from app.agents.mappers import peer_map_to_spillover
 from app.agents.trace_utils import make_trace_event, trace_to_dict, traced_tool
-from app.models.agent_state import AgentState, ResearchBundle
+from app.models.agent_state import AgentState
 from app.models.playbook import ConfidenceTier, SpilloverMap
 from app.models.trace import TraceEventType
 from app.services.peer_map import PeerMapService
-from app.services.tavily_client import TavilyClient
 
 AGENT_NAME = "spillover"
 
@@ -19,18 +18,12 @@ AGENT_NAME = "spillover"
 class SpilloverAgent:
     """Map peer spillover for the reporting ticker."""
 
-    def __init__(
-        self,
-        peer_map: PeerMapService | None = None,
-        tavily: TavilyClient | None = None,
-    ):
+    def __init__(self, peer_map: PeerMapService | None = None):
         self._peer_map = peer_map or PeerMapService()
-        self._tavily = tavily or TavilyClient()
 
     async def run(self, state: AgentState) -> dict[str, Any]:
         job_id = state["job_id"]
         ticker = state["ticker"].upper()
-        research: ResearchBundle = state.get("research") or {}
         started = time.perf_counter()
 
         trace_events: list[dict[str, Any]] = [
@@ -52,22 +45,6 @@ class SpilloverAgent:
                 peer_result = await self._peer_map.build_peer_map(ticker, max_peers=10)
                 trace_events.extend(trace_to_dict(e) for e in tool_events)
             spillover: SpilloverMap = peer_map_to_spillover(peer_result)
-
-            # Enrich with sector context if Tavily available
-            sector = research.get("sector") or peer_result.sector
-            if sector:
-                try:
-                    async with traced_tool(
-                        job_id,
-                        AGENT_NAME,
-                        "tavily_peer_context",
-                        {"ticker": ticker, "sector": sector},
-                    ) as tool_events:
-                        await self._tavily.search_sector_context(ticker, sector)
-                        trace_events.extend(trace_to_dict(e) for e in tool_events)
-                except Exception as exc:
-                    errors.append(f"tavily_peer_context: {exc}")
-
         except Exception as exc:
             errors.append(f"peer_map: {exc}")
             spillover = SpilloverMap(

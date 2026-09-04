@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { formatRelationship } from "@/lib/format";
 import type { PeerSpillover } from "@/lib/types";
@@ -15,18 +15,16 @@ export function PeerSpilloverTable({ peers }: PeerSpilloverTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("correlation_score");
   const [sortAsc, setSortAsc] = useState(false);
 
-  const sorted = useMemo(() => {
-    return [...peers].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortAsc ? aVal - bVal : bVal - aVal;
-      }
-      return sortAsc
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal));
-    });
-  }, [peers, sortAsc, sortKey]);
+  const sorted = [...peers].sort((a, b) => {
+    const aVal = a[sortKey];
+    const bVal = b[sortKey];
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortAsc ? aVal - bVal : bVal - aVal;
+    }
+    return sortAsc
+      ? String(aVal).localeCompare(String(bVal))
+      : String(bVal).localeCompare(String(aVal));
+  });
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {

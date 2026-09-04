@@ -21,6 +21,53 @@ interface ExportToolbarProps {
   traceLog?: TraceLog | null;
 }
 
+type ExportKind = "json" | "bundle";
+
+function exportUrl(kind: ExportKind, jobId: string): string {
+  if (kind === "json") {
+    return getPlaybookJsonExportUrl(jobId);
+  }
+  return getPlaybookBundleExportUrl(jobId);
+}
+
+function fallbackFilename(kind: ExportKind, ticker: string, jobId: string): string {
+  const suffix = kind === "bundle" ? "-bundle" : "";
+  return `earningspulse-${ticker.toLowerCase()}-${jobId}${suffix}.json`;
+}
+
+function saveLocalFallback(
+  kind: ExportKind,
+  jobId: string,
+  ticker: string,
+  playbook: Playbook,
+  traceLog?: TraceLog | null
+): void {
+  const filename = fallbackFilename(kind, ticker, jobId);
+  if (kind === "json") {
+    downloadJson(filename, playbook);
+    return;
+  }
+  downloadJson(
+    filename,
+    buildClientSideBundle(jobId, ticker, playbook, traceLog)
+  );
+}
+
+async function downloadServerExport(
+  kind: ExportKind,
+  jobId: string,
+  ticker: string
+): Promise<void> {
+  const response = await fetch(exportUrl(kind, jobId));
+  if (!response.ok) {
+    throw new Error(`Export failed (${response.status})`);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = disposition.match(/filename="(.+)"/);
+  downloadBlob(match?.[1] ?? fallbackFilename(kind, ticker, jobId), blob);
+}
+
 export function ExportToolbar({
   jobId,
   ticker,
@@ -30,46 +77,21 @@ export function ExportToolbar({
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleServerExport = async (kind: "json" | "bundle") => {
+  const handleServerExport = (kind: ExportKind) => {
     setLoading(kind);
     setError(null);
-    try {
-      const url =
-        kind === "json"
-          ? getPlaybookJsonExportUrl(jobId)
-          : getPlaybookBundleExportUrl(jobId);
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Export failed (${response.status})`);
-      }
-      const blob = await response.blob();
-      const disposition = response.headers.get("content-disposition") ?? "";
-      const match = disposition.match(/filename="(.+)"/);
-      const filename =
-        match?.[1] ??
-        `earningspulse-${ticker.toLowerCase()}-${jobId}${kind === "bundle" ? "-bundle" : ""}.json`;
-
-      downloadBlob(filename, blob);
-    } catch (err) {
-      if (kind === "json") {
-        downloadJson(
-          `earningspulse-${ticker.toLowerCase()}-${jobId}.json`,
-          playbook
+    void downloadServerExport(kind, jobId, ticker)
+      .catch((err: unknown) => {
+        saveLocalFallback(kind, jobId, ticker, playbook, traceLog);
+        setError(
+          err instanceof Error
+            ? `${err.message} — saved locally instead`
+            : "Saved locally instead"
         );
-      } else {
-        downloadJson(
-          `earningspulse-${ticker.toLowerCase()}-${jobId}-bundle.json`,
-          buildClientSideBundle(jobId, ticker, playbook, traceLog)
-        );
-      }
-      setError(
-        err instanceof Error
-          ? `${err.message} — saved locally instead`
-          : "Saved locally instead"
-      );
-    } finally {
-      setLoading(null);
-    }
+      })
+      .finally(() => {
+        setLoading(null);
+      });
   };
 
   return (

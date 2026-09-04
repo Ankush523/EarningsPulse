@@ -15,6 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f # v1.3.1
+        with:
+          mode: firewall-free
+          shims: "false"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
@@ -27,7 +33,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: uv sync --frozen --all-groups
+        run: sfw uv sync --frozen --all-groups
 
       - name: Ruff lint
         run: uv run --frozen ruff check app tests
@@ -49,6 +55,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f # v1.3.1
+        with:
+          mode: firewall-free
+          shims: "false"
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -60,7 +72,7 @@ jobs:
           bun-version: "1.4.0"
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: sfw bun install --frozen-lockfile
 
       - name: Run property tests
         run: bun run test:property
@@ -85,6 +97,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Socket Firewall
+        uses: SocketDev/action@2d3f25590c6ed6ba11a9a14c064d962a3a04698f # v1.3.1
+        with:
+          mode: firewall-free
+          shims: "false"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
@@ -98,7 +116,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: uv sync --frozen --no-dev
+        run: sfw uv sync --frozen --no-dev
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -112,7 +130,7 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: frontend
-        run: bun install --frozen-lockfile
+        run: sfw bun install --frozen-lockfile
 
       - name: Install Playwright browsers
         working-directory: frontend
