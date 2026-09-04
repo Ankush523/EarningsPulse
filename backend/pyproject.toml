@@ -67,4 +67,7 @@ include = ["app", "tests"]
 
 [tool.deptry.per_rule_ignores]
 # uvicorn is the ASGI process. python-dotenv is loaded via pydantic-settings env_file.
+# numpy is installed transitively via pandas/yfinance.
 DEP002 = ["uvicorn", "python-dotenv"]
+DEP003 = ["numpy"]
+
