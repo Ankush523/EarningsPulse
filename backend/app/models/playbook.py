@@ -1,5 +1,7 @@
 """Pydantic schemas for the Earnings Playbook deliverable."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from enum import Enum
 
@@ -105,6 +107,49 @@ class HistoricalReaction(BaseModel):
     pattern: ReactionArchetype
 
 
+class MonteCarloPercentilePoint(BaseModel):
+    """Percentile price and return at a specific day in the simulation window."""
+
+    day: int = Field(description="Trading day relative to earnings (0 = pre-earnings baseline)")
+    label: str = Field(description="Day label (e.g. T-0, T+1, T+2, T+3)")
+    p5: float = Field(description="5th percentile price")
+    p25: float = Field(description="25th percentile price")
+    p50: float = Field(description="50th percentile / median price")
+    p75: float = Field(description="75th percentile price")
+    p95: float = Field(description="95th percentile price")
+    mean: float = Field(description="Mean simulated price")
+    p5_return_pct: float
+    p25_return_pct: float
+    p50_return_pct: float
+    p75_return_pct: float
+    p95_return_pct: float
+
+
+class MonteCarloSimulation(BaseModel):
+    """Monte Carlo price path simulation output."""
+
+    ticker: str
+    num_simulations: int = Field(default=10000, description="Number of simulated trajectories")
+    window_days: int = Field(default=3, description="Simulation horizon in trading days")
+    baseline_price: float = Field(description="Pre-earnings baseline price")
+    expected_move_pct: float = Field(description="Expected earnings jump volatility %")
+    realized_daily_volatility_pct: float = Field(
+        description="Daily volatility % used for diffusion"
+    )
+    prob_positive_return: float = Field(
+        ge=0, le=100, description="Probability of positive return at horizon %"
+    )
+    prob_exceeds_implied_move: float = Field(
+        ge=0, le=100, description="Probability of exceeding implied move %"
+    )
+    var_95_pct: float = Field(description="95% Value at Risk %")
+    cvar_95_pct: float = Field(description="95% Expected Shortfall / CVaR %")
+    expected_range: dict[str, float] = Field(description="min/max expected price at window end")
+    expected_return_pct: float = Field(description="Mean expected return % across all simulations")
+    trajectories: list[MonteCarloPercentilePoint] = Field(default_factory=list)
+    summary: str = Field(description="Human-readable synthesis of simulation findings")
+
+
 class ReactionAnalysisSummary(BaseModel):
     """Section C — Price reaction scenarios and historical analysis."""
 
@@ -141,6 +186,10 @@ class ReactionAnalysisSummary(BaseModel):
         description="Summary of options implied move vs historical realized move",
     )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
+    monte_carlo: MonteCarloSimulation | None = Field(
+        default=None,
+        description="Monte Carlo post-earnings price path simulation",
+    )
     sources: list[Source] = Field(default_factory=list)
 
 

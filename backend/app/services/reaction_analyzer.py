@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
-from datetime import date
+import math
+from datetime import date, timedelta
 from statistics import mean, median
 from typing import Any
 
 from app.models.analysis import EarningsReactionEvent, ReactionPatternAnalysis
 from app.models.data import EarningsEvent, OHLCVBar
-from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome
+from app.models.playbook import (
+    ConfidenceTier,
+    MonteCarloSimulation,
+    ReactionArchetype,
+    ReportOutcome,
+)
 from app.services.earnings_calendar import EarningsCalendarService
+from app.services.monte_carlo import MonteCarloSimulator
 from app.services.price_data import PriceDataService
 from app.utils.cache import TTLCache, app_cache
 from app.utils.confidence import score_from_data_quality
@@ -57,10 +64,12 @@ class ReactionAnalyzer:
         self,
         price_service: PriceDataService | None = None,
         earnings_service: EarningsCalendarService | None = None,
+        monte_carlo_service: MonteCarloSimulator | None = None,
         cache: TTLCache | None = None,
     ):
         self._price = price_service or PriceDataService()
         self._earnings = earnings_service or EarningsCalendarService()
+        self._monte_carlo = monte_carlo_service or MonteCarloSimulator()
         self._cache = cache or app_cache
 
     async def analyze_ticker(
@@ -97,7 +106,19 @@ class ReactionAnalyzer:
                 events.append(analyzed)
 
         options_data = self._price.get_options_implied_move(normalized, use_cache=use_cache)
-        result = self.aggregate_events(normalized, events, options_data=options_data)
+        monte_carlo = self._run_monte_carlo(
+            normalized,
+            events,
+            options_data=options_data,
+            window_days=window_days,
+            use_cache=use_cache,
+        )
+        result = self.aggregate_events(
+            normalized,
+            events,
+            options_data=options_data,
+            monte_carlo=monte_carlo,
+        )
 
         if use_cache:
             self._cache.set(cache_key, result, ttl_seconds=3600)
@@ -219,12 +240,111 @@ class ReactionAnalyzer:
 
         return ReactionArchetype.GAP_AND_HOLD
 
+    def _run_monte_carlo(
+        self,
+        ticker: str,
+        events: list[EarningsReactionEvent],
+        *,
+        options_data: dict[str, Any] | None = None,
+        window_days: int = 3,
+        use_cache: bool = True,
+    ) -> MonteCarloSimulation | None:
+        """Run Monte Carlo post-earnings simulation if baseline price is available."""
+        try:
+            baseline_price: float | None = None
+            if options_data and options_data.get("underlying_price"):
+                baseline_price = float(options_data["underlying_price"])
+
+            recent_bars: list[OHLCVBar] = []
+            try:
+                today = date.today()
+                recent_bars = self._price.fetch_ohlcv(
+                    ticker,
+                    today - timedelta(days=60),
+                    today,
+                    use_cache=use_cache,
+                )
+            except Exception:
+                pass
+
+            if not baseline_price and recent_bars:
+                baseline_price = recent_bars[-1].close
+            elif not baseline_price and events and events[0].baseline_price:
+                baseline_price = events[0].baseline_price
+
+            if baseline_price is None or baseline_price <= 0:
+                return None
+
+            realized_daily_vol_pct: float | None = None
+            if len(recent_bars) >= 5:
+                closes = [b.close for b in recent_bars if b.close > 0]
+                if len(closes) >= 5:
+                    log_rets = [
+                        math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))
+                    ]
+                    mean_ret = sum(log_rets) / len(log_rets)
+                    variance = sum((r - mean_ret) ** 2 for r in log_rets) / (len(log_rets) - 1)
+                    realized_daily_vol_pct = round(math.sqrt(variance) * 100.0, 2)
+
+            beat_prob = 0.50
+            inline_prob = 0.30
+            miss_prob = 0.20
+            if events:
+                beats = sum(
+                    1
+                    for e in events
+                    if e.report_outcome == ReportOutcome.BEAT or e.initial_move_pct > 1.0
+                )
+                inlines = sum(
+                    1
+                    for e in events
+                    if e.report_outcome == ReportOutcome.INLINE
+                    or abs(e.initial_move_pct) <= 1.0
+                )
+                misses = sum(
+                    1
+                    for e in events
+                    if e.report_outcome == ReportOutcome.MISS or e.initial_move_pct < -1.0
+                )
+                total = len(events)
+                if total > 0:
+                    b_p = max(0.1, beats / total)
+                    i_p = max(0.1, inlines / total)
+                    m_p = max(0.1, misses / total)
+                    s = b_p + i_p + m_p
+                    beat_prob = b_p / s
+                    inline_prob = i_p / s
+                    miss_prob = m_p / s
+
+            raw_implied = options_data.get("implied_move_pct") if options_data else None
+            implied_pct = float(raw_implied) if isinstance(raw_implied, (int, float)) else None
+            hist_move = (
+                round(mean(abs(event.initial_move_pct) for event in events), 2)
+                if events
+                else None
+            )
+
+            return self._monte_carlo.simulate(
+                ticker=ticker,
+                baseline_price=baseline_price,
+                window_days=window_days,
+                implied_move_pct=implied_pct,
+                historical_move_pct=hist_move,
+                realized_daily_vol_pct=realized_daily_vol_pct,
+                beat_prob=beat_prob,
+                inline_prob=inline_prob,
+                miss_prob=miss_prob,
+            )
+        except Exception:
+            return None
+
     def aggregate_events(
         self,
         ticker: str,
         events: list[EarningsReactionEvent],
         *,
         options_data: dict[str, Any] | None = None,
+        monte_carlo: MonteCarloSimulation | None = None,
     ) -> ReactionPatternAnalysis:
         """Aggregate per-event reactions into a ticker-level pattern analysis."""
         if not events:
@@ -234,6 +354,7 @@ class ReactionAnalyzer:
                 archetype_description=ARCHETYPE_DESCRIPTIONS[ReactionArchetype.INSUFFICIENT_DATA],
                 events_analyzed=0,
                 confidence=ConfidenceTier.LOW,
+                monte_carlo=monte_carlo,
             )
 
         pattern_counts: dict[str, int] = {}
@@ -332,6 +453,7 @@ class ReactionAnalyzer:
             volatility_assessment=volatility_assessment,
             options_summary=options_summary,
             confidence=confidence,
+            monte_carlo=monte_carlo,
         )
 
     @staticmethod

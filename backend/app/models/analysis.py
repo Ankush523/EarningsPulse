@@ -4,7 +4,14 @@ from datetime import UTC, date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.models.playbook import ConfidenceTier, PeerRelationship, ReactionArchetype, ReportOutcome
+from app.models.playbook import (
+    ConfidenceTier,
+    MonteCarloPercentilePoint,
+    MonteCarloSimulation,
+    PeerRelationship,
+    ReactionArchetype,
+    ReportOutcome,
+)
 
 
 class EarningsReactionEvent(BaseModel):
@@ -62,6 +69,10 @@ class ReactionPatternAnalysis(BaseModel):
         description="Summary of options implied move vs historical realized move",
     )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
+    monte_carlo: MonteCarloSimulation | None = Field(
+        default=None,
+        description="Monte Carlo post-earnings price path simulation",
+    )
     analyzed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

@@ -54,6 +54,7 @@ def reaction_analysis_to_summary(
         volatility_assessment=analysis.volatility_assessment,
         options_summary=analysis.options_summary,
         confidence=analysis.confidence,
+        monte_carlo=analysis.monte_carlo,
         sources=[
             Source(
                 title="Historical price data",

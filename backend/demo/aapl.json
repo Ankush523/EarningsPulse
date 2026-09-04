@@ -106,6 +106,86 @@
       "volatility_assessment": "OVERPRICED",
       "options_summary": "Options market implies ±4.2% move vs. ±3.1% historical avg move (volatility overpriced).",
       "confidence": "medium",
+      "monte_carlo": {
+        "ticker": "AAPL",
+        "num_simulations": 10000,
+        "window_days": 3,
+        "baseline_price": 224.23,
+        "expected_move_pct": 4.2,
+        "realized_daily_volatility_pct": 2.42,
+        "prob_positive_return": 57.6,
+        "prob_exceeds_implied_move": 37.2,
+        "var_95_pct": -6.81,
+        "cvar_95_pct": -8.72,
+        "expected_range": {
+          "min": 208.96,
+          "max": 243.21
+        },
+        "expected_return_pct": 0.9,
+        "trajectories": [
+          {
+            "day": 0,
+            "label": "T-0 (Report)",
+            "p5": 224.23,
+            "p25": 224.23,
+            "p50": 224.23,
+            "p75": 224.23,
+            "p95": 224.23,
+            "mean": 224.23,
+            "p5_return_pct": 0.0,
+            "p25_return_pct": 0.0,
+            "p50_return_pct": 0.0,
+            "p75_return_pct": 0.0,
+            "p95_return_pct": 0.0
+          },
+          {
+            "day": 1,
+            "label": "T+1",
+            "p5": 212.94,
+            "p25": 221.99,
+            "p50": 226.87,
+            "p75": 231.14,
+            "p95": 236.48,
+            "mean": 226.17,
+            "p5_return_pct": -5.04,
+            "p25_return_pct": -1.0,
+            "p50_return_pct": 1.18,
+            "p75_return_pct": 3.08,
+            "p95_return_pct": 5.46
+          },
+          {
+            "day": 2,
+            "label": "T+2",
+            "p5": 211.22,
+            "p25": 220.38,
+            "p50": 226.55,
+            "p75": 232.4,
+            "p95": 240.35,
+            "mean": 226.28,
+            "p5_return_pct": -5.8,
+            "p25_return_pct": -1.72,
+            "p50_return_pct": 1.03,
+            "p75_return_pct": 3.64,
+            "p95_return_pct": 7.19
+          },
+          {
+            "day": 3,
+            "label": "T+3",
+            "p5": 208.96,
+            "p25": 219.29,
+            "p50": 226.31,
+            "p75": 233.28,
+            "p95": 243.21,
+            "mean": 226.24,
+            "p5_return_pct": -6.81,
+            "p25_return_pct": -2.2,
+            "p50_return_pct": 0.93,
+            "p75_return_pct": 4.03,
+            "p95_return_pct": 8.46
+          }
+        ],
+        "summary": "Across 10,000 simulated post-earnings paths over 3 sessions, the median price settles at $226.31 (+0.9%). Win probability is 57.6%, with a 90% confidence corridor ranging from $208.96 (-6.8%) to $243.21 (+8.5%). 95% Value-at-Risk (VaR) is -6.8% (CVaR -8.7%)."
+      },
       "sources": []
     },
     "spillover_map": {

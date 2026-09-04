@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
+import { MonteCarloChart } from "@/components/MonteCarloChart";
 import { PeerSpilloverTable } from "@/components/PeerSpilloverTable";
 import { ReactionChart } from "@/components/ReactionChart";
 import { ScenarioTree } from "@/components/ScenarioTree";
@@ -194,6 +195,20 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
                 )}
               </p>
             )}
+          </div>
+        )}
+
+        {reaction.monte_carlo && (
+          <div className="mt-10 border-t border-rule-soft pt-6">
+            <h3 className="text-[1.15rem] font-medium">
+              Monte Carlo post-earnings simulation
+            </h3>
+            <div className="mt-4">
+              <MonteCarloChart
+                simulation={reaction.monte_carlo}
+                ticker={summary.ticker}
+              />
+            </div>
           </div>
         )}
 

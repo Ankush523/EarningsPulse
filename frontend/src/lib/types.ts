@@ -75,6 +75,39 @@ export interface HistoricalReaction {
   pattern: ReactionArchetype;
 }
 
+export interface MonteCarloPercentilePoint {
+  day: number;
+  label: string;
+  p5: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p95: number;
+  mean: number;
+  p5_return_pct: number;
+  p25_return_pct: number;
+  p50_return_pct: number;
+  p75_return_pct: number;
+  p95_return_pct: number;
+}
+
+export interface MonteCarloSimulation {
+  ticker: string;
+  num_simulations: number;
+  window_days: number;
+  baseline_price: number;
+  expected_move_pct: number;
+  realized_daily_volatility_pct: number;
+  prob_positive_return: number;
+  prob_exceeds_implied_move: number;
+  var_95_pct: number;
+  cvar_95_pct: number;
+  expected_range: { min: number; max: number };
+  expected_return_pct: number;
+  trajectories: MonteCarloPercentilePoint[];
+  summary: string;
+}
+
 interface ReactionAnalysisSummary {
   archetype: ReactionArchetype;
   archetype_description: string;
@@ -89,6 +122,7 @@ interface ReactionAnalysisSummary {
   volatility_assessment?: string | null;
   options_summary?: string | null;
   confidence: ConfidenceTier;
+  monte_carlo?: MonteCarloSimulation | null;
   sources: Source[];
 }
 

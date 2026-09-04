@@ -33,7 +33,10 @@ class DemoStore:
 
     def __init__(self, settings: Settings | None = None):
         self._settings = settings or get_settings()
-        self._demo_dir = Path(self._settings.demo_cache_dir)
+        demo_dir = Path(self._settings.demo_cache_dir)
+        if not demo_dir.exists() and (Path("backend") / demo_dir).exists():
+            demo_dir = Path("backend") / demo_dir
+        self._demo_dir = demo_dir
 
     @property
     def demo_dir(self) -> Path:
