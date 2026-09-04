@@ -9,16 +9,9 @@ from typing import Any
 
 import pandas as pd
 import yfinance as yf
+from curl_cffi import requests as curl_requests
 
 logger = logging.getLogger(__name__)
-
-try:
-    from curl_cffi import requests as curl_requests
-
-    _HAS_CURL_CFFI = True
-except ImportError:  # pragma: no cover - optional dependency path
-    curl_requests = None  # type: ignore[assignment]
-    _HAS_CURL_CFFI = False
 
 _MIN_INTERVAL_SEC = 0.4
 _MAX_RETRIES = 4
@@ -35,31 +28,13 @@ def _is_rate_limit_error(exc: BaseException) -> bool:
 
 
 def get_session() -> Any:
-    """Return a shared HTTP session (curl_cffi + Chrome impersonation when available)."""
+    """Return a shared HTTP session with Chrome impersonation."""
     global _session
     if _session is not None:
         return _session
 
-    if _HAS_CURL_CFFI and curl_requests is not None:
-        _session = curl_requests.Session(impersonate="chrome")
-        logger.debug("yfinance session: curl_cffi chrome impersonation enabled")
-    else:
-        import requests
-
-        _session = requests.Session()
-        _session.headers.update(
-            {
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/133.0.0.0 Safari/537.36"
-                )
-            }
-        )
-        logger.warning(
-            "curl_cffi not installed — yfinance may hit Yahoo rate limits. "
-            "Install curl_cffi for reliable price data."
-        )
+    _session = curl_requests.Session(impersonate="chrome")
+    logger.debug("yfinance session: curl_cffi chrome impersonation enabled")
     return _session
 
 
