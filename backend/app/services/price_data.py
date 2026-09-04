@@ -256,6 +256,64 @@ class PriceDataService:
         }
 
     @staticmethod
+    def compute_fib_retracement(
+        bars: list[OHLCVBar],
+        earnings_date: date,
+        *,
+        lookback_bars: int = 20,
+    ) -> dict[str, float]:
+        """
+        Fibonacci retracement levels from the pre-earnings swing range.
+
+        Returns price levels and retracement percentages relative to baseline.
+        """
+        ordered = sorted(bars, key=lambda bar: bar.date)
+        pre = [bar for bar in ordered if bar.date < earnings_date]
+        if len(pre) < 2:
+            return {}
+
+        window = pre[-lookback_bars:]
+        swing_high = max(bar.high for bar in window)
+        swing_low = min(bar.low for bar in window)
+        diff = swing_high - swing_low
+        if diff <= 0:
+            return {}
+
+        baseline_candidates = pre
+        baseline = baseline_candidates[-1].close
+        if baseline <= 0:
+            return {}
+
+        levels: dict[str, float] = {
+            "swing_high": round(swing_high, 4),
+            "swing_low": round(swing_low, 4),
+            "baseline": round(baseline, 4),
+        }
+        for ratio, key in (
+            (0.236, "fib_0.236"),
+            (0.382, "fib_0.382"),
+            (0.500, "fib_0.500"),
+            (0.618, "fib_0.618"),
+        ):
+            price = swing_high - ratio * diff
+            levels[key] = round(price, 4)
+            levels[f"{key}_pct"] = round(((price - baseline) / baseline) * 100, 4)
+
+        return levels
+
+    @staticmethod
+    def slice_window_bars(
+        bars: list[OHLCVBar],
+        earnings_date: date,
+        *,
+        window_days: int = 3,
+    ) -> list[OHLCVBar]:
+        """Extract ±window_days bars around an earnings date from a longer series."""
+        start = earnings_date - timedelta(days=window_days)
+        end = earnings_date + timedelta(days=window_days)
+        return [bar for bar in bars if start <= bar.date <= end]
+
+    @staticmethod
     def get_company_name(ticker: str) -> str | None:
         """Best-effort company name without Yahoo quoteSummary (.info) calls."""
         return lookup_company_name(ticker)

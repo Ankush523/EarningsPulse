@@ -197,6 +197,66 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
           </div>
         )}
 
+        {(reaction.backtest_years != null ||
+          reaction.monte_carlo != null ||
+          reaction.validation != null) && (
+          <div className="mt-10 border-t border-rule-soft pt-6">
+            <h3 className="text-[1.15rem] font-medium">Quantitative validation</h3>
+            {reaction.backtest_years != null && (
+              <p className="mt-2 text-ink-soft">
+                Backtested across {reaction.historical_reactions.length} earnings over{" "}
+                {reaction.backtest_years.toFixed(1)} years of price history.
+              </p>
+            )}
+            {reaction.monte_carlo && (
+              <dl className="mt-4 grid grid-cols-2 gap-6 sm:grid-cols-4">
+                <Figure
+                  label="MC median move"
+                  value={`${reaction.monte_carlo.p50_final_move_pct >= 0 ? "+" : ""}${reaction.monte_carlo.p50_final_move_pct.toFixed(1)}%`}
+                />
+                <Figure
+                  label="MC 10–90% band"
+                  value={`${reaction.monte_carlo.p10_final_move_pct.toFixed(1)}% to ${reaction.monte_carlo.p90_final_move_pct.toFixed(1)}%`}
+                />
+                {reaction.monte_carlo.p50_max_dip_pct != null && (
+                  <Figure
+                    label="MC median dip"
+                    value={`${reaction.monte_carlo.p50_max_dip_pct.toFixed(1)}%`}
+                    tone="down"
+                  />
+                )}
+                {reaction.monte_carlo.dip_before_recovery_prob != null && (
+                  <Figure
+                    label="Dip-then-recovery (sim)"
+                    value={formatPercent(reaction.monte_carlo.dip_before_recovery_prob)}
+                  />
+                )}
+              </dl>
+            )}
+            {reaction.validation && (
+              <p className="mt-4 max-w-measure text-ink-soft">
+                <span className="font-medium text-ink">
+                  Overfitting check ({reaction.validation.overfitting_risk} risk):
+                </span>{" "}
+                {reaction.validation.summary}
+              </p>
+            )}
+            {reaction.fib_levels && Object.keys(reaction.fib_levels).length > 0 && (
+              <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {(["fib_0.382_pct", "fib_0.500_pct", "fib_0.618_pct"] as const).map((key) =>
+                  reaction.fib_levels?.[key] != null ? (
+                    <Figure
+                      key={key}
+                      label={key.replace("_pct", "").replace("fib_", "Fib ")}
+                      value={`${reaction.fib_levels[key] >= 0 ? "+" : ""}${reaction.fib_levels[key].toFixed(1)}%`}
+                    />
+                  ) : null,
+                )}
+              </dl>
+            )}
+          </div>
+        )}
+
         <div className="mt-10 border-t border-rule-soft pt-6">
           <h3 className="text-[1.15rem] font-medium">How the last reports traded</h3>
           <div className="mt-4">

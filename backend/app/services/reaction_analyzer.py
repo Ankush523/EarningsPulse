@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from statistics import mean, median
 from typing import Any
 
+from app.config import Settings, get_settings
 from app.models.analysis import EarningsReactionEvent, ReactionPatternAnalysis
 from app.models.data import EarningsEvent, OHLCVBar
 from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome
 from app.services.earnings_calendar import EarningsCalendarService
+from app.services.monte_carlo import simulate_reaction_paths
 from app.services.price_data import PriceDataService
+from app.services.reaction_validation import validate_reaction_patterns
 from app.utils.cache import TTLCache, app_cache
-from app.utils.confidence import score_from_data_quality
+from app.utils.confidence import combine_confidence, score_from_data_quality
 
 
 def _earnings_date(event: EarningsReactionEvent) -> date:
@@ -58,22 +61,26 @@ class ReactionAnalyzer:
         price_service: PriceDataService | None = None,
         earnings_service: EarningsCalendarService | None = None,
         cache: TTLCache | None = None,
+        settings: Settings | None = None,
     ):
         self._price = price_service or PriceDataService()
         self._earnings = earnings_service or EarningsCalendarService()
         self._cache = cache or app_cache
+        self._settings = settings or get_settings()
 
     async def analyze_ticker(
         self,
         ticker: str,
         *,
-        limit: int = 8,
-        window_days: int = 3,
+        limit: int | None = None,
+        window_days: int | None = None,
         use_cache: bool = True,
     ) -> ReactionPatternAnalysis:
         """Fetch historical earnings and analyze reaction patterns for a ticker."""
         normalized = ticker.upper().strip()
-        cache_key = TTLCache.make_key("reaction_analysis", normalized, limit, window_days)
+        event_limit = limit or self._settings.reaction_history_limit
+        window = window_days or self._settings.reaction_window_days
+        cache_key = TTLCache.make_key("reaction_analysis", normalized, event_limit, window)
         if use_cache:
             cached = self._cache.get(cache_key)
             if cached is not None:
@@ -81,28 +88,116 @@ class ReactionAnalyzer:
 
         historical = await self._earnings.get_historical_earnings(
             normalized,
-            limit=limit,
+            limit=event_limit,
             use_cache=use_cache,
         )
 
-        events: list[EarningsReactionEvent] = []
-        for earnings_event in historical.events:
-            analyzed = self.analyze_event(
-                normalized,
-                earnings_event,
-                window_days=window_days,
-                use_cache=use_cache,
-            )
-            if analyzed is not None:
-                events.append(analyzed)
+        events = self._analyze_events_batch(
+            normalized,
+            historical.events,
+            window_days=window,
+            use_cache=use_cache,
+        )
 
         options_data = self._price.get_options_implied_move(normalized, use_cache=use_cache)
         result = self.aggregate_events(normalized, events, options_data=options_data)
+
+        result.monte_carlo = simulate_reaction_paths(
+            events,
+            n_simulations=self._settings.monte_carlo_simulations,
+        )
+        result.validation = validate_reaction_patterns(
+            events,
+            train_ratio=self._settings.validation_train_ratio,
+        )
+        if events:
+            first = min(event.earnings_date for event in events)
+            last = max(event.earnings_date for event in events)
+            result.backtest_years = round((last - first).days / 365.25, 1)
+            latest = max(events, key=_earnings_date)
+            if latest.baseline_price is not None:
+                latest_bars = self._price.slice_window_bars(
+                    self._load_bars_for_event(normalized, latest.earnings_date, window, use_cache),
+                    latest.earnings_date,
+                    window_days=window,
+                )
+                result.fib_levels = self._price.compute_fib_retracement(
+                    latest_bars,
+                    latest.earnings_date,
+                )
+
+        if result.validation and result.validation.overfitting_risk == "high":
+            result.confidence = combine_confidence(result.confidence, ConfidenceTier.LOW)
+        elif result.validation and result.validation.overfitting_risk == "medium":
+            result.confidence = combine_confidence(result.confidence, ConfidenceTier.MEDIUM)
 
         if use_cache:
             self._cache.set(cache_key, result, ttl_seconds=3600)
 
         return result
+
+    def _analyze_events_batch(
+        self,
+        ticker: str,
+        earnings_events: list[EarningsEvent],
+        *,
+        window_days: int,
+        use_cache: bool,
+    ) -> list[EarningsReactionEvent]:
+        if not earnings_events:
+            return []
+
+        min_date = min(event.report_date for event in earnings_events) - timedelta(days=window_days)
+        max_date = max(event.report_date for event in earnings_events) + timedelta(days=window_days)
+
+        try:
+            all_bars = self._price.fetch_ohlcv(ticker, min_date, max_date, use_cache=use_cache)
+        except Exception:
+            all_bars = []
+
+        events: list[EarningsReactionEvent] = []
+        for earnings_event in earnings_events:
+            if all_bars:
+                window_bars = self._price.slice_window_bars(
+                    all_bars,
+                    earnings_event.report_date,
+                    window_days=window_days,
+                )
+                analyzed = self.analyze_window(
+                    ticker,
+                    earnings_event.report_date,
+                    window_bars,
+                    report_outcome=self._infer_report_outcome(earnings_event),
+                    window_days=window_days,
+                )
+            else:
+                analyzed = self.analyze_event(
+                    ticker,
+                    earnings_event,
+                    window_days=window_days,
+                    use_cache=use_cache,
+                )
+            if analyzed is not None:
+                events.append(analyzed)
+        return events
+
+    def _load_bars_for_event(
+        self,
+        ticker: str,
+        earnings_date: date,
+        window_days: int,
+        use_cache: bool,
+    ) -> list[OHLCVBar]:
+        try:
+            window = self._price.fetch_around_earnings(
+                ticker,
+                earnings_date,
+                window_days=window_days + 20,
+                use_cache=use_cache,
+            )
+            return window.bars
+        except Exception:
+            return []
 
     def analyze_event(
         self,
@@ -194,7 +289,6 @@ class ReactionAnalyzer:
         has_dip = dip_pct is not None and dip_pct <= DIP_THRESHOLD_PCT
         has_recovery = recovery_pct is not None and recovery_pct >= RALLY_RECOVERY_MIN_PCT
 
-        # Dip-then-rally: positive outcome with initial dip followed by meaningful recovery.
         if has_dip and has_recovery and recovery_pct > abs(dip_pct or 0):
             return ReactionArchetype.DIP_THEN_RALLY
 
@@ -390,7 +484,6 @@ class ReactionAnalyzer:
         if not post:
             return None
 
-        # Use first post-earnings close as the initial reaction proxy.
         first_post_close = post[0].close
         return ((first_post_close - baseline) / baseline) * 100
 

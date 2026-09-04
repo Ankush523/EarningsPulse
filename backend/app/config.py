@@ -58,6 +58,12 @@ class Settings(BaseSettings):
     trace_log_dir: str = "logs/traces"
     demo_cache_dir: str = "demo"
 
+    # Reaction intelligence
+    reaction_history_limit: int = 40
+    reaction_window_days: int = 3
+    monte_carlo_simulations: int = 1000
+    validation_train_ratio: float = 0.7
+
     # Optional cache
     redis_url: str | None = None
 
