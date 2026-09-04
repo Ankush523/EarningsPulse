@@ -1,9 +1,10 @@
 import { PlaybookPageClient } from "@/components/PlaybookPageClient";
 
 interface PlaybookPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function PlaybookPage({ params }: PlaybookPageProps) {
-  return <PlaybookPageClient jobId={params.id} />;
+export default async function PlaybookPage({ params }: PlaybookPageProps) {
+  const { id } = await params;
+  return <PlaybookPageClient jobId={id} />;
 }

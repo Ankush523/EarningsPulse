@@ -24,7 +24,7 @@ Every agent step is streamed live (SSE) and logged in PRISM-compatible trace for
 
 ```mermaid
 flowchart TB
-  subgraph Frontend["Frontend (Next.js 14)"]
+  subgraph Frontend["Frontend (Next.js 15)"]
     Input[Ticker Input]
     Trace[Agent Trace Panel]
     Viewer[Playbook Viewer]
@@ -63,7 +63,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Frontend | Next.js 15, TypeScript, Tailwind CSS |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |
@@ -81,7 +81,7 @@ finance_hackathon/
 │   ├── uv.lock           # Locked dependency versions
 │   ├── Dockerfile        # Production container
 │   └── railway.toml      # Railway deploy config
-├── frontend/             # Next.js 14 web app
+├── frontend/             # Next.js 15 web app
 │   ├── e2e/              # Playwright tests
 │   ├── Dockerfile        # Production container
 │   └── vercel.json       # Vercel deploy config
