@@ -2,9 +2,9 @@
 
 export type ConfidenceTier = "high" | "medium" | "low";
 
-export type ReportOutcome = "beat" | "inline" | "miss";
+type ReportOutcome = "beat" | "inline" | "miss";
 
-export type ReactionArchetype =
+type ReactionArchetype =
   | "dip_then_rally"
   | "immediate_rip"
   | "sell_the_news"
@@ -12,15 +12,15 @@ export type ReactionArchetype =
   | "volatility_pin"
   | "insufficient_data";
 
-export type PeerRelationship =
+type PeerRelationship =
   | "direct_peer"
   | "supplier"
   | "customer"
   | "thematic";
 
-export type PlaybookStatus = "pending" | "running" | "completed" | "failed";
+type PlaybookStatus = "pending" | "running" | "completed" | "failed";
 
-export type TraceEventType =
+type TraceEventType =
   | "run_started"
   | "run_completed"
   | "run_failed"
@@ -31,20 +31,20 @@ export type TraceEventType =
   | "tool_call_failed"
   | "confidence_updated";
 
-export interface Source {
+interface Source {
   title: string;
   url: string;
   source_type: string;
   accessed_at: string;
 }
 
-export interface KeyMetric {
+interface KeyMetric {
   name: string;
   description: string;
   importance: ConfidenceTier;
 }
 
-export interface ReportForecast {
+interface ReportForecast {
   key_metrics: KeyMetric[];
   bull_case: string;
   base_case: string;
@@ -75,7 +75,7 @@ export interface HistoricalReaction {
   pattern: ReactionArchetype;
 }
 
-export interface ReactionAnalysisSummary {
+interface ReactionAnalysisSummary {
   archetype: ReactionArchetype;
   archetype_description: string;
   scenarios: PriceScenario[];
@@ -102,26 +102,26 @@ export interface PeerSpillover {
   watch_flag: boolean;
 }
 
-export interface SpilloverMap {
+interface SpilloverMap {
   reporting_ticker: string;
   peers: PeerSpillover[];
   confidence: ConfidenceTier;
   sources: Source[];
 }
 
-export interface ActionRule {
+interface ActionRule {
   condition: string;
   action: string;
   confidence: ConfidenceTier;
   historical_basis?: string | null;
 }
 
-export interface ActionPlaybook {
+interface ActionPlaybook {
   rules: ActionRule[];
   disclaimer: string;
 }
 
-export interface ExecutiveSummary {
+interface ExecutiveSummary {
   ticker: string;
   company_name?: string | null;
   earnings_date?: string | null;
@@ -136,7 +136,7 @@ export interface ExecutiveSummary {
   sources: Source[];
 }
 
-export interface PlaybookMetadata {
+interface PlaybookMetadata {
   job_id: string;
   generated_at: string;
   generation_time_ms?: number | null;
@@ -187,16 +187,6 @@ export interface EarningsCalendarResponse {
   events: EarningsEvent[];
 }
 
-/** @public Backend `/api/calendar/{ticker}` payload. */
-export interface TickerEarningsResponse {
-  ticker: string;
-  report_date?: string | null;
-  report_time?: string | null;
-  has_upcoming: boolean;
-  eps_estimate?: number | null;
-  eps_actual?: number | null;
-}
-
 export interface TraceEvent {
   event_id: string;
   job_id: string;
@@ -241,17 +231,6 @@ export interface HealthResponse {
   version: string;
   environment?: string;
   timestamp: string;
-}
-
-/** @public Backend `/ready` payload. */
-export interface ReadinessResponse extends HealthResponse {
-  checks: {
-    api: boolean;
-    openai_configured: boolean;
-    tavily_configured: boolean;
-    finnhub_configured: boolean;
-    prism_enabled: boolean;
-  };
 }
 
 export interface ApiError {

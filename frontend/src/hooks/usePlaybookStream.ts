@@ -7,7 +7,7 @@ import type { JobStatus, Playbook, SSEEvent, TraceEvent } from "@/lib/types";
 
 export type StreamStatus = "idle" | "connecting" | "streaming" | "completed" | "failed";
 
-export interface UsePlaybookStreamResult {
+interface UsePlaybookStreamResult {
   status: StreamStatus;
   events: SSEEvent[];
   traceEvents: TraceEvent[];
