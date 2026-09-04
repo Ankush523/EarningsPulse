@@ -253,6 +253,9 @@ cd frontend && bun run lint
 # React Doctor health scan (Bun equivalent of npx react-doctor@latest)
 cd frontend && bun run doctor
 
+# Vercel plugin for Cursor/Claude (skills, /deploy, /env, /status)
+npx plugins add vercel/vercel-plugin --yes --target cursor --scope project
+
 # Typecheck frontend (TypeScript 7 / tsc)
 cd frontend && bun run typecheck
 
