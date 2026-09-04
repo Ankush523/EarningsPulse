@@ -80,6 +80,9 @@ jobs:
       - name: Lint (oxlint)
         run: bun run lint
 
+      - name: Unused code (knip)
+        run: bun run knip
+
       - name: Typecheck
         run: bun run typecheck
 

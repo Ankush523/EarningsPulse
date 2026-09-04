@@ -24,6 +24,9 @@ bun run test:property
 echo "==> Frontend lint (oxlint)"
 bun run lint
 
+echo "==> Frontend unused code (knip)"
+bun run knip
+
 echo "==> Frontend typecheck"
 bun run typecheck
 

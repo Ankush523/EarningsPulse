@@ -187,6 +187,7 @@ export interface EarningsCalendarResponse {
   events: EarningsEvent[];
 }
 
+/** @public Backend `/api/calendar/{ticker}` payload. */
 export interface TickerEarningsResponse {
   ticker: string;
   report_date?: string | null;
@@ -242,6 +243,7 @@ export interface HealthResponse {
   timestamp: string;
 }
 
+/** @public Backend `/ready` payload. */
 export interface ReadinessResponse extends HealthResponse {
   checks: {
     api: boolean;
