@@ -89,3 +89,38 @@ async def test_build_peer_map(settings, cache):
     assert len(result.peers) <= 5
     assert all(-1 <= peer.correlation_score <= 1 for peer in result.peers)
     assert result.peers[0].ticker != "NVDA"
+
+
+@pytest.mark.asyncio
+async def test_build_peer_map_dynamic_peers(settings, cache):
+    earnings_service = EarningsCalendarService(settings=settings, cache=cache)
+    earnings_service.get_historical_earnings = AsyncMock(
+        return_value=HistoricalEarningsResponse(
+            ticker="UNKNOWN_TICKER",
+            source="finnhub",
+            events=[
+                EarningsEvent(ticker="UNKNOWN_TICKER", report_date=date(2024, 5, 22)),
+            ],
+        )
+    )
+    earnings_service.get_peers = AsyncMock(return_value=["PEER_A", "PEER_B"])
+
+    price_service = PriceDataService(cache=cache)
+    price_service.fetch_ohlcv = MagicMock(
+        return_value=[
+            OHLCVBar(date=date(2024, 5, 22), open=100, high=101, low=99, close=100),
+            OHLCVBar(date=date(2024, 5, 23), open=100, high=105, low=100, close=104),
+        ]
+    )
+    price_service.get_company_name = MagicMock(return_value="Dynamic Peer Co")
+
+    service = PeerMapService(
+        price_service=price_service,
+        earnings_service=earnings_service,
+        cache=cache,
+    )
+
+    result = await service.build_peer_map("UNKNOWN_TICKER", max_peers=5, use_cache=False)
+    assert result.reporting_ticker == "UNKNOWN_TICKER"
+    peer_tickers = [p.ticker for p in result.peers]
+    assert "PEER_A" in peer_tickers or "PEER_B" in peer_tickers

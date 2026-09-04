@@ -171,6 +171,46 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
             )}
           </div>
         )}
+
+        {(reaction.implied_move_pct != null || reaction.historical_move_pct != null) && (
+          <div className="mt-6 rounded-lg border border-card-border bg-background/60 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                Options Implied Move vs. Realized Move
+              </span>
+              {reaction.volatility_assessment && (
+                <span
+                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                    reaction.volatility_assessment === "OVERPRICED"
+                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-400"
+                      : reaction.volatility_assessment === "UNDERPRICED"
+                      ? "border border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
+                      : "border border-blue-500/30 bg-blue-500/20 text-blue-400"
+                  }`}
+                >
+                  {reaction.volatility_assessment}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4 text-sm">
+              {reaction.implied_move_pct != null && (
+                <StatPill
+                  label="Options Implied Move"
+                  value={`±${reaction.implied_move_pct.toFixed(1)}%`}
+                />
+              )}
+              {reaction.historical_move_pct != null && (
+                <StatPill
+                  label="Historical Realized Move"
+                  value={`±${reaction.historical_move_pct.toFixed(1)}%`}
+                />
+              )}
+            </div>
+            {reaction.options_summary && (
+              <p className="mt-2 text-xs text-muted">{reaction.options_summary}</p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Section D — Peer Spillover */}

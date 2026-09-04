@@ -49,6 +49,10 @@ def reaction_analysis_to_summary(
         avg_recovery_pct=analysis.avg_recovery_pct,
         dip_frequency_on_positive=analysis.dip_frequency_on_positive,
         expected_dip_zone=analysis.expected_dip_zone,
+        implied_move_pct=analysis.implied_move_pct,
+        historical_move_pct=analysis.historical_move_pct,
+        volatility_assessment=analysis.volatility_assessment,
+        options_summary=analysis.options_summary,
         confidence=analysis.confidence,
         sources=[
             Source(

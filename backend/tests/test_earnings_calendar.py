@@ -53,6 +53,26 @@ async def test_get_upcoming_earnings_requires_api_key(cache):
 
 
 @pytest.mark.asyncio
+async def test_get_peers_from_finnhub(settings, cache):
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json.return_value = ["AAPL", "DELL", "HPQ", "HPE"]
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    service = EarningsCalendarService(
+        settings=settings,
+        cache=cache,
+        client=mock_client,
+    )
+    peers = await service.get_peers("AAPL", use_cache=False)
+    assert "AAPL" not in peers
+    assert "DELL" in peers
+    assert "HPQ" in peers
+
+
+@pytest.mark.asyncio
 async def test_get_historical_earnings_from_finnhub(settings, cache):
     mock_response = MagicMock()
     mock_response.raise_for_status = MagicMock()
