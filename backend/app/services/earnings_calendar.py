@@ -388,3 +388,50 @@ class EarningsCalendarService:
         if numeric != numeric:  # NaN
             return None
         return numeric
+
+    async def get_peers(
+        self,
+        ticker: str,
+        *,
+        use_cache: bool = True,
+    ) -> list[str]:
+        """Fetch peer company tickers from Finnhub /stock/peers."""
+        normalized = ticker.upper().strip()
+        cache_key = TTLCache.make_key("finnhub_peers", normalized)
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if isinstance(cached, list):
+                return [peer for peer in cached if isinstance(peer, str)]
+
+        if not self._settings.finnhub_api_key:
+            return []
+
+        owns_client = self._client is None
+        client = await self._get_client()
+        try:
+            response = await client.get(
+                f"{FINNHUB_BASE_URL}/stock/peers",
+                params={
+                    "symbol": normalized,
+                    "token": self._settings.finnhub_api_key,
+                },
+            )
+            response.raise_for_status()
+            peers = response.json()
+            if isinstance(peers, list):
+                result = [
+                    p.upper().strip()
+                    for p in peers
+                    if isinstance(p, str)
+                    and p.upper().strip() != normalized
+                    and len(p.strip()) <= 5
+                ]
+                if use_cache:
+                    self._cache.set(cache_key, result, ttl_seconds=86400)
+                return result
+            return []
+        except Exception:
+            return []
+        finally:
+            if owns_client:
+                await client.aclose()

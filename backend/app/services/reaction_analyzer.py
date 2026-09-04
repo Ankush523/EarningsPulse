@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from statistics import mean, median
+from typing import Any
 
 from app.models.analysis import EarningsReactionEvent, ReactionPatternAnalysis
 from app.models.data import EarningsEvent, EarningsWindowPrices, OHLCVBar
@@ -95,7 +96,8 @@ class ReactionAnalyzer:
             if analyzed is not None:
                 events.append(analyzed)
 
-        result = self.aggregate_events(normalized, events)
+        options_data = self._price.get_options_implied_move(normalized, use_cache=use_cache)
+        result = self.aggregate_events(normalized, events, options_data=options_data)
 
         if use_cache:
             self._cache.set(cache_key, result, ttl_seconds=3600)
@@ -221,6 +223,8 @@ class ReactionAnalyzer:
         self,
         ticker: str,
         events: list[EarningsReactionEvent],
+        *,
+        options_data: dict[str, Any] | None = None,
     ) -> ReactionPatternAnalysis:
         """Aggregate per-event reactions into a ticker-level pattern analysis."""
         if not events:
@@ -266,6 +270,49 @@ class ReactionAnalyzer:
                 "median": round(median(dip_values), 4),
             }
 
+        # Historical realized move % (average absolute initial move on earnings)
+        historical_move_pct = (
+            round(mean(abs(event.initial_move_pct) for event in events), 2) if events else None
+        )
+
+        implied_move_pct: float | None = None
+        volatility_assessment: str | None = None
+        options_summary: str | None = None
+
+        if options_data is not None:
+            raw_implied = options_data.get("implied_move_pct")
+            if isinstance(raw_implied, int | float) and raw_implied == raw_implied:
+                implied_move_pct = float(raw_implied)
+
+        if implied_move_pct is not None and historical_move_pct is not None:
+            if implied_move_pct > historical_move_pct * 1.15:
+                volatility_assessment = "OVERPRICED"
+                options_summary = (
+                    f"Options market implies ±{implied_move_pct:.1f}% move vs. "
+                    f"±{historical_move_pct:.1f}% historical avg move (volatility overpriced)."
+                )
+            elif implied_move_pct < historical_move_pct * 0.85:
+                volatility_assessment = "UNDERPRICED"
+                options_summary = (
+                    f"Options market implies ±{implied_move_pct:.1f}% move vs. "
+                    f"±{historical_move_pct:.1f}% historical avg move (volatility underpriced)."
+                )
+            else:
+                volatility_assessment = "INLINE"
+                options_summary = (
+                    f"Options market implies ±{implied_move_pct:.1f}% move, "
+                    f"closely aligned with ±{historical_move_pct:.1f}% historical avg move."
+                )
+        elif implied_move_pct is not None:
+            options_summary = (
+                f"Options market implies ±{implied_move_pct:.1f}% move for upcoming earnings."
+            )
+        elif historical_move_pct is not None:
+            options_summary = (
+                f"Historical average realized move is ±{historical_move_pct:.1f}% "
+                "across past earnings."
+            )
+
         has_estimates = any(e.report_outcome is not None for e in events)
         confidence = score_from_data_quality(
             sample_size=len(events),
@@ -283,6 +330,10 @@ class ReactionAnalyzer:
             avg_recovery_pct=avg_recovery,
             dip_frequency_on_positive=dip_frequency,
             expected_dip_zone=expected_dip_zone,
+            implied_move_pct=implied_move_pct,
+            historical_move_pct=historical_move_pct,
+            volatility_assessment=volatility_assessment,
+            options_summary=options_summary,
             confidence=confidence,
         )
 

@@ -101,6 +101,10 @@
         "max": -1.5,
         "median": -2.8
       },
+      "implied_move_pct": 4.2,
+      "historical_move_pct": 3.1,
+      "volatility_assessment": "OVERPRICED",
+      "options_summary": "Options market implies ±4.2% move vs. ±3.1% historical avg move (volatility overpriced).",
       "confidence": "medium",
       "sources": []
     },
