@@ -86,7 +86,7 @@ flowchart TB
 |----------|-------|
 | `NEXT_PUBLIC_BACKEND_URL` | `https://<your-railway-or-render-api-url>` |
 
-5. Deploy. Vercel detects **Bun** from `frontend/bun.lock` and uses `frontend/vercel.json` (`bun install --frozen-lockfile`, then `bun run build` on Node). Do not enable the Bun Function runtime (`bunVersion`).
+5. Deploy. Vercel detects **Bun** from `frontend/bun.lock` and uses `frontend/vercel.json` (`npm exec bun@1.4.0 install --frozen-lockfile`, then `next build` on Node). Do not enable the Bun Function runtime (`bunVersion`). Vercel's default installer is still Bun 1.3.x, which cannot read this lockfile (`lockfileVersion` 3).
 
 ---
 
