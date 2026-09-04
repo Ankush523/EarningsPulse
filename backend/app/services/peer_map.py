@@ -296,11 +296,8 @@ class PeerMapService:
         peer_ticker: str,
         earnings_dates: list[date],
         bars_by_ticker: dict[str, list[OHLCVBar]],
-        *,
-        use_cache: bool = True,
     ) -> dict:
         """Compute return correlation around reporting ticker earnings dates."""
-        del use_cache  # bars already loaded in bulk
         if not earnings_dates:
             return {
                 "score": 0.0,
