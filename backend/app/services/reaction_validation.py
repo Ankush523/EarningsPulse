@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import Counter
 
 from app.models.analysis import EarningsReactionEvent, ValidationSummary
-from app.models.playbook import ReactionArchetype
 
 
 def validate_reaction_patterns(

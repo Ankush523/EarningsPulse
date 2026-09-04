@@ -19,8 +19,7 @@ def _bar(day: int, *, high: float, low: float, close: float) -> OHLCVBar:
 
 def test_compute_fib_retracement_levels():
     bars = [
-        _bar(i, high=110 + i * 0.2, low=90 + i * 0.1, close=100 + i * 0.15)
-        for i in range(1, 25)
+        _bar(i, high=110 + i * 0.2, low=90 + i * 0.1, close=100 + i * 0.15) for i in range(1, 25)
     ]
     earnings_date = date(2024, 1, 24)
     levels = PriceDataService.compute_fib_retracement(bars, earnings_date)
