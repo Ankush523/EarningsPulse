@@ -99,7 +99,7 @@ export default function CalendarPage() {
                     <th className="px-6 py-3 font-medium">Report Date</th>
                     <th className="px-6 py-3 font-medium">Time</th>
                     <th className="px-6 py-3 font-medium">EPS Est.</th>
-                    <th className="px-6 py-3 font-medium" />
+                    <th className="px-6 py-3 text-right font-medium">Playbook</th>
                   </tr>
                 </thead>
                 <tbody>

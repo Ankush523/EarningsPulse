@@ -59,8 +59,11 @@ jobs:
       - name: Run property tests
         run: npm run test:property
 
-      - name: Lint
+      - name: Lint (oxlint)
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Build
         run: npm run build
