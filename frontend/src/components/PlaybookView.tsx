@@ -1,16 +1,18 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { ConfidenceBadge } from "@/components/ConfidenceBadge";
 import { PeerSpilloverTable } from "@/components/PeerSpilloverTable";
 import { ReactionChart } from "@/components/ReactionChart";
 import { ScenarioTree } from "@/components/ScenarioTree";
 import {
-  formatArchetype,
+  describeArchetype,
   formatDate,
   formatLatency,
   formatPercent,
 } from "@/lib/format";
-import type { Playbook } from "@/lib/types";
+import type { ConfidenceTier, Playbook } from "@/lib/types";
 
 interface PlaybookViewProps {
   playbook: Playbook;
@@ -21,358 +23,388 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
   const reaction = playbook.reaction_analysis;
   const spillover = playbook.spillover_map;
   const actions = playbook.action_playbook;
+  const meta = playbook.metadata;
+
+  const reportLine = summary.earnings_date
+    ? `Reports ${formatDate(summary.earnings_date)}${
+        summary.is_after_hours ? ", after the close" : ""
+      }.`
+    : summary.is_after_hours
+      ? "Reports after the close."
+      : null;
 
   return (
-    <div className="playbook-view space-y-8">
-      {/* Section A — Executive Summary */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-sm text-accent">{summary.ticker}</p>
-            <h2 className="text-2xl font-bold">
-              {summary.company_name ?? summary.ticker} Earnings Playbook
-            </h2>
-            {summary.earnings_date && (
-              <p className="mt-1 text-sm text-muted">
-                Report date: {formatDate(summary.earnings_date)}
-                {summary.is_after_hours && " · After hours"}
-              </p>
-            )}
-          </div>
+    <article className="playbook-view">
+      <header className="border-b border-ink pb-8">
+        <p className="font-mono text-[1.05rem] text-ink-soft">{summary.ticker}</p>
+        <h1 className="mt-1 text-balance text-[2.25rem] font-medium leading-[1.1] tracking-tight sm:text-[2.75rem]">
+          {summary.company_name ?? summary.ticker} earnings playbook
+        </h1>
+        <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-ink-soft">
+          {reportLine && <span>{reportLine}</span>}
           <ConfidenceBadge tier={summary.overall_confidence} />
-        </div>
+        </p>
+      </header>
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <ProbabilityCard label="Beat" value={summary.beat_probability} tone="success" />
-          <ProbabilityCard label="Inline" value={summary.inline_probability} tone="warning" />
-          <ProbabilityCard label="Miss" value={summary.miss_probability} tone="danger" />
-        </div>
-
-        <div className="mb-4 rounded-lg border border-accent/20 bg-accent/5 p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-accent">
-            Primary Pattern
-          </p>
-          <p className="mt-1 font-semibold">
-            {formatArchetype(summary.primary_pattern)}
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            {summary.primary_pattern_description}
-          </p>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">
-            Top Drivers
-          </p>
-          <ul className="space-y-1.5">
-            {summary.top_drivers.map((driver) => (
-              <li key={driver} className="flex gap-2 text-sm">
-                <span className="text-accent">→</span>
-                {driver}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {playbook.metadata.generation_time_ms != null && (
-          <p className="mt-4 font-mono text-xs text-muted">
-            Generated in {formatLatency(playbook.metadata.generation_time_ms)}
-          </p>
-        )}
-      </section>
-
-      {/* Section B — Report Forecast */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <SectionHeader
-          title="Report Forecast"
-          badge={<ConfidenceBadge tier={forecast.confidence} />}
+      <section className="py-10" aria-labelledby="odds-heading">
+        <h2 id="odds-heading" className="sr-only">
+          Report odds
+        </h2>
+        <OddsStrip
+          beat={summary.beat_probability}
+          inline={summary.inline_probability}
+          miss={summary.miss_probability}
         />
 
+        <div className="mt-10 grid gap-10 md:grid-cols-2">
+          <div>
+            <h3 className="text-[1.15rem] font-medium">Expected pattern</h3>
+            <p className="mt-2 text-[1.35rem] leading-snug">
+              {describeArchetype(summary.primary_pattern)}
+            </p>
+            <p className="mt-2 max-w-measure text-ink-soft">
+              {summary.primary_pattern_description}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-[1.15rem] font-medium">What decides it</h3>
+            <ul className="mt-2 list-disc space-y-1.5 pl-5 marker:text-ink-soft">
+              {summary.top_drivers.map((driver) => (
+                <li key={driver}>{driver}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <DocSection title="Report forecast" confidence={forecast.confidence}>
         {forecast.key_metrics.length > 0 && (
-          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
             {forecast.key_metrics.map((metric) => (
-              <div
-                key={metric.name}
-                className="rounded-lg border border-card-border bg-background/50 p-4"
-              >
-                <div className="mb-1 flex items-center justify-between">
-                  <p className="font-medium">{metric.name}</p>
-                  <ConfidenceBadge tier={metric.importance} />
-                </div>
-                <p className="text-sm text-muted">{metric.description}</p>
+              <div key={metric.name}>
+                <dt className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="text-[1.1rem] font-medium">{metric.name}</span>
+                  <span className="text-[0.85rem] italic text-ink-soft">
+                    {IMPORTANCE_LABEL[metric.importance]}
+                  </span>
+                </dt>
+                <dd className="mt-1 text-ink-soft">{metric.description}</dd>
               </div>
             ))}
-          </div>
+          </dl>
         )}
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <CaseCard title="Bull Case" content={forecast.bull_case} tone="success" />
-          <CaseCard title="Base Case" content={forecast.base_case} tone="accent" />
-          <CaseCard title="Bear Case" content={forecast.bear_case} tone="danger" />
+        <div className="mt-10 grid gap-8 md:grid-cols-3">
+          <Case title="Bull case" tone="up" text={forecast.bull_case} />
+          <Case title="Base case" tone="ink" text={forecast.base_case} />
+          <Case title="Bear case" tone="down" text={forecast.bear_case} />
         </div>
 
         {(forecast.positive_surprises.length > 0 ||
           forecast.negative_surprises.length > 0) && (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-10 grid gap-8 sm:grid-cols-2">
             {forecast.positive_surprises.length > 0 && (
-              <SurpriseList
-                title="Positive Surprises"
-                items={forecast.positive_surprises}
-                tone="success"
-              />
+              <div>
+                <h3 className="text-[1.1rem] font-medium text-up">
+                  Could surprise to the upside
+                </h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft marker:text-up">
+                  {forecast.positive_surprises.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             )}
             {forecast.negative_surprises.length > 0 && (
-              <SurpriseList
-                title="Negative Surprises"
-                items={forecast.negative_surprises}
-                tone="danger"
-              />
+              <div>
+                <h3 className="text-[1.1rem] font-medium text-down">
+                  Could surprise to the downside
+                </h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft marker:text-down">
+                  {forecast.negative_surprises.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}
-      </section>
+      </DocSection>
 
-      {/* Section C — Reaction Analysis */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <SectionHeader
-          title="Price Reaction Scenarios"
-          badge={<ConfidenceBadge tier={reaction.confidence} />}
-        />
-        <p className="mb-4 text-sm text-muted">{reaction.archetype_description}</p>
+      <DocSection title="Price reaction scenarios" confidence={reaction.confidence}>
+        <p className="max-w-measure text-ink-soft">{reaction.archetype_description}</p>
 
-        <ScenarioTree scenarios={reaction.scenarios} />
-
-        <div className="mt-8">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">
-            Historical Reactions
-          </h4>
-          <ReactionChart
-            reactions={reaction.historical_reactions}
-            ticker={summary.ticker}
-          />
+        <div className="mt-6">
+          <ScenarioTree scenarios={reaction.scenarios} />
         </div>
 
-        {(reaction.avg_dip_pct != null || reaction.dip_frequency_on_positive != null) && (
-          <div className="mt-6 flex flex-wrap gap-4 text-sm">
+        {(reaction.avg_dip_pct != null ||
+          reaction.avg_recovery_pct != null ||
+          reaction.dip_frequency_on_positive != null) && (
+          <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-rule-soft pt-6">
             {reaction.avg_dip_pct != null && (
-              <StatPill label="Avg dip" value={`${reaction.avg_dip_pct.toFixed(1)}%`} />
+              <Figure
+                label="Average dip"
+                value={`${reaction.avg_dip_pct.toFixed(1)}%`}
+                tone="down"
+              />
             )}
             {reaction.avg_recovery_pct != null && (
-              <StatPill
-                label="Avg recovery"
-                value={`${reaction.avg_recovery_pct.toFixed(1)}%`}
+              <Figure
+                label="Average recovery"
+                value={`+${reaction.avg_recovery_pct.toFixed(1)}%`}
+                tone="up"
               />
             )}
             {reaction.dip_frequency_on_positive != null && (
-              <StatPill
-                label="Dip on beat"
+              <Figure
+                label="Beats that dipped first"
                 value={formatPercent(reaction.dip_frequency_on_positive)}
               />
             )}
-          </div>
+          </dl>
         )}
 
         {(reaction.implied_move_pct != null || reaction.historical_move_pct != null) && (
-          <div className="mt-6 rounded-lg border border-card-border bg-background/60 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-                Options Implied Move vs. Realized Move
-              </span>
-              {reaction.volatility_assessment && (
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
-                    reaction.volatility_assessment === "OVERPRICED"
-                      ? "border border-amber-500/30 bg-amber-500/20 text-amber-400"
-                      : reaction.volatility_assessment === "UNDERPRICED"
-                      ? "border border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
-                      : "border border-blue-500/30 bg-blue-500/20 text-blue-400"
-                  }`}
-                >
-                  {reaction.volatility_assessment}
-                </span>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-4 text-sm">
+          <div className="mt-10 border-t border-rule-soft pt-6">
+            <h3 className="text-[1.15rem] font-medium">
+              What options expect against what usually happens
+            </h3>
+            <dl className="mt-4 grid grid-cols-2 gap-6 sm:max-w-md">
               {reaction.implied_move_pct != null && (
-                <StatPill
-                  label="Options Implied Move"
+                <Figure
+                  label="Options-implied move"
                   value={`±${reaction.implied_move_pct.toFixed(1)}%`}
                 />
               )}
               {reaction.historical_move_pct != null && (
-                <StatPill
-                  label="Historical Realized Move"
+                <Figure
+                  label="Typical realized move"
                   value={`±${reaction.historical_move_pct.toFixed(1)}%`}
                 />
               )}
-            </div>
-            {reaction.options_summary && (
-              <p className="mt-2 text-xs text-muted">{reaction.options_summary}</p>
+            </dl>
+            {reaction.volatility_assessment && (
+              <p className="mt-4 max-w-measure">
+                <span className="font-medium">
+                  {volatilityVerdict(reaction.volatility_assessment)}
+                </span>
+                {reaction.options_summary && (
+                  <span className="text-ink-soft"> {reaction.options_summary}</span>
+                )}
+              </p>
             )}
           </div>
         )}
-      </section>
 
-      {/* Section D — Peer Spillover */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <SectionHeader
-          title="Peer Spillover Map"
-          badge={<ConfidenceBadge tier={spillover.confidence} />}
-        />
+        <div className="mt-10 border-t border-rule-soft pt-6">
+          <h3 className="text-[1.15rem] font-medium">How the last reports traded</h3>
+          <div className="mt-4">
+            <ReactionChart
+              reactions={reaction.historical_reactions}
+              ticker={summary.ticker}
+            />
+          </div>
+        </div>
+      </DocSection>
+
+      <DocSection title="Peer spillover map" confidence={spillover.confidence}>
         <PeerSpilloverTable peers={spillover.peers} />
-      </section>
+      </DocSection>
 
-      {/* Section E — Action Playbook */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <SectionHeader title="Action Playbook" />
-        <ol className="space-y-4">
-          {actions.rules.map((rule) => (
-            <li
-              key={`${rule.condition}:${rule.action}:${rule.confidence}`}
-              className="rounded-lg border border-card-border bg-background/50 p-4"
-            >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-accent">
-                  If
-                </p>
-                <ConfidenceBadge tier={rule.confidence} />
-              </div>
-              <p className="mb-3 text-sm font-medium">{rule.condition}</p>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted">
-                Then
-              </p>
-              <p className="mt-1 text-sm">{rule.action}</p>
-              {rule.historical_basis && (
-                <p className="mt-2 text-xs text-muted">{rule.historical_basis}</p>
-              )}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      {/* Section F — Sources */}
-      <section className="rounded-xl border border-card-border bg-card p-6">
-        <SectionHeader title="Sources" />
-        {playbook.all_sources.length === 0 ? (
-          <p className="text-sm text-muted">No sources cited.</p>
+      <DocSection title="Action playbook">
+        {actions.rules.length === 0 ? (
+          <p className="text-ink-soft">No conditional rules were produced.</p>
         ) : (
-          <ul className="space-y-2">
+          <ol className="divide-y divide-rule-soft">
+            {actions.rules.map((rule) => (
+              <li
+                key={`${rule.condition}:${rule.action}:${rule.confidence}`}
+                className="grid gap-x-8 gap-y-2 py-5 first:pt-0 sm:grid-cols-[1fr_1.4fr]"
+              >
+                <p>
+                  <span className="italic text-ink-soft">If </span>
+                  <span className="font-medium">{rule.condition}</span>
+                </p>
+                <div>
+                  <p>
+                    <span className="italic text-ink-soft">then </span>
+                    {rule.action}
+                  </p>
+                  <p className="mt-2 flex flex-wrap items-baseline gap-x-4 text-[0.9rem] text-ink-soft">
+                    <ConfidenceBadge tier={rule.confidence} />
+                    {rule.historical_basis && <span>{rule.historical_basis}</span>}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+        {actions.disclaimer && (
+          <p className="mt-8 max-w-measure text-[0.9rem] italic text-ink-soft">
+            {actions.disclaimer}
+          </p>
+        )}
+      </DocSection>
+
+      <DocSection title="Sources">
+        {playbook.all_sources.length === 0 ? (
+          <p className="text-ink-soft">No sources were cited for this playbook.</p>
+        ) : (
+          <ul className="space-y-2.5">
             {playbook.all_sources.map((source) => (
-              <li key={source.url}>
+              <li key={source.url} className="flex flex-wrap items-baseline gap-x-3">
                 <a
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent hover:underline"
+                  className="underline decoration-rule underline-offset-4 hover:decoration-ink"
                 >
                   {source.title}
                 </a>
-                <span className="ml-2 font-mono text-[10px] text-muted">
+                <span className="text-[0.85rem] text-ink-soft">
                   {source.source_type}
                 </span>
               </li>
             ))}
           </ul>
         )}
-      </section>
-    </div>
+      </DocSection>
+
+      <footer className="border-t border-rule pt-6 text-[0.9rem] text-ink-soft">
+        Generated {formatDate(meta.generated_at)}
+        {meta.generation_time_ms != null && ` in ${formatLatency(meta.generation_time_ms)}`}
+        {" "}by EarningsPulse {meta.model_version}
+        {meta.data_sources_used.length > 0 &&
+          ` using ${meta.data_sources_used.join(", ")}`}
+        . Job <span className="font-mono">{meta.job_id}</span>.
+      </footer>
+    </article>
   );
 }
 
-function SectionHeader({
+const IMPORTANCE_LABEL: Record<ConfidenceTier, string> = {
+  high: "Decisive",
+  medium: "Matters",
+  low: "Minor",
+};
+
+function volatilityVerdict(assessment: string): string {
+  switch (assessment.toUpperCase()) {
+    case "OVERPRICED":
+      return "Options look expensive relative to history.";
+    case "UNDERPRICED":
+      return "Options look cheap relative to history.";
+    case "FAIR":
+    case "FAIRLY_PRICED":
+      return "Options are priced about in line with history.";
+    default:
+      return assessment;
+  }
+}
+
+function DocSection({
   title,
-  badge,
+  confidence,
+  children,
 }: {
   title: string;
-  badge?: React.ReactNode;
+  confidence?: ConfidenceTier;
+  children: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      {badge}
+    <section className="grid gap-x-10 gap-y-4 border-t border-rule py-10 lg:grid-cols-[11rem_1fr]">
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <h2 className="text-[1.25rem] font-medium leading-snug">{title}</h2>
+        {confidence && (
+          <p className="mt-1.5">
+            <ConfidenceBadge tier={confidence} />
+          </p>
+        )}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
+function OddsStrip({
+  beat,
+  inline,
+  miss,
+}: {
+  beat: number;
+  inline: number;
+  miss: number;
+}) {
+  const total = beat + inline + miss || 1;
+  const segments = [
+    { label: "Beat", value: beat, bar: "bg-up", text: "text-up" },
+    { label: "Inline", value: inline, bar: "bg-rule", text: "text-ink-soft" },
+    { label: "Miss", value: miss, bar: "bg-down", text: "text-down" },
+  ];
+
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-4">
+        {segments.map((segment) => (
+          <div key={segment.label}>
+            <p className={`text-[1.05rem] ${segment.text}`}>{segment.label}</p>
+            <p className="font-mono text-[2.5rem] leading-none tracking-tight sm:text-[3rem]">
+              {formatPercent(segment.value)}
+            </p>
+          </div>
+        ))}
+      </div>
+      <div
+        className="mt-5 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-sm"
+        role="img"
+        aria-label={`Beat ${formatPercent(beat)}, inline ${formatPercent(inline)}, miss ${formatPercent(miss)}`}
+      >
+        {segments.map((segment) => (
+          <span
+            key={segment.label}
+            className={`block h-full ${segment.bar}`}
+            style={{ width: `${(segment.value / total) * 100}%` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-function ProbabilityCard({
+function Case({
+  title,
+  tone,
+  text,
+}: {
+  title: string;
+  tone: "up" | "ink" | "down";
+  text: string;
+}) {
+  const border = { up: "border-up", ink: "border-ink", down: "border-down" };
+  const color = { up: "text-up", ink: "", down: "text-down" };
+  return (
+    <div className={`border-t-2 pt-3 ${border[tone]}`}>
+      <h3 className={`text-[1.1rem] font-medium ${color[tone]}`}>{title}</h3>
+      <p className="mt-1.5 text-ink-soft">{text}</p>
+    </div>
+  );
+}
+
+function Figure({
   label,
   value,
   tone,
 }: {
   label: string;
-  value: number;
-  tone: "success" | "warning" | "danger";
+  value: string;
+  tone?: "up" | "down";
 }) {
-  const colors = {
-    success: "text-success",
-    warning: "text-warning",
-    danger: "text-danger",
-  };
-  return (
-    <div className="rounded-lg border border-card-border bg-background/50 p-4 text-center">
-      <p className="text-xs uppercase tracking-wider text-muted">{label}</p>
-      <p className={`mt-1 font-mono text-3xl font-bold ${colors[tone]}`}>
-        {formatPercent(value)}
-      </p>
-    </div>
-  );
-}
-
-function CaseCard({
-  title,
-  content,
-  tone,
-}: {
-  title: string;
-  content: string;
-  tone: "success" | "accent" | "danger";
-}) {
-  const border = {
-    success: "border-success/30",
-    accent: "border-accent/30",
-    danger: "border-danger/30",
-  };
-  return (
-    <div className={`rounded-lg border ${border[tone]} bg-background/50 p-4`}>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">
-        {title}
-      </p>
-      <p className="text-sm leading-relaxed">{content}</p>
-    </div>
-  );
-}
-
-function SurpriseList({
-  title,
-  items,
-  tone,
-}: {
-  title: string;
-  items: string[];
-  tone: "success" | "danger";
-}) {
-  const color = tone === "success" ? "text-success" : "text-danger";
+  const color = tone === "up" ? "text-up" : tone === "down" ? "text-down" : "";
   return (
     <div>
-      <p className={`mb-2 text-xs font-medium uppercase tracking-wider ${color}`}>
-        {title}
-      </p>
-      <ul className="space-y-1">
-        {items.map((item) => (
-          <li key={item} className="text-sm text-muted">
-            · {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-full border border-card-border bg-background/50 px-3 py-1.5">
-      <span className="text-muted">{label}: </span>
-      <span className="font-mono font-medium">{value}</span>
+      <dt className="text-[0.9rem] text-ink-soft">{label}</dt>
+      <dd className={`mt-0.5 font-mono text-[1.6rem] leading-none ${color}`}>{value}</dd>
     </div>
   );
 }

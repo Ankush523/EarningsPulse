@@ -5,49 +5,39 @@ import { useState } from "react";
 
 import { generatePlaybook, loadDemoPlaybook } from "@/lib/api";
 
-const DEMO_TICKERS = ["AAPL"];
+const DEMO_TICKER = "AAPL";
 
 export function DemoButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDemo = async (ticker: string) => {
+  const handleDemo = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await loadDemoPlaybook(ticker);
+      const response = await loadDemoPlaybook(DEMO_TICKER);
       router.push(`/playbook/${response.job_id}`);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Demo unavailable"
-      );
+      setError(err instanceof Error ? err.message : "The demo is unavailable");
       setLoading(false);
     }
   };
 
   return (
-    <div className="mt-6 text-center">
-      <p className="mb-3 text-xs uppercase tracking-wider text-muted">
-        Or try instant demo
-      </p>
-      <div className="flex flex-wrap justify-center gap-2">
-        {DEMO_TICKERS.map((ticker) => (
-          <button
-            key={ticker}
-            type="button"
-            disabled={loading}
-            onClick={() => handleDemo(ticker)}
-            className="rounded-lg border border-card-border bg-card px-4 py-2 font-mono text-sm transition hover:border-accent hover:text-accent disabled:opacity-50"
-          >
-            {loading ? "Loading…" : `Demo ${ticker}`}
-          </button>
-        ))}
-      </div>
-      {error && (
-        <p className="mt-3 text-xs text-danger">{error}</p>
-      )}
-    </div>
+    <p className="mt-2 text-[0.95rem] text-ink-soft">
+      No API keys yet?{" "}
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleDemo}
+        className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink disabled:opacity-50"
+      >
+        {loading ? "Opening the demo" : `Demo ${DEMO_TICKER}`}
+      </button>{" "}
+      opens a cached playbook instantly.
+      {error && <span className="ml-2 text-down">{error}</span>}
+    </p>
   );
 }
 
@@ -70,9 +60,9 @@ export function RegenerateButton({ ticker }: { ticker: string }) {
       type="button"
       disabled={loading}
       onClick={handleRegenerate}
-      className="rounded-lg border border-card-border bg-background px-4 py-2 text-sm transition hover:border-accent disabled:opacity-50"
+      className="rounded border border-ink px-4 py-2 text-[0.95rem] font-medium text-ink transition hover:bg-ink hover:text-paper disabled:opacity-50"
     >
-      {loading ? "Starting…" : `Regenerate ${ticker}`}
+      {loading ? "Starting" : `Generate ${ticker} again`}
     </button>
   );
 }

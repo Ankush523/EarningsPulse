@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 
-const inter = Inter({
+const newsreader = Newsreader({
   subsets: ["latin"],
-  variable: "--font-inter",
+  style: ["normal", "italic"],
+  weight: "variable",
+  axes: ["opsz"],
+  variable: "--font-newsreader",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-plex-mono",
 });
 
 const FALLBACK_SITE_URL = "http://localhost:3000";
@@ -67,9 +71,9 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}
+        className={`${newsreader.variable} ${plexMono.variable} bg-paper text-ink`}
       >
         {children}
       </body>

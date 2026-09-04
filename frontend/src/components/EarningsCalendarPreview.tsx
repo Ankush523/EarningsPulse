@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { fetchEarningsCalendar } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatReportTime } from "@/lib/format";
 import type { EarningsEvent } from "@/lib/types";
 
 export function EarningsCalendarPreview() {
@@ -25,7 +25,7 @@ export function EarningsCalendarPreview() {
       .catch((err) => {
         if (mounted) {
           setError(
-            err instanceof Error ? err.message : "Failed to load calendar"
+            err instanceof Error ? err.message : "Could not load the calendar"
           );
         }
       })
@@ -39,57 +39,66 @@ export function EarningsCalendarPreview() {
   }, []);
 
   return (
-    <section className="mt-20">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">Upcoming Earnings</h2>
-          <p className="mt-1 text-sm text-muted">Next 7 days</p>
-        </div>
+    <section className="mt-24">
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-ink pb-3">
+        <h2 className="text-[1.75rem] font-medium leading-tight tracking-tight">
+          Reporting in the next seven days
+        </h2>
         <Link
           href="/calendar"
-          className="text-sm text-accent transition hover:underline"
+          className="text-[0.95rem] text-ink-soft underline decoration-rule underline-offset-4 transition hover:text-ink hover:decoration-ink"
         >
-          View full calendar →
+          Full calendar
         </Link>
       </div>
 
-      <div className="rounded-xl border border-card-border bg-card">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-          </div>
-        ) : error ? (
-          <p className="px-6 py-8 text-center text-sm text-muted">{error}</p>
-        ) : events.length === 0 ? (
-          <p className="px-6 py-8 text-center text-sm text-muted">
-            No earnings events found for the next 7 days.
-          </p>
-        ) : (
-          <ul className="divide-y divide-card-border">
-            {events.map((event) => (
-              <li
-                key={`${event.ticker}-${event.report_date}`}
-                className="flex items-center justify-between gap-4 px-6 py-4"
+      {loading ? (
+        <ul className="divide-y divide-rule-soft" aria-label="Loading calendar">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="flex gap-6 py-4">
+              <span className="h-4 w-24 rounded-sm bg-rule-soft" />
+              <span className="h-4 w-16 rounded-sm bg-rule-soft" />
+              <span className="h-4 w-40 rounded-sm bg-rule-soft" />
+            </li>
+          ))}
+        </ul>
+      ) : error ? (
+        <p className="max-w-measure py-4 text-ink-soft">
+          The calendar did not load ({error}). The API may be offline; you can
+          still generate a playbook for any ticker above.
+        </p>
+      ) : events.length === 0 ? (
+        <p className="max-w-measure py-4 text-ink-soft">
+          No reports found for the next seven days. The calendar reads from
+          Finnhub, so the API needs a key to fill it in. You can still generate
+          a playbook for any ticker above.
+        </p>
+      ) : (
+        <ul className="divide-y divide-rule-soft">
+          {events.map((event) => (
+            <li
+              key={`${event.ticker}-${event.report_date}`}
+              className="grid grid-cols-[7.5rem_5rem_1fr] items-baseline gap-4 py-3.5 sm:grid-cols-[8rem_6rem_1fr_8rem]"
+            >
+              <span className="font-mono text-[0.9rem] text-ink-soft">
+                {formatDate(event.report_date)}
+              </span>
+              <Link
+                href={`/calendar#${event.ticker}`}
+                className="font-mono font-medium underline decoration-rule underline-offset-4 hover:decoration-ink"
               >
-                <div>
-                  <p className="font-mono font-semibold">{event.ticker}</p>
-                  {event.company_name && (
-                    <p className="text-sm text-muted">{event.company_name}</p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm">{formatDate(event.report_date)}</p>
-                  {event.report_time && (
-                    <p className="font-mono text-xs uppercase text-muted">
-                      {event.report_time}
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                {event.ticker}
+              </Link>
+              <span className="truncate text-ink-soft">
+                {event.company_name ?? ""}
+              </span>
+              <span className="hidden text-right text-[0.95rem] text-ink-soft sm:block">
+                {formatReportTime(event.report_time)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
