@@ -88,21 +88,7 @@ class PlaybookOrchestrator:
             "status": "running",
         }
 
-        try:
-            final_state = await self._graph.ainvoke(initial_state)
-        except Exception as exc:
-            trace = TraceLog(job_id=job_id, ticker=normalized)
-            trace.events = serialize_trace_events(initial_state.get("trace_events", []))
-            trace.events.append(
-                make_trace_event(
-                    job_id,
-                    TraceEventType.RUN_FAILED,
-                    f"Playbook generation failed: {exc}",
-                    error=str(exc),
-                    latency_ms=int((time.perf_counter() - started) * 1000),
-                )
-            )
-            raise
+        final_state = await self._graph.ainvoke(initial_state)
 
         playbook: Playbook | None = final_state.get("playbook")
         if playbook is None:

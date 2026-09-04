@@ -220,7 +220,6 @@ async def test_spillover_agent_with_mock_peer_map(cache, mock_peer_map_result):
     service.build_peer_map = AsyncMock(return_value=mock_peer_map_result)
 
     agent = SpilloverAgent(peer_map=service)
-    agent._tavily.search_sector_context = AsyncMock(return_value=[])
 
     state = cast(
         AgentState,
