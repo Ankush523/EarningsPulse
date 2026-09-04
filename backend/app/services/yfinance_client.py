@@ -40,7 +40,7 @@ def get_session() -> Any:
     if _session is not None:
         return _session
 
-    if _HAS_CURL_CFFI:
+    if _HAS_CURL_CFFI and curl_requests is not None:
         _session = curl_requests.Session(impersonate="chrome")
         logger.debug("yfinance session: curl_cffi chrome impersonation enabled")
     else:

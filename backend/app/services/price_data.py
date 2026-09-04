@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 
@@ -136,10 +136,16 @@ class PriceDataService:
 
         bars: list[OHLCVBar] = []
         for idx, row in history.iterrows():
+            if isinstance(idx, datetime):
+                bar_date = idx.date()
+            elif isinstance(idx, date):
+                bar_date = idx
+            else:
+                continue
             try:
                 bars.append(
                     OHLCVBar(
-                        date=idx.date() if hasattr(idx, "date") else idx,
+                        date=bar_date,
                         open=float(row["Open"]),
                         high=float(row["High"]),
                         low=float(row["Low"]),

@@ -27,6 +27,7 @@ dev = [
     "pytest-asyncio==0.25.0",
     "hypothesis==6.138.5",
     "ruff>=0.8.0",
+    "ty>=0.0.78",
 ]
 
 [tool.uv]
@@ -51,3 +52,10 @@ indent-style = "space"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ty.environment]
+python-version = "3.12"
+root = ["."]
+
+[tool.ty.src]
+include = ["app", "tests"]

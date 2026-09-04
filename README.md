@@ -77,7 +77,7 @@ finance_hackathon/
 ├── backend/              # FastAPI + LangGraph agents
 │   ├── app/              # Application code
 │   ├── demo/             # Pre-cached demo playbooks (AAPL)
-│   ├── pyproject.toml    # Python deps + ruff config
+│   ├── pyproject.toml    # Python deps + ruff + ty config
 │   ├── uv.lock           # Locked dependency versions
 │   ├── Dockerfile        # Production container
 │   └── railway.toml      # Railway deploy config
@@ -234,8 +234,9 @@ Property-based tests use [Hypothesis](https://hypothesis.readthedocs.io/) (backe
 # Backend (unit + Hypothesis property tests)
 cd backend && uv run python -m pytest
 
-# Lint backend
+# Lint backend (ruff) and type-check (ty)
 cd backend && uv run ruff check app tests && uv run ruff format --check app tests
+cd backend && uv run ty check
 
 # Frontend property tests (Hegel via Vitest)
 cd frontend && npm run test:property
@@ -256,7 +257,9 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && npx playwright install chromium && npm run test:e2e
 ```
 
-CI (GitHub Actions): backend ruff + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
+CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
+
+Toolchain: **uv** + **ruff** + **ty** (backend) and **oxc/oxlint** + TypeScript 5.9 (frontend).
 
 TypeScript native (Go / `tsgo`) is **not** wired into `next build` yet: Next.js 15 still requires the JavaScript `typescript` package and its compiler plugin. Stay on TypeScript **5.9.3** until Next exposes a stable TypeScript 7 / `useTypeScriptCli` path for this app.
 

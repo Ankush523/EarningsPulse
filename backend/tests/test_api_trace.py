@@ -218,8 +218,10 @@ async def test_prism_client_sync_with_rest_fallback(trace_settings):
 
     assert synced is True
     mock_http.post.assert_awaited_once()
-    call_kwargs = mock_http.post.await_args.kwargs
-    assert "trajectories" in mock_http.post.await_args.args[0]
+    await_args = mock_http.post.await_args
+    assert await_args is not None
+    call_kwargs = await_args.kwargs
+    assert "trajectories" in await_args.args[0]
     assert call_kwargs["json"]["project_id"] == "proj_test"
     assert len(call_kwargs["json"]["steps"]) == 2
 

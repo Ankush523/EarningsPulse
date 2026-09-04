@@ -19,6 +19,10 @@ from app.utils.cache import TTLCache, app_cache
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
 
 
+def _report_date(event: EarningsEvent) -> date:
+    return event.report_date
+
+
 class EarningsCalendarService:
     """Fetch upcoming and historical earnings events."""
 
@@ -92,7 +96,7 @@ class EarningsCalendarService:
             if owns_client:
                 await client.aclose()
 
-        events = [
+        events: list[EarningsEvent] = [
             self._parse_calendar_event(item)
             for item in payload.get("earningsCalendar", [])
             if item.get("symbol")
@@ -101,7 +105,7 @@ class EarningsCalendarService:
         result = EarningsCalendarResponse(
             from_date=today,
             to_date=to_date,
-            events=sorted(events, key=lambda event: event.report_date),
+            events=sorted(events, key=_report_date),
         )
 
         if use_cache:
@@ -238,7 +242,7 @@ class EarningsCalendarService:
 
         return HistoricalEarningsResponse(
             ticker=ticker,
-            events=sorted(events, key=lambda e: e.report_date, reverse=True),
+            events=sorted(events, key=_report_date, reverse=True),
             source="finnhub",
         )
 
@@ -291,7 +295,7 @@ class EarningsCalendarService:
 
         return HistoricalEarningsResponse(
             ticker=ticker,
-            events=sorted(events, key=lambda e: e.report_date, reverse=True),
+            events=sorted(events, key=_report_date, reverse=True),
             source="yfinance",
         )
 
@@ -375,9 +379,12 @@ class EarningsCalendarService:
 
     @staticmethod
     def _safe_float(value: object) -> float | None:
+        if value is None or not isinstance(value, int | float | str):
+            return None
         try:
-            if value is None or value != value:  # NaN check
-                return None
-            return float(value)
+            numeric = float(value)
         except (TypeError, ValueError):
             return None
+        if numeric != numeric:  # NaN
+            return None
+        return numeric
