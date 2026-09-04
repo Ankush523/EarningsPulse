@@ -28,6 +28,8 @@ async def readiness_check(settings: Settings = Depends(get_app_settings)) -> dic
     checks = {
         "api": True,
         "openai_configured": bool(settings.openai_api_key),
+        "google_configured": bool(settings.google_api_key),
+        "llm_configured": bool(settings.openai_api_key or settings.google_api_key),
         "tavily_configured": bool(settings.tavily_api_key),
         "finnhub_configured": bool(settings.finnhub_api_key),
         "prism_enabled": settings.prism_enabled,

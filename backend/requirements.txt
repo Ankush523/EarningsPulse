@@ -14,9 +14,11 @@ httpx==0.28.1
 langgraph==0.2.60
 langchain-core==0.3.28
 langchain-openai==0.2.14
+google-generativeai>=0.8.0
 
 # Market data (Phase 1+)
-yfinance==0.2.51
+yfinance>=0.2.58
+curl_cffi>=0.7.0
 pandas>=2.2.0
 
 # Testing

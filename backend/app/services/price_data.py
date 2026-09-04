@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Iterable
 
-import yfinance as yf
+import pandas as pd
 
 from app.models.data import EarningsWindowPrices, OHLCVBar, PriceReturnMetrics
+from app.services.company_names import get_company_name as lookup_company_name
 from app.services.errors import DataNotFoundError, ServiceError
+from app.services.yfinance_client import call_with_retry, download, get_ticker
 from app.utils.cache import TTLCache, app_cache
 
 
@@ -38,10 +40,13 @@ class PriceDataService:
                 return cached
 
         try:
-            history = yf.Ticker(normalized).history(
-                start=start.isoformat(),
-                end=(end + timedelta(days=1)).isoformat(),
-                auto_adjust=True,
+            history = call_with_retry(
+                f"history:{normalized}",
+                lambda: get_ticker(normalized).history(
+                    start=start.isoformat(),
+                    end=(end + timedelta(days=1)).isoformat(),
+                    auto_adjust=True,
+                ),
             )
         except Exception as exc:
             raise ServiceError(
@@ -50,27 +55,108 @@ class PriceDataService:
                 retryable=True,
             ) from exc
 
-        if history.empty:
+        bars = self._dataframe_to_bars(history, normalized)
+        if not bars:
             raise DataNotFoundError(
                 f"No price data found for {normalized} between {start} and {end}",
                 service="yfinance",
             )
 
-        bars = [
-            OHLCVBar(
-                date=idx.date(),
-                open=float(row["Open"]),
-                high=float(row["High"]),
-                low=float(row["Low"]),
-                close=float(row["Close"]),
-                volume=int(row["Volume"]) if row["Volume"] == row["Volume"] else None,
-            )
-            for idx, row in history.iterrows()
-        ]
-
         if use_cache:
             self._cache.set(cache_key, bars, ttl_seconds=3600)
 
+        return bars
+
+    def fetch_ohlcv_many(
+        self,
+        tickers: list[str],
+        start: date,
+        end: date,
+        *,
+        use_cache: bool = True,
+    ) -> dict[str, list[OHLCVBar]]:
+        """Fetch OHLCV for multiple tickers in one Yahoo request when possible."""
+        normalized = [t.upper().strip() for t in tickers if t.strip()]
+        if not normalized:
+            return {}
+
+        cache_key = TTLCache.make_key("ohlcv_batch", sorted(normalized), start, end)
+        if use_cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
+        result: dict[str, list[OHLCVBar]] = {t: [] for t in normalized}
+
+        if len(normalized) == 1:
+            result[normalized[0]] = self.fetch_ohlcv(
+                normalized[0], start, end, use_cache=use_cache
+            )
+            return result
+
+        try:
+            frame = call_with_retry(
+                f"download:{','.join(normalized)}",
+                lambda: download(
+                    normalized,
+                    start=start.isoformat(),
+                    end=(end + timedelta(days=1)).isoformat(),
+                ),
+            )
+        except Exception as exc:
+            # Fall back to sequential single-ticker fetches.
+            for ticker in normalized:
+                try:
+                    result[ticker] = self.fetch_ohlcv(
+                        ticker, start, end, use_cache=use_cache
+                    )
+                except Exception:
+                    result[ticker] = []
+            return result
+
+        if frame.empty:
+            return result
+
+        if isinstance(frame.columns, pd.MultiIndex):
+            for ticker in normalized:
+                if ticker not in frame.columns.get_level_values(1):
+                    continue
+                ticker_frame = frame.xs(ticker, axis=1, level=1, drop_level=False)
+                if isinstance(ticker_frame.columns, pd.MultiIndex):
+                    ticker_frame.columns = ticker_frame.columns.droplevel(1)
+                result[ticker] = self._dataframe_to_bars(ticker_frame, ticker)
+        else:
+            result[normalized[0]] = self._dataframe_to_bars(frame, normalized[0])
+
+        if use_cache:
+            self._cache.set(cache_key, result, ttl_seconds=3600)
+
+        return result
+
+    @staticmethod
+    def _dataframe_to_bars(history: pd.DataFrame, ticker: str) -> list[OHLCVBar]:
+        if history is None or history.empty:
+            return []
+
+        bars: list[OHLCVBar] = []
+        for idx, row in history.iterrows():
+            try:
+                bars.append(
+                    OHLCVBar(
+                        date=idx.date() if hasattr(idx, "date") else idx,
+                        open=float(row["Open"]),
+                        high=float(row["High"]),
+                        low=float(row["Low"]),
+                        close=float(row["Close"]),
+                        volume=(
+                            int(row["Volume"])
+                            if row["Volume"] == row["Volume"]
+                            else None
+                        ),
+                    )
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
         return bars
 
     def fetch_around_earnings(
@@ -172,9 +258,5 @@ class PriceDataService:
 
     @staticmethod
     def get_company_name(ticker: str) -> str | None:
-        """Best-effort company name lookup via yfinance metadata."""
-        try:
-            info = yf.Ticker(ticker.upper().strip()).info
-            return info.get("shortName") or info.get("longName")
-        except Exception:
-            return None
+        """Best-effort company name without Yahoo quoteSummary (.info) calls."""
+        return lookup_company_name(ticker)
