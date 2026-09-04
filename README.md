@@ -250,6 +250,9 @@ cd frontend && bun run test:property
 # Lint frontend (oxlint — ESLint/next lint retired)
 cd frontend && bun run lint
 
+# React Doctor health scan (Bun equivalent of npx react-doctor@latest)
+cd frontend && bun run doctor
+
 # Typecheck frontend (TypeScript 7 / tsc)
 cd frontend && bun run typecheck
 
@@ -263,7 +266,7 @@ SKIP_E2E=1 ./scripts/run_tests.sh
 cd frontend && bunx playwright install chromium && bun run test:e2e
 ```
 
-CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`.
+CI (GitHub Actions): backend ruff + **ty** + pytest → frontend property tests / oxlint / `tsc --noEmit` / build → Playwright E2E on every push/PR to `main`. A separate [React Doctor](https://www.react.doctor/ci) workflow scans `frontend/` on PRs (advisory, changed-files only).
 
 Toolchain: **uv** + **ruff** + **ty** (backend) and **Bun** + **oxc/oxlint** + TypeScript 7 (frontend).
 

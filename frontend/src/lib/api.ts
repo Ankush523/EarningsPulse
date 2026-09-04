@@ -4,16 +4,11 @@ import type {
   HealthResponse,
   JobStatus,
   PlaybookGenerateResponse,
-  ReadinessResponse,
   TraceLog,
 } from "./types";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
-
-export function getBackendUrl(): string {
-  return BACKEND_URL;
-}
 
 export function getPlaybookStreamUrl(jobId: string): string {
   return `${BACKEND_URL}/api/playbook/stream/${jobId}`;
@@ -39,19 +34,6 @@ export async function checkBackendHealth(): Promise<boolean> {
     return data.status === "healthy";
   } catch {
     return false;
-  }
-}
-
-export async function fetchBackendReadiness(): Promise<ReadinessResponse | null> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/ready`, {
-      method: "GET",
-      cache: "no-store",
-    });
-    if (!response.ok) return null;
-    return response.json();
-  } catch {
-    return null;
   }
 }
 
@@ -116,17 +98,6 @@ export function getPlaybookJsonExportUrl(jobId: string): string {
 
 export function getPlaybookBundleExportUrl(jobId: string): string {
   return `${BACKEND_URL}/api/playbook/${jobId}/export/bundle`;
-}
-
-export async function listDemoTickers(): Promise<string[]> {
-  const response = await fetch(`${BACKEND_URL}/api/playbook/demo`, {
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(await parseError(response));
-  }
-  const data: { tickers: string[] } = await response.json();
-  return data.tickers;
 }
 
 export async function loadDemoPlaybook(

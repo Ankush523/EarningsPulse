@@ -6,5 +6,5 @@ interface PlaybookPageProps {
 
 export default async function PlaybookPage({ params }: PlaybookPageProps) {
   const { id } = await params;
-  return <PlaybookPageClient jobId={id} />;
+  return <PlaybookPageClient key={id} jobId={id} />;
 }

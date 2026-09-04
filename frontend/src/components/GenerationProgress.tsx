@@ -11,21 +11,21 @@ export function GenerationProgress({
   isRunning,
   eventCount,
 }: GenerationProgressProps) {
+  if (!isRunning) return null;
+  return <RunningProgress eventCount={eventCount} />;
+}
+
+function RunningProgress({ eventCount }: { eventCount: number }) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    if (!isRunning) return;
-
-    setElapsed(0);
     const started = Date.now();
     const interval = window.setInterval(() => {
       setElapsed(Math.floor((Date.now() - started) / 1000));
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [isRunning]);
-
-  if (!isRunning) return null;
+  }, []);
 
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;

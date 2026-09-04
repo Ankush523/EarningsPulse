@@ -14,11 +14,16 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const FALLBACK_SITE_URL = "http://localhost:3000";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? FALLBACK_SITE_URL;
+
+function siteMetadataBase(value: string): URL {
+  return URL.canParse(value) ? new URL(value) : new URL(FALLBACK_SITE_URL);
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: siteMetadataBase(siteUrl),
   title: {
     default: "EarningsPulse — Pre-Earnings AI Playbooks",
     template: "%s · EarningsPulse",

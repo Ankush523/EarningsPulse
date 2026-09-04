@@ -226,9 +226,9 @@ export function PlaybookView({ playbook }: PlaybookViewProps) {
       <section className="rounded-xl border border-card-border bg-card p-6">
         <SectionHeader title="Action Playbook" />
         <ol className="space-y-4">
-          {actions.rules.map((rule, index) => (
+          {actions.rules.map((rule) => (
             <li
-              key={`${rule.condition}-${index}`}
+              key={`${rule.condition}:${rule.action}:${rule.confidence}`}
               className="rounded-lg border border-card-border bg-background/50 p-4"
             >
               <div className="mb-2 flex items-center justify-between gap-2">
