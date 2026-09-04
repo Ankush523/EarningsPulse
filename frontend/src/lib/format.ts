@@ -39,10 +39,49 @@ export function formatArchetype(value: string): string {
     .join(" ");
 }
 
+const ARCHETYPE_LABEL: Record<string, string> = {
+  dip_then_rally: "Dip, then rally",
+  immediate_rip: "Immediate rip",
+  sell_the_news: "Sell the news",
+  gap_and_hold: "Gap and hold",
+  volatility_pin: "Volatility pin",
+  insufficient_data: "Not enough history",
+};
+
+export function describeArchetype(value: string): string {
+  return ARCHETYPE_LABEL[value] ?? formatArchetype(value);
+}
+
+const DIRECTION_LABEL: Record<string, string> = {
+  same: "Same way",
+  inverse: "Opposite way",
+  opposite: "Opposite way",
+  up: "Up",
+  down: "Down",
+  mixed: "Mixed",
+  neutral: "Flat",
+};
+
+export function describeDirection(value: string): string {
+  const key = value.trim().toLowerCase();
+  return DIRECTION_LABEL[key] ?? value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function formatLatency(ms: number | null | undefined): string {
   if (ms == null) return "—";
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
+}
+
+const REPORT_TIME_LABEL: Record<string, string> = {
+  amc: "After the close",
+  bmo: "Before the open",
+  dmh: "During market hours",
+};
+
+export function formatReportTime(value: string | null | undefined): string {
+  if (!value) return "Time not set";
+  return REPORT_TIME_LABEL[value.toLowerCase()] ?? value;
 }
 
 export function formatRelationship(value: string): string {

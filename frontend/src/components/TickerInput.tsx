@@ -32,7 +32,7 @@ export function TickerInput({ suggestions = POPULAR_TICKERS }: TickerInputProps)
       router.push(`/playbook/${response.job_id}`);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to start playbook generation"
+        err instanceof Error ? err.message : "Could not start the playbook"
       );
       setLoading(false);
     }
@@ -45,75 +45,73 @@ export function TickerInput({ suggestions = POPULAR_TICKERS }: TickerInputProps)
   );
 
   return (
-    <div className="mx-auto max-w-md">
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-3 sm:flex-row"
-      >
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            placeholder="Enter ticker (e.g. AAPL)"
-            maxLength={10}
-            pattern="[A-Za-z.\-]+"
-            list="ticker-suggestions"
-            disabled={loading}
-            className="w-full rounded-lg border border-card-border bg-card px-4 py-3 font-mono text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-60"
-            aria-label="Stock ticker symbol"
-          />
-          <datalist id="ticker-suggestions">
-            {Array.from(new Set([...suggestions, ...POPULAR_TICKERS])).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </datalist>
-        </div>
+    <div className="max-w-xl">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+        <input
+          type="text"
+          value={ticker}
+          onChange={(e) => setTicker(e.target.value.toUpperCase())}
+          placeholder="Ticker"
+          maxLength={10}
+          pattern="[A-Za-z.\-]+"
+          list="ticker-suggestions"
+          disabled={loading}
+          className="w-full flex-1 rounded border border-rule bg-panel px-4 py-3 font-mono text-lg uppercase text-ink placeholder:normal-case placeholder:text-ink-soft/70 disabled:opacity-60"
+          aria-label="Stock ticker symbol"
+          autoComplete="off"
+        />
+        <datalist id="ticker-suggestions">
+          {Array.from(new Set([...suggestions, ...POPULAR_TICKERS])).map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </datalist>
         <button
           type="submit"
           disabled={!ticker.trim() || loading}
-          className="rounded-lg bg-accent px-6 py-3 font-medium text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded bg-ink px-6 py-3 text-[1.05rem] font-medium text-paper transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {loading ? "Starting…" : "Generate Playbook"}
+          {loading ? "Starting" : "Generate playbook"}
         </button>
       </form>
 
-      {error && (
-        <p className="mt-3 text-center text-sm text-danger">{error}</p>
-      )}
+      {error && <p className="mt-3 text-[0.95rem] text-down">{error}</p>}
 
-      {ticker && filteredSuggestions.length > 0 && (
-        <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {filteredSuggestions.slice(0, 5).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setTicker(s)}
-              className="rounded-md border border-card-border px-2 py-1 font-mono text-xs text-muted transition hover:border-accent hover:text-foreground"
-            >
-              {s}
-            </button>
+      {ticker && filteredSuggestions.length > 0 ? (
+        <p className="mt-4 text-[0.95rem] text-ink-soft">
+          Did you mean{" "}
+          {filteredSuggestions.slice(0, 5).map((s, i) => (
+            <span key={s}>
+              {i > 0 && ", "}
+              <button
+                type="button"
+                onClick={() => setTicker(s)}
+                className="font-mono text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
+              >
+                {s}
+              </button>
+            </span>
           ))}
-        </div>
+        </p>
+      ) : (
+        <p className="mt-4 text-[0.95rem] text-ink-soft">
+          Try{" "}
+          {POPULAR_TICKERS.slice(0, 4).map((s, i) => (
+            <span key={s}>
+              {i > 0 && (i === 3 ? " or " : ", ")}
+              <button
+                type="button"
+                onClick={() => setTicker(s)}
+                className="font-mono text-ink underline decoration-rule underline-offset-4 hover:decoration-ink"
+              >
+                {s}
+              </button>
+            </span>
+          ))}
+          .
+        </p>
       )}
-
-      <p className="mt-4 text-center text-xs text-muted">
-        Or pick from{" "}
-        {POPULAR_TICKERS.slice(0, 4).map((s, i) => (
-          <span key={s}>
-            {i > 0 && ", "}
-            <button
-              type="button"
-              onClick={() => setTicker(s)}
-              className="font-mono text-accent hover:underline"
-            >
-              {s}
-            </button>
-          </span>
-        ))}
-      </p>
     </div>
   );
 }

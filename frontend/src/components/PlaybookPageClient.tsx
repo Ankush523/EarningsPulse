@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { AgentTracePanel } from "@/components/AgentTracePanel";
 import { AppHeader } from "@/components/AppHeader";
-import { DisclaimerBanner } from "@/components/DisclaimerBanner";
-import { ExportToolbar } from "@/components/ExportToolbar";
-import { GenerationProgress } from "@/components/GenerationProgress";
 import { RegenerateButton } from "@/components/DemoButton";
+import { ExportToolbar } from "@/components/ExportToolbar";
 import { PlaybookView } from "@/components/PlaybookView";
+import { RunPanel } from "@/components/RunPanel";
+import { SiteFooter } from "@/components/SiteFooter";
 import { fetchTraceLog } from "@/lib/api";
 import { usePlaybookStream } from "@/hooks/usePlaybookStream";
 import type { TraceLog } from "@/lib/types";
@@ -25,7 +24,7 @@ export function PlaybookPageClient({ jobId }: PlaybookPageClientProps) {
 
   const isRunning = status === "connecting" || status === "streaming";
   const isDemo = jobId.startsWith("demo_");
-  const ticker = playbook?.executive_summary.ticker ?? job?.ticker ?? "…";
+  const ticker = playbook?.executive_summary.ticker ?? job?.ticker ?? null;
 
   useEffect(() => {
     if (status !== "completed" && status !== "failed") return;
@@ -36,70 +35,57 @@ export function PlaybookPageClient({ jobId }: PlaybookPageClientProps) {
   }, [jobId, status]);
 
   return (
-    <div className="min-h-screen">
-      <DisclaimerBanner />
+    <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="no-print mb-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-6 pb-8 pt-8">
+        <div className="no-print mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 text-[0.95rem] text-ink-soft">
           <Link
             href="/"
-            className="text-sm text-muted transition hover:text-accent"
+            className="underline decoration-rule underline-offset-4 transition hover:text-ink hover:decoration-ink"
           >
-            ← Back to home
+            Back to home
           </Link>
-          <h1 className="mt-4 text-2xl font-bold sm:text-3xl">
-            {isRunning ? "Generating Playbook…" : "Earnings Playbook"}
-          </h1>
-          <p className="mt-1 font-mono text-sm text-muted">
-            {ticker} · Job {jobId}
-            {isDemo && " · Demo"}
-          </p>
+          {isDemo && <span>Cached demo playbook</span>}
         </div>
 
-        <GenerationProgress
-          isRunning={isRunning}
-          eventCount={events.length || traceEvents.length}
+        <RunPanel
+          status={status}
+          events={events}
+          traceEvents={traceEvents}
+          error={status === "failed" ? null : error}
+          durationMs={playbook?.metadata.generation_time_ms ?? traceLog?.total_latency_ms}
         />
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(280px,380px)_1fr]">
-          <div className="no-print">
-            <AgentTracePanel
-              status={status}
-              events={events}
-              traceEvents={traceEvents}
-              error={error}
-            />
-          </div>
-
-          <div className="min-w-0">
-            {playbook ? (
-              <div className="animate-fade-in">
+        <div className="mt-12">
+          {playbook ? (
+            <div className="reveal">
+              <div className="mb-8 flex justify-end">
                 <ExportToolbar
                   jobId={jobId}
-                  ticker={ticker}
+                  ticker={ticker ?? ""}
                   playbook={playbook}
                   traceLog={traceLog}
                 />
-                <div id="playbook-export">
-                  <PlaybookView playbook={playbook} />
-                </div>
               </div>
-            ) : isRunning ? (
-              <PlaybookSkeleton ticker={ticker} />
-            ) : status === "failed" ? (
-              <ErrorPanel
-                error={error}
-                ticker={ticker}
-                hasPartialTrace={traceEvents.length > 0}
-                onRetryStream={reconnect}
-              />
-            ) : (
-              <PlaybookSkeleton ticker={ticker} />
-            )}
-          </div>
+              <div id="playbook-export">
+                <PlaybookView playbook={playbook} />
+              </div>
+            </div>
+          ) : status === "failed" ? (
+            <ErrorPanel
+              error={error}
+              ticker={ticker}
+              hasPartialTrace={traceEvents.length > 0}
+              onRetryStream={reconnect}
+            />
+          ) : (
+            <PlaybookSkeleton ticker={ticker} running={isRunning} />
+          )}
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
@@ -111,54 +97,68 @@ function ErrorPanel({
   onRetryStream,
 }: {
   error: string | null;
-  ticker: string;
+  ticker: string | null;
   hasPartialTrace: boolean;
   onRetryStream: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-danger/30 bg-danger/10 p-8">
-      <h3 className="mb-2 text-lg font-semibold text-danger">
-        Playbook generation failed
-      </h3>
-      <p className="mb-4 text-sm text-muted">
-        {error ?? "An unexpected error occurred."}
+    <div className="max-w-measure border-t-2 border-down pt-5">
+      <h1 className="text-[1.75rem] font-medium leading-tight tracking-tight">
+        The playbook could not be finished
+      </h1>
+      <p className="mt-3 text-ink-soft">
+        {error ?? "The run stopped before a playbook was written."}
       </p>
       {hasPartialTrace && (
-        <p className="mb-4 text-sm text-muted">
-          Partial agent trace is available in the panel — some steps completed
-          before the failure.
+        <p className="mt-2 text-ink-soft">
+          The steps that did finish are in the run log above.
         </p>
       )}
-      <div className="flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
           onClick={onRetryStream}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
+          className="rounded bg-ink px-4 py-2 text-[0.95rem] font-medium text-paper transition hover:bg-ink/90"
         >
-          Retry stream
+          Reconnect
         </button>
-        <RegenerateButton ticker={ticker} />
+        {ticker && <RegenerateButton ticker={ticker} />}
       </div>
     </div>
   );
 }
 
-function PlaybookSkeleton({ ticker }: { ticker: string }) {
+function PlaybookSkeleton({
+  ticker,
+  running,
+}: {
+  ticker: string | null;
+  running: boolean;
+}) {
   return (
-    <div className="animate-pulse space-y-6">
-      <div className="rounded-xl border border-card-border bg-card p-6">
-        <div className="mb-4 h-4 w-24 rounded bg-card-border" />
-        <div className="mb-2 h-8 w-64 max-w-full rounded bg-card-border" />
-        <div className="h-4 w-48 max-w-full rounded bg-card-border" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-lg bg-card-border/60" />
-          ))}
-        </div>
-      </div>
-      <p className="text-center text-sm text-muted">
-        Building playbook for {ticker}…
+    <div aria-busy={running} className="border-b border-ink pb-8">
+      {ticker && <p className="font-mono text-[1.05rem] text-ink-soft">{ticker}</p>}
+      <h1 className="mt-1 text-[2.25rem] font-medium leading-[1.1] tracking-tight sm:text-[2.75rem]">
+        {!running
+          ? "Loading the playbook"
+          : ticker
+            ? `Writing the ${ticker} playbook`
+            : "Writing the playbook"}
+      </h1>
+      <p className="mt-3 max-w-measure text-ink-soft">
+        {running
+          ? "The agents are reading filings, news and price history. The document appears here as soon as the synthesis step finishes."
+          : "Fetching the saved run."}
       </p>
+      <div className="mt-10 grid grid-cols-3 gap-4" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <div key={i}>
+            <span className="block h-4 w-12 rounded-sm bg-rule-soft" />
+            <span className="mt-2 block h-10 w-20 rounded-sm bg-rule-soft" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 h-2.5 w-full rounded-sm bg-rule-soft" aria-hidden />
     </div>
   );
 }

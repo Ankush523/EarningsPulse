@@ -6,6 +6,18 @@ import { checkBackendHealth } from "@/lib/api";
 
 type Status = "loading" | "healthy" | "unhealthy";
 
+const DOT: Record<Status, string> = {
+  loading: "bg-rule",
+  healthy: "bg-up",
+  unhealthy: "bg-down",
+};
+
+const LABEL: Record<Status, string> = {
+  loading: "Checking API",
+  healthy: "API connected",
+  unhealthy: "API unreachable",
+};
+
 export function BackendStatus() {
   const [status, setStatus] = useState<Status>("loading");
 
@@ -25,24 +37,10 @@ export function BackendStatus() {
     };
   }, []);
 
-  const color =
-    status === "healthy"
-      ? "bg-success"
-      : status === "unhealthy"
-        ? "bg-danger"
-        : "bg-warning";
-
-  const label =
-    status === "healthy"
-      ? "API Online"
-      : status === "unhealthy"
-        ? "API Offline"
-        : "Checking...";
-
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className={`h-2 w-2 rounded-full ${color}`} aria-hidden />
-      <span className="font-mono text-muted">{label}</span>
-    </div>
+    <span className="flex items-center gap-2 text-[0.9rem] text-ink-soft">
+      <span className={`h-2 w-2 rounded-full ${DOT[status]}`} aria-hidden />
+      <span className="sr-only sm:not-sr-only">{LABEL[status]}</span>
+    </span>
   );
 }
