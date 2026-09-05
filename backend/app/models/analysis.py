@@ -4,7 +4,13 @@ from datetime import UTC, date, datetime
 
 from pydantic import BaseModel, Field
 
-from app.models.playbook import ConfidenceTier, PeerRelationship, ReactionArchetype, ReportOutcome
+from app.models.playbook import (
+    ConfidenceTier,
+    PeerRelationship,
+    ReactionArchetype,
+    ReactionChartData,
+    ReportOutcome,
+)
 
 
 class EarningsReactionEvent(BaseModel):
@@ -99,6 +105,7 @@ class ReactionPatternAnalysis(BaseModel):
     validation: ValidationSummary | None = None
     backtest_years: float | None = None
     fib_levels: dict[str, float] = Field(default_factory=dict)
+    reaction_chart: ReactionChartData | None = None
 
 
 class PeerCandidate(BaseModel):

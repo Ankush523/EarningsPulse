@@ -101,6 +101,7 @@ def reaction_analysis_to_summary(
         validation=validation,
         backtest_years=analysis.backtest_years,
         fib_levels=analysis.fib_levels,
+        reaction_chart=analysis.reaction_chart,
         sources=[
             Source(
                 title="Historical price data",

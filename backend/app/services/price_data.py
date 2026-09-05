@@ -314,6 +314,55 @@ class PriceDataService:
         return [bar for bar in bars if start <= bar.date <= end]
 
     @staticmethod
+    def slice_chart_bars(
+        bars: list[OHLCVBar],
+        focus_date: date,
+        *,
+        lookback_days: int = 45,
+        forward_days: int = 5,
+    ) -> list[OHLCVBar]:
+        """Extract daily bars for the reaction chart (history before + days after focus)."""
+        start = focus_date - timedelta(days=lookback_days)
+        end = focus_date + timedelta(days=forward_days)
+        return sorted(
+            (bar for bar in bars if start <= bar.date <= end),
+            key=lambda bar: bar.date,
+        )
+
+    @staticmethod
+    def compute_floor_pivot(prev_bar: OHLCVBar) -> dict[str, float]:
+        """Classic floor pivot levels from the prior session OHLC."""
+        high = prev_bar.high
+        low = prev_bar.low
+        close = prev_bar.close
+        pivot = (high + low + close) / 3
+        range_size = high - low
+        return {
+            "pivot": round(pivot, 4),
+            "resistance": round(2 * pivot - low, 4),
+            "support": round(2 * pivot - high, 4),
+            "resistance_2": round(pivot + range_size, 4),
+            "support_2": round(pivot - range_size, 4),
+        }
+
+    @staticmethod
+    def compute_swing_levels(
+        bars: list[OHLCVBar],
+        before: date,
+        *,
+        lookback_bars: int = 20,
+    ) -> dict[str, float]:
+        """Swing high/low support and resistance from pre-focus bars."""
+        pre = sorted((bar for bar in bars if bar.date < before), key=lambda bar: bar.date)
+        window = pre[-lookback_bars:]
+        if len(window) < 2:
+            return {}
+        return {
+            "swing_high": round(max(bar.high for bar in window), 4),
+            "swing_low": round(min(bar.low for bar in window), 4),
+        }
+
+    @staticmethod
     def get_company_name(ticker: str) -> str | None:
         """Best-effort company name without Yahoo quoteSummary (.info) calls."""
         return lookup_company_name(ticker)

@@ -1,4 +1,4 @@
-import { ReactionChart } from "@/components/ReactionChart";
+import { ReactionWorkspace } from "@/components/reaction/ReactionWorkspace";
 import { ScenarioTree } from "@/components/ScenarioTree";
 import { Figure, PlaybookSection } from "@/components/playbook/PlaybookSection";
 import { formatPercent } from "@/lib/format";
@@ -19,19 +19,23 @@ export function ReactionAnalysisSection({ reaction, ticker }: ReactionAnalysisSe
       <p className="max-w-measure text-ink-soft">{reaction.archetype_description}</p>
 
       <div className="mt-6">
+        <ReactionWorkspace
+          ticker={ticker}
+          chart={reaction.reaction_chart}
+          historicalReactions={reaction.historical_reactions}
+          impliedMovePct={reaction.implied_move_pct}
+          historicalMovePct={reaction.historical_move_pct}
+          archetype={reaction.archetype}
+        />
+      </div>
+
+      <div className="mt-8">
         <ScenarioTree scenarios={reaction.scenarios} />
       </div>
 
       <ReactionStats reaction={reaction} />
       <OptionsVolatilityBlock reaction={reaction} />
       <QuantitativeValidationBlock reaction={reaction} />
-
-      <div className="mt-10 border-t border-white/45 pt-6">
-        <h3 className="text-[1.15rem] font-medium">How the last reports traded</h3>
-        <div className="mt-4">
-          <ReactionChart reactions={reaction.historical_reactions} ticker={ticker} />
-        </div>
-      </div>
     </PlaybookSection>
   );
 }

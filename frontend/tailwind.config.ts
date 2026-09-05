@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -26,6 +27,11 @@ const config: Config = {
         "panel-ink-text": "var(--panel-ink-text)",
         "panel-ink-soft": "var(--panel-ink-soft)",
         "panel-ink-rule": "var(--panel-ink-rule)",
+        "surface-hover": "var(--surface-hover)",
+        "chart-shell": "var(--chart-shell-bg)",
+        "chart-shell-border": "var(--chart-shell-border)",
+        "chart-shell-muted": "var(--chart-shell-muted)",
+        "chart-shell-soft": "var(--chart-shell-soft)",
       },
       fontFamily: {
         sans: [

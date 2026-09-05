@@ -1,9 +1,11 @@
 """Pydantic schemas for the Earnings Playbook deliverable."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, Field
+
+from app.models.data import OHLCVBar
 
 
 class ConfidenceTier(str, Enum):
@@ -105,6 +107,47 @@ class HistoricalReaction(BaseModel):
     pattern: ReactionArchetype
 
 
+class ReactionPathPoint(BaseModel):
+    """One point on a post-earnings reaction path."""
+
+    offset_days: int = Field(description="Trading days relative to the earnings date")
+    date: date
+    pct_from_baseline: float
+    close: float
+
+
+class ReactionEventPath(BaseModel):
+    """Percent path for one historical earnings event."""
+
+    earnings_date: date
+    report_outcome: ReportOutcome | None = None
+    baseline_price: float
+    points: list[ReactionPathPoint] = Field(default_factory=list)
+
+
+class ReactionReferenceLine(BaseModel):
+    """Horizontal price level overlay for the reaction chart."""
+
+    label: str
+    price: float
+    kind: str = Field(
+        description="pivot, support, resistance, entry, tp, sl"
+    )
+
+
+class ReactionChartData(BaseModel):
+    """Chart payload for the reaction workspace UI."""
+
+    ticker: str
+    focus_earnings_date: date
+    baseline_price: float
+    window_days: int
+    candles: list[OHLCVBar] = Field(default_factory=list)
+    paths: list[ReactionEventPath] = Field(default_factory=list)
+    median_path: list[ReactionPathPoint] = Field(default_factory=list)
+    reference_lines: list[ReactionReferenceLine] = Field(default_factory=list)
+
+
 class MonteCarloSummary(BaseModel):
     """Monte Carlo percentile bands surfaced in the playbook."""
 
@@ -173,6 +216,7 @@ class ReactionAnalysisSummary(BaseModel):
     validation: ValidationSummary | None = None
     backtest_years: float | None = None
     fib_levels: dict[str, float] = Field(default_factory=dict)
+    reaction_chart: ReactionChartData | None = None
 
 
 class PeerSpillover(BaseModel):
