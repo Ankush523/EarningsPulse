@@ -61,7 +61,7 @@ flowchart TB
 
 | Layer | Stack |
 |-------|-------|
-| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, oxlint, Knip, Bun |
+| Frontend | Next.js 16, React 19, TypeScript 7, Tailwind CSS, lightweight-charts, oxlint, Knip, Bun |
 | Backend | FastAPI, LangGraph, Pydantic v2 |
 | LLM | OpenAI GPT-4o |
 | Research | Tavily Search API |

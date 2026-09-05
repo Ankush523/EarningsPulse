@@ -59,8 +59,8 @@ Scroll the completed playbook. Hit these four beats:
 1. Report forecast: beat/miss probabilities, key metrics, confidence tier  
    > "We're not predicting exact EPS. We're forecasting sentiment and scenario probabilities with cited sources."
 
-2. Price reaction scenarios: primary pattern (for example dip-then-rally)  
-   > "This ticker historically dips on beats before recovering. That's the non-obvious part."
+2. Price reaction scenarios: reaction workspace chart + primary pattern (for example dip-then-rally)  
+   > "Daily candles around the print, with historical path overlays. This ticker historically dips on beats before recovering. That's the non-obvious part."
 
 3. Peer spillover map: top 3–5 correlated tickers  
    > "These peers historically move in the same after-hours window."

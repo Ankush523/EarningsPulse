@@ -1,30 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EarningsPulse frontend
 
-## Getting Started
+Next.js 16 (App Router) web UI for playbook generation, live agent traces, and the earnings playbook viewer.
 
-First, run the development server:
+## Getting started
 
 ```bash
+bun install
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The backend API defaults to `http://localhost:8000` via `NEXT_PUBLIC_BACKEND_URL`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to load Newsreader and IBM Plex Mono.
+| Command | Purpose |
+|---------|---------|
+| `bun run dev` | Development server (Turbopack) |
+| `bun run build` | Production build |
+| `bun run lint` | oxlint |
+| `bun run typecheck` | TypeScript (`tsc --noEmit`) |
+| `bun run knip` | Unused files, deps, exports |
+| `bun run doctor` | React Doctor health scan |
+| `bun run test:e2e` | Playwright (starts backend + frontend) |
 
-## Learn More
+## Layout and design tokens
 
-To learn more about Next.js, take a look at the following resources:
+Defined in `tailwind.config.ts` and `src/app/globals.css`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Token | Value | Use |
+|-------|-------|-----|
+| `max-w-page` | `85rem` (1360px) | Header, footer, home, calendar, playbook shell |
+| `max-w-measure` | `42rem` | Long-form prose on marketing pages and disclaimers |
+| `--up` / `--down` / `--caution` | CSS variables | Direction-only colour (beat/miss, charts, badges) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Playbook pages use a wide data-workspace layout: section cards fill the page shell; titles stack above content until `xl`, then sit in a sticky left rail. Internal grids (odds strip, forecast cases, reaction stats) expand to the full content column — no nested `max-w-measure` inside panels.
 
-## Deploy on Vercel
+## Key components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Area | Files |
+|------|-------|
+| Playbook viewer | `PlaybookView.tsx`, `playbook/PlaybookSection.tsx`, `PlaybookPageClient.tsx` |
+| Reaction workspace | `reaction/ReactionWorkspace.tsx`, `ReactionCandleChart.tsx`, `ReactionMoveHistogram.tsx` |
+| Agent trace | `RunPanel.tsx` (dark surface) |
+| Theme | `ThemeProvider.tsx`, `ThemeToggle.tsx`, `lib/theme.ts` |
+| Charts | [lightweight-charts](https://tradingview.github.io/lightweight-charts/) v5 |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Typography: system UI sans stack in `globals.css`; IBM Plex Mono via `next/font` for tickers and figures.
+
+## Docs
+
+Monorepo docs live in `../docs/` — see [IMPLEMENTATION_PLAN.md](../docs/IMPLEMENTATION_PLAN.md) §10 for frontend flows and the design system.

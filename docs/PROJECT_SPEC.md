@@ -316,11 +316,14 @@ Archetypes are computed per ticker. The dip-then-rally pattern from brainstormin
 
 ### Screen 3. Playbook output
 
-- Executive summary
+- Wide page shell (`max-w-page`, 1360px) with glass section cards
+- Executive summary with beat/inline/miss odds strip
+- Report forecast with bull/base/bear cases
+- Reaction workspace: daily OHLCV candles, historical path overlays, pivot/support/resistance lines, move histogram
 - Expandable scenario tree
-- Historical reaction chart (last 4–8 earnings on a price timeline)
 - Peer spillover table with correlation scores
-- Sources sidebar with clickable links
+- Sources list with clickable links
+- Light / dark theme toggle (charts follow theme)
 
 ### Screen 4. Compare (stretch)
 
@@ -442,11 +445,12 @@ No dependency on specific tickers (NVIDIA, Marvell, IREN) unless they happen to 
 
 **Visual identity (shipped):**
 
-- Light stone paper (`#eeefea`) with navy ink (`#14202b`)
-- Colour reserved for direction: up / down / caution tokens
-- Newsreader for text, IBM Plex Mono for figures and tickers
-- The agent run panel is the only dark surface
+- Light stone paper (`#eef2fb`) or dark navy (`#0b0f16`) with theme toggle
+- Navy / white ink tokens; colour reserved for direction (up / down / caution)
+- System UI sans stack + IBM Plex Mono for figures and tickers
+- Page shell `max-w-page` (1360px); playbook sections use full-width internal grids
+- The agent run panel is the only always-dark surface; charts use lightweight-charts
 
 ---
 
-Document version 1.1. Created September 3, 2026. Branding updated September 4, 2026.
+Document version 1.2. Created September 3, 2026. Branding and layout updated September 4, 2026.

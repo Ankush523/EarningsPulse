@@ -113,8 +113,8 @@ Yes, with a Cursor coding agent, if the user supplies keys and runs the demo.
 | Layer | Choice | Rationale |
 | ------------------- | ------------------------------------- | ------------------------------------------------------ |
 | Frontend | Next.js 16 (App Router) + TypeScript 7 | Turbopack by default, easy Vercel deploy |
-| UI | Tailwind CSS + shadcn/ui | Fast path to a usable finance UI |
-| Charts | Recharts | Earnings reaction timeline charts |
+| UI | Tailwind CSS + custom glass components | Editorial finance UI without a component library |
+| Charts | lightweight-charts | OHLCV reaction workspace (candles, paths, reference lines) |
 | Backend | Python 3.12 + FastAPI | Strong ecosystem for finance data and AI agents |
 | Agent framework | LangGraph | Multi-agent orchestration with state |
 | LLM | OpenAI GPT-4o (primary) | Tool calling and synthesis quality; Anthropic as fallback |
@@ -181,10 +181,13 @@ EarningsPulse/
 │   │   │   └── calendar/page.tsx
 │   │   ├── components/
 │   │   │   ├── TickerInput.tsx
-│   │   │   ├── AgentTracePanel.tsx    # PRISM live trace
+│   │   │   ├── RunPanel.tsx           # PRISM live trace (dark surface)
 │   │   │   ├── PlaybookView.tsx
 │   │   │   ├── ScenarioTree.tsx
-│   │   │   ├── ReactionChart.tsx
+│   │   │   ├── reaction/
+│   │   │   │   ├── ReactionWorkspace.tsx
+│   │   │   │   ├── ReactionCandleChart.tsx
+│   │   │   │   └── ReactionMoveHistogram.tsx
 │   │   │   ├── PeerSpilloverTable.tsx
 │   │   │   └── ConfidenceBadge.tsx
 │   │   ├── lib/
@@ -255,7 +258,7 @@ Phases are sequential. All phases merged to `main` as of September 3, 2026.
 
 - [x] Initialize monorepo with `backend/` and `frontend/` directories
 - [x] Set up Python virtual environment, `requirements.txt` (FastAPI, LangGraph, yfinance, httpx, pydantic, etc.)
-- [x] Set up Next.js 16 with TypeScript 7, Tailwind, shadcn/ui
+- [x] Set up Next.js 16 with TypeScript 7, Tailwind, custom glass UI
 - [x] Create `.env.example` with all required keys documented
 - [x] Create `docker-compose.yml` for local dev (backend + frontend)
 - [x] Implement health check endpoints (`GET /health` on backend, frontend loads)
@@ -376,7 +379,7 @@ Phases are sequential. All phases merged to `main` as of September 3, 2026.
   - Connect to stream endpoint
   - Parse events, update state
   - Handle completion and errors
-- [x] `AgentTracePanel.tsx`: Live PRISM trace viewer
+- [x] `RunPanel.tsx`: Live PRISM trace viewer
   - Step-by-step agent progress
   - Tool call log with timestamps
   - Status indicators (running/complete/error)
@@ -384,13 +387,15 @@ Phases are sequential. All phases merged to `main` as of September 3, 2026.
 - [x] `PlaybookView.tsx`: Main output display
   - Section A: Executive summary
   - Section B: Report forecast
-  - Section C: Scenario tree (interactive)
+  - Section C: Reaction workspace + scenario tree (interactive)
   - Section D: Peer spillover table
   - Section E: Action playbook
   - Section F: Sources list
-- [x] `ReactionChart.tsx`: Historical earnings reaction chart
-  - Price line with earnings dates marked
-  - Dip/recovery annotations
+- [x] `ReactionWorkspace.tsx`: Price reaction chart workspace
+  - Daily OHLCV candles via lightweight-charts
+  - Historical earnings path overlays, median path, pivot/support/resistance lines
+  - Move histogram and overlay toggles
+  - Theme-aware chart palette (light / dark)
 - [x] `ScenarioTree.tsx`: Interactive scenario tree with probabilities
 - [x] `PeerSpilloverTable.tsx`: Sortable peer table with correlation bars
 - [x] `ConfidenceBadge.tsx`: Reusable confidence tier badge
@@ -410,6 +415,8 @@ Phases are sequential. All phases merged to `main` as of September 3, 2026.
 - [x] SEO meta tags and favicon
 - [x] Performance: playbook generation under 2 minutes
 - [x] Mobile-responsive layout verification
+- [x] Wide playbook layout (`max-w-page` shell, full-width section grids)
+- [x] Reaction chart workspace: backend `reaction_chart.py` payload + frontend lightweight-charts UI
 
 **Exit criteria:** Demo-ready UX on happy path and error path.
 
@@ -572,12 +579,16 @@ START
 
 | Element | Style |
 | ----------------- | ------------------------------------------ |
-| Background | Light stone paper (`#eeefea`) |
-| Ink | Navy (`#14202b`), soft ink for secondary text |
+| Page shell | `max-w-page` (`85rem` / 1360px), aligned header + footer |
+| Background | Light stone paper (`#eef2fb`) or dark navy (`#0b0f16`) via `ThemeProvider` |
+| Ink | Navy / white tokens (`--ink`, `--ink-soft`), soft ink for secondary text |
 | Direction colour | Up / down / caution tokens only |
-| Agent run panel | Dark surface (only dark UI in the app) |
-| Typography | Newsreader (text) + IBM Plex Mono (figures, tickers) |
-| Charts | Recharts |
+| Surfaces | Glass panels (`glass-panel`, `glass-panel-strong`) with blur and rim shadows |
+| Agent run panel | Dark surface (`RunPanel.tsx`) — always dark even in light mode |
+| Typography | System UI sans stack + IBM Plex Mono (figures, tickers) |
+| Prose measure | `max-w-measure` (`42rem`) for marketing copy and disclaimers only |
+| Playbook layout | Section titles stack until `xl`; sticky title rail + full-width content grids at `xl+` |
+| Charts | lightweight-charts (reaction workspace candles, paths, reference lines) |
 
 ## 11. PRISM integration plan
 
@@ -598,7 +609,7 @@ class PrismClient:
 ```
 
 - All traces stored locally and served via `GET /api/trace/{job_id}`
-- Frontend AgentTracePanel reads from the same SSE stream
+- Frontend `RunPanel` reads from the same SSE stream
 - At the hackathon: add `PRISM_API_KEY` to env → auto-switches to live PRISM
 
 ### PRISM event types
@@ -757,4 +768,4 @@ Phase 9: Deploy + docs + demo script (merged PR #9)
 
 ---
 
-Document version 1.2. Created September 3, 2026. Updated September 4, 2026 (docs unslop + design system).
+Document version 1.3. Created September 3, 2026. Updated September 4, 2026 (reaction workspace, layout tokens, design system refresh).
