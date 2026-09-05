@@ -14,7 +14,8 @@ from app.services.trace_store import trace_event_to_prism_step
 
 logger = logging.getLogger(__name__)
 
-PRISM_TRAJECTORY_PATH = "/api/v1/trajectories"
+PRISM_TRAJECTORY_PATH = "/api/trajectories"
+PRISM_TRACE_PATH = "/api/traces"
 
 
 class PrismClient:
@@ -95,19 +96,23 @@ class PrismClient:
 
         try:
             if self._sdk is not None:
-                await asyncio.to_thread(
+                synced = await asyncio.to_thread(
                     self._submit_trajectory_sdk,
                     trace_log,
                     steps,
                 )
             else:
-                await self._submit_trajectory_rest(trace_log, steps)
+                synced = await self._submit_trajectory_rest(trace_log, steps)
+
+            if synced:
+                await self._submit_summary_trace(trace_log, steps)
 
             async with self._lock:
                 self._buffers.pop(trace_log.job_id, None)
 
-            logger.info("PRISM sync completed for job %s", trace_log.job_id)
-            return True
+            if synced:
+                logger.info("PRISM sync completed for job %s", trace_log.job_id)
+            return synced
         except Exception as exc:
             logger.warning(
                 "PRISM sync failed for job %s (local trace preserved): %s",
@@ -120,34 +125,46 @@ class PrismClient:
         self,
         trace_log: TraceLog,
         steps: list[dict[str, Any]],
-    ) -> None:
+    ) -> bool:
         assert self._sdk is not None
         final_status = "success"
         if steps and steps[-1].get("step_type") == "error":
             final_status = "error"
 
-        self._sdk.submit_trajectory(
+        agent_name = f"earningspulse-{trace_log.ticker.lower()}"
+        result = self._sdk.submit_trajectory(
             steps,
-            agent_name=f"earningspulse-{trace_log.ticker.lower()}",
+            agent_name=agent_name,
+            agent_id=agent_name,
             model=self._settings.llm_model,
             request_id=trace_log.job_id,
             conversation_id=trace_log.job_id,
             final_status=final_status,
-            async_send=True,
+            async_send=False,
         )
+        self._sdk.flush()
+        return result is not None
 
     async def _submit_trajectory_rest(
         self,
         trace_log: TraceLog,
         steps: list[dict[str, Any]],
-    ) -> None:
+    ) -> bool:
         client = await self._get_http_client()
         url = f"{self._settings.prism_host.rstrip('/')}{PRISM_TRAJECTORY_PATH}"
+        agent_name = f"earningspulse-{trace_log.ticker.lower()}"
+        final_status = "error" if steps and steps[-1].get("step_type") == "error" else "success"
         payload = {
             "project_id": self._settings.prism_project_id,
-            "agent_name": f"earningspulse-{trace_log.ticker.lower()}",
+            "conversation_id": trace_log.job_id,
+            "request_id": trace_log.job_id,
+            "agent_id": agent_name,
+            "agent_name": agent_name,
             "model": self._settings.llm_model,
             "steps": steps,
+            "total_duration_ms": trace_log.total_latency_ms
+            or sum(step.get("duration_ms") or 0 for step in steps),
+            "final_status": final_status,
             "metadata": {
                 "job_id": trace_log.job_id,
                 "ticker": trace_log.ticker,
@@ -156,13 +173,100 @@ class PrismClient:
             },
         }
         headers = {
-            "Authorization": f"Bearer {self._settings.prism_api_key}",
-            "X-PRISMtrace-Key": self._settings.prism_api_key or "",
+            "x-prismtrace-key": self._settings.prism_api_key or "",
             "Content-Type": "application/json",
         }
         response = await client.post(url, json=payload, headers=headers, timeout=30.0)
         if response.status_code >= 400:
             raise RuntimeError(f"PRISM API returned {response.status_code}: {response.text[:500]}")
+        return True
+
+    async def _submit_summary_trace(
+        self,
+        trace_log: TraceLog,
+        steps: list[dict[str, Any]],
+    ) -> None:
+        """Send one summary trace so the PRISM dashboard live counter updates."""
+        agent_name = f"earningspulse-{trace_log.ticker.lower()}"
+        tool_calls = sum(1 for step in steps if step.get("step_type") == "tool_call")
+        final_step = steps[-1].get("label", "Playbook generation completed")
+        payload = {
+            "project_id": self._settings.prism_project_id,
+            "model": self._settings.llm_model,
+            "input_messages": [
+                {
+                    "role": "user",
+                    "content": f"Generate earnings playbook for {trace_log.ticker}",
+                }
+            ],
+            "output_message": final_step,
+            "latency_ms": trace_log.total_latency_ms or 0,
+            "agent_name": agent_name,
+            "agent_id": agent_name,
+            "trace_id": trace_log.job_id,
+            "metadata": {
+                "job_id": trace_log.job_id,
+                "ticker": trace_log.ticker,
+                "source": "earningspulse",
+                "tool_calls": tool_calls,
+                "step_count": len(steps),
+            },
+        }
+        headers = {
+            "x-prismtrace-key": self._settings.prism_api_key or "",
+            "Content-Type": "application/json",
+        }
+        try:
+            if self._sdk is not None:
+                await asyncio.to_thread(self._submit_summary_trace_sdk, trace_log, steps)
+            else:
+                client = await self._get_http_client()
+                url = f"{self._settings.prism_host.rstrip('/')}{PRISM_TRACE_PATH}"
+                response = await client.post(url, json=payload, headers=headers, timeout=30.0)
+                if response.status_code >= 400:
+                    logger.warning(
+                        "PRISM summary trace failed for job %s: %s",
+                        trace_log.job_id,
+                        response.text[:200],
+                    )
+        except Exception as exc:
+            logger.warning(
+                "PRISM summary trace failed for job %s: %s",
+                trace_log.job_id,
+                exc,
+            )
+
+    def _submit_summary_trace_sdk(
+        self,
+        trace_log: TraceLog,
+        steps: list[dict[str, Any]],
+    ) -> None:
+        assert self._sdk is not None
+        agent_name = f"earningspulse-{trace_log.ticker.lower()}"
+        tool_calls = sum(1 for step in steps if step.get("step_type") == "tool_call")
+        final_step = steps[-1].get("label", "Playbook generation completed")
+        self._sdk.trace_llm(
+            model=self._settings.llm_model,
+            input_messages=[
+                {
+                    "role": "user",
+                    "content": f"Generate earnings playbook for {trace_log.ticker}",
+                }
+            ],
+            output=final_step,
+            latency_ms=trace_log.total_latency_ms or 0,
+            trace_id=trace_log.job_id,
+            agent_id=agent_name,
+            agent_name=agent_name,
+            metadata={
+                "job_id": trace_log.job_id,
+                "ticker": trace_log.ticker,
+                "source": "earningspulse",
+                "tool_calls": tool_calls,
+                "step_count": len(steps),
+            },
+        )
+        self._sdk.flush()
 
     async def _get_http_client(self) -> httpx.AsyncClient:
         if self._http is None or self._http.is_closed:

@@ -162,7 +162,10 @@ async def test_get_trace_api_completed_job(client, trace_settings):
 
 @pytest.mark.asyncio
 async def test_prism_client_local_mode_does_not_sync(trace_settings):
-    client = PrismClient(settings=trace_settings)
+    settings = trace_settings.model_copy(
+        update={"prism_api_key": None, "prism_project_id": None},
+    )
+    client = PrismClient(settings=settings)
     assert client.local_mode is True
 
     trace_log = TraceLog(
@@ -217,13 +220,13 @@ async def test_prism_client_sync_with_rest_fallback(trace_settings):
         synced = await client.sync_trace_log(trace_log)
 
     assert synced is True
-    mock_http.post.assert_awaited_once()
-    await_args = mock_http.post.await_args
-    assert await_args is not None
-    call_kwargs = await_args.kwargs
-    assert "trajectories" in await_args.args[0]
-    assert call_kwargs["json"]["project_id"] == "proj_test"
-    assert len(call_kwargs["json"]["steps"]) == 2
+    assert mock_http.post.await_count == 2
+    trajectory_call = mock_http.post.await_args_list[0]
+    trace_call = mock_http.post.await_args_list[1]
+    assert "trajectories" in trajectory_call.args[0]
+    assert "traces" in trace_call.args[0]
+    assert trajectory_call.kwargs["json"]["project_id"] == "proj_test"
+    assert len(trajectory_call.kwargs["json"]["steps"]) == 2
 
 
 @pytest.mark.asyncio
