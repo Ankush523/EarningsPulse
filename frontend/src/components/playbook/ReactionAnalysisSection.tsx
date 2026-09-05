@@ -26,7 +26,7 @@ export function ReactionAnalysisSection({ reaction, ticker }: ReactionAnalysisSe
       <OptionsVolatilityBlock reaction={reaction} />
       <QuantitativeValidationBlock reaction={reaction} />
 
-      <div className="mt-10 border-t border-rule-soft pt-6">
+      <div className="mt-10 border-t border-white/45 pt-6">
         <h3 className="text-[1.15rem] font-medium">How the last reports traded</h3>
         <div className="mt-4">
           <ReactionChart reactions={reaction.historical_reactions} ticker={ticker} />
@@ -47,7 +47,7 @@ function ReactionStats({ reaction }: { reaction: ReactionAnalysis }) {
   }
 
   return (
-    <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-rule-soft pt-6">
+    <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-white/45 pt-6">
       {reaction.avg_dip_pct != null && (
         <Figure
           label="Average dip"

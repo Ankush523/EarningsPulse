@@ -38,7 +38,7 @@ export function BackendStatus() {
   }, []);
 
   return (
-    <span className="flex items-center gap-2 text-[0.9rem] text-ink-soft">
+    <span className="glass-chip flex items-center gap-2 px-3 py-1.5 text-[0.85rem] text-ink-soft">
       <span className={`h-2 w-2 rounded-full ${DOT[status]}`} aria-hidden />
       <span className="sr-only sm:not-sr-only">{LABEL[status]}</span>
     </span>

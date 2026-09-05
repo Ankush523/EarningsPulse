@@ -44,12 +44,12 @@ function PlaybookHeader({ summary }: { summary: Playbook["executive_summary"] })
   const reportLine = buildReportLine(summary);
 
   return (
-    <header className="border-b border-ink pb-8">
+    <header className="glass-panel-strong mb-5 p-6 sm:p-8">
       <p className="font-mono text-[1.05rem] text-ink-soft">{summary.ticker}</p>
-      <h1 className="mt-1 text-balance text-[2.25rem] font-medium leading-[1.1] tracking-tight sm:text-[2.75rem]">
+      <h1 className="mt-1 text-balance text-[2.25rem] font-semibold leading-[1.1] tracking-tight sm:text-[2.75rem]">
         {summary.company_name ?? summary.ticker} earnings playbook
       </h1>
-      <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-ink-soft">
+      <p className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-2 text-ink-soft">
         {reportLine && <span>{reportLine}</span>}
         <ConfidenceBadge tier={summary.overall_confidence} />
       </p>
@@ -70,7 +70,7 @@ function buildReportLine(summary: Playbook["executive_summary"]): string | null 
 
 function ExecutiveOddsSection({ summary }: { summary: Playbook["executive_summary"] }) {
   return (
-    <section className="py-10" aria-labelledby="odds-heading">
+    <section className="glass-panel mb-5 p-6 sm:p-8" aria-labelledby="odds-heading">
       <h2 id="odds-heading" className="sr-only">
         Report odds
       </h2>
@@ -81,7 +81,7 @@ function ExecutiveOddsSection({ summary }: { summary: Playbook["executive_summar
       />
       <div className="mt-10 grid gap-10 md:grid-cols-2">
         <div>
-          <h3 className="text-[1.15rem] font-medium">Expected pattern</h3>
+          <h3 className="text-[1.15rem] font-semibold">Expected pattern</h3>
           <p className="mt-2 text-[1.35rem] leading-snug">
             {describeArchetype(summary.primary_pattern)}
           </p>
@@ -90,7 +90,7 @@ function ExecutiveOddsSection({ summary }: { summary: Playbook["executive_summar
           </p>
         </div>
         <div>
-          <h3 className="text-[1.15rem] font-medium">What decides it</h3>
+          <h3 className="text-[1.15rem] font-semibold">What decides it</h3>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 marker:text-ink-soft">
             {summary.top_drivers.map((driver) => (
               <li key={driver}>{driver}</li>
@@ -108,7 +108,7 @@ function ActionPlaybookSection({ actions }: { actions: Playbook["action_playbook
       {actions.rules.length === 0 ? (
         <p className="text-ink-soft">No conditional rules were produced.</p>
       ) : (
-        <ol className="divide-y divide-rule-soft">
+        <ol className="divide-y divide-white/40">
           {actions.rules.map((rule) => (
             <li
               key={`${rule.condition}:${rule.action}:${rule.confidence}`}
@@ -154,7 +154,7 @@ function SourcesSection({ sources }: { sources: Playbook["all_sources"] }) {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline decoration-rule underline-offset-4 hover:decoration-ink"
+                className="link-glass font-medium"
               >
                 {source.title}
               </a>
@@ -169,7 +169,7 @@ function SourcesSection({ sources }: { sources: Playbook["all_sources"] }) {
 
 function PlaybookFooter({ meta }: { meta: Playbook["metadata"] }) {
   return (
-    <footer className="border-t border-rule pt-6 text-[0.9rem] text-ink-soft">
+    <footer className="glass-panel mt-5 p-6 text-[0.9rem] text-ink-soft sm:p-8">
       Generated {formatDate(meta.generated_at)}
       {meta.generation_time_ms != null && ` in ${formatLatency(meta.generation_time_ms)}`}
       {" "}by EarningsPulse {meta.model_version}
@@ -199,8 +199,8 @@ function OddsStrip({
     <div>
       <div className="grid grid-cols-3 gap-4">
         {segments.map((segment) => (
-          <div key={segment.label}>
-            <p className={`text-[1.05rem] ${segment.text}`}>{segment.label}</p>
+          <div key={segment.label} className="glass-chip rounded-2xl px-4 py-3">
+            <p className={`text-[1.05rem] font-medium ${segment.text}`}>{segment.label}</p>
             <p className="font-mono text-[2.5rem] leading-none tracking-tight sm:text-[3rem]">
               {formatPercent(segment.value)}
             </p>
@@ -208,14 +208,14 @@ function OddsStrip({
         ))}
       </div>
       <div
-        className="mt-5 flex h-2.5 w-full gap-0.5 overflow-hidden rounded-sm"
+        className="mt-5 flex h-3 w-full gap-0.5 overflow-hidden rounded-full bg-white/35 p-0.5"
         role="img"
         aria-label={`Beat ${formatPercent(beat)}, inline ${formatPercent(inline)}, miss ${formatPercent(miss)}`}
       >
         {segments.map((segment) => (
           <span
             key={segment.label}
-            className={`block h-full ${segment.bar}`}
+            className={`block h-full rounded-full ${segment.bar}`}
             style={{ width: `${(segment.value / total) * 100}%` }}
           />
         ))}

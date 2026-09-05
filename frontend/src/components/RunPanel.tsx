@@ -164,7 +164,7 @@ export function RunPanel({
   return (
     <section
       aria-label="Agent run"
-      className="no-print rounded-md bg-ink text-panel-ink-text"
+      className="no-print glass-panel-dark overflow-hidden"
     >
       <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 px-5 py-4 sm:px-6">
         <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
@@ -212,7 +212,7 @@ export function RunPanel({
             type="button"
             onClick={() => setLogOpen(!showLog)}
             aria-expanded={showLog}
-            className="rounded border border-panel-ink-rule px-3 py-1 text-[0.85rem] text-panel-ink-text transition hover:border-panel-ink-soft"
+            className="cursor-pointer rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[0.85rem] text-panel-ink-text transition hover:border-white/25 hover:bg-white/10"
           >
             {showLog ? "Hide log" : `Run log (${displayEvents.length})`}
           </button>

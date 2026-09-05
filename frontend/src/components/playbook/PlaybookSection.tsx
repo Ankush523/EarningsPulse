@@ -13,11 +13,11 @@ export function PlaybookSection({
   children: ReactNode;
 }) {
   return (
-    <section className="grid gap-x-10 gap-y-4 border-t border-rule py-10 lg:grid-cols-[11rem_1fr]">
-      <div className="lg:sticky lg:top-6 lg:self-start">
-        <h2 className="text-[1.25rem] font-medium leading-snug">{title}</h2>
+    <section className="glass-panel mb-5 grid gap-x-10 gap-y-4 p-6 sm:p-8 lg:grid-cols-[11rem_1fr] lg:p-9">
+      <div className="lg:sticky lg:top-24 lg:self-start">
+        <h2 className="text-[1.2rem] font-semibold leading-snug">{title}</h2>
         {confidence && (
-          <p className="mt-1.5">
+          <p className="mt-2">
             <ConfidenceBadge tier={confidence} />
           </p>
         )}
@@ -38,9 +38,9 @@ export function Figure({
 }) {
   const color = tone === "up" ? "text-up" : tone === "down" ? "text-down" : "";
   return (
-    <div>
-      <dt className="text-[0.9rem] text-ink-soft">{label}</dt>
-      <dd className={`mt-0.5 font-mono text-[1.6rem] leading-none ${color}`}>{value}</dd>
+    <div className="glass-chip rounded-2xl px-4 py-3">
+      <dt className="text-[0.85rem] text-ink-soft">{label}</dt>
+      <dd className={`mt-1 font-mono text-[1.5rem] leading-none ${color}`}>{value}</dd>
     </div>
   );
 }
@@ -54,12 +54,13 @@ export function ForecastCase({
   tone: "up" | "ink" | "down";
   text: string;
 }) {
-  const border = { up: "border-up", ink: "border-ink", down: "border-down" };
-  const color = { up: "text-up", ink: "", down: "text-down" };
+  const border = { up: "border-up/40", ink: "border-white/50", down: "border-down/40" };
+  const color = { up: "text-up", ink: "text-ink", down: "text-down" };
+  const wash = { up: "bg-up-wash", ink: "bg-white/35", down: "bg-down-wash" };
   return (
-    <div className={`border-t-2 pt-3 ${border[tone]}`}>
-      <h3 className={`text-[1.1rem] font-medium ${color[tone]}`}>{title}</h3>
-      <p className="mt-1.5 text-ink-soft">{text}</p>
+    <div className={`rounded-2xl border-t-2 ${border[tone]} ${wash[tone]} p-4 backdrop-blur-sm`}>
+      <h3 className={`text-[1.05rem] font-semibold ${color[tone]}`}>{title}</h3>
+      <p className="mt-2 text-[0.98rem] leading-relaxed text-ink-soft">{text}</p>
     </div>
   );
 }

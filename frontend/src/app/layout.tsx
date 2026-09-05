@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { IBM_Plex_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: "variable",
-  axes: ["opsz"],
-  variable: "--font-newsreader",
-});
 
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -56,8 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "EarningsPulse — Pre-Earnings AI Playbooks",
-    description:
-      "Know the report. Read the reaction. Watch the ripple.",
+    description: "Know the report. Read the reaction. Watch the ripple.",
   },
   robots: {
     index: true,
@@ -72,9 +63,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${newsreader.variable} ${plexMono.variable} bg-paper text-ink`}
-      >
+      <body className={`${plexMono.variable} text-ink antialiased`}>
         {children}
       </body>
     </html>

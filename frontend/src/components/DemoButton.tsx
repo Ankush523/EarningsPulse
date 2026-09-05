@@ -25,15 +25,15 @@ export function DemoButton() {
   };
 
   return (
-    <p className="mt-2 text-[0.95rem] text-ink-soft">
+    <p className="mt-3 text-[0.95rem] text-ink-soft">
       No API keys yet?{" "}
       <button
         type="button"
         disabled={loading}
         onClick={handleDemo}
-        className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink disabled:opacity-50"
+        className="cursor-pointer font-medium text-accent underline decoration-accent/30 underline-offset-4 hover:decoration-accent disabled:opacity-50"
       >
-        {loading ? "Opening the demo" : `Demo ${DEMO_TICKER}`}
+        {loading ? "Opening the demo…" : `Demo ${DEMO_TICKER}`}
       </button>{" "}
       opens a cached playbook instantly.
       {error && <span className="ml-2 text-down">{error}</span>}
@@ -60,9 +60,9 @@ export function RegenerateButton({ ticker }: { ticker: string }) {
       type="button"
       disabled={loading}
       onClick={handleRegenerate}
-      className="rounded border border-ink px-4 py-2 text-[0.95rem] font-medium text-ink transition hover:bg-ink hover:text-paper disabled:opacity-50"
+      className="btn-secondary cursor-pointer rounded-xl px-4 py-2 text-[0.95rem] font-medium text-ink disabled:opacity-50"
     >
-      {loading ? "Starting" : `Generate ${ticker} again`}
+      {loading ? "Starting…" : `Generate ${ticker} again`}
     </button>
   );
 }

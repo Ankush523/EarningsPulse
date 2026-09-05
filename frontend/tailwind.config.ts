@@ -15,6 +15,8 @@ const config: Config = {
         "ink-soft": "var(--ink-soft)",
         rule: "var(--rule)",
         "rule-soft": "var(--rule-soft)",
+        accent: "var(--accent)",
+        "accent-soft": "var(--accent-soft)",
         up: "var(--up)",
         down: "var(--down)",
         caution: "var(--caution)",
@@ -26,8 +28,15 @@ const config: Config = {
         "panel-ink-rule": "var(--panel-ink-rule)",
       },
       fontFamily: {
-        sans: ["var(--font-newsreader)", "Georgia", "serif"],
-        serif: ["var(--font-newsreader)", "Georgia", "serif"],
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "SF Pro Display",
+          "SF Pro Text",
+          "Segoe UI",
+          "system-ui",
+          "sans-serif",
+        ],
         mono: ["var(--font-plex-mono)", "ui-monospace", "monospace"],
       },
       fontSize: {
@@ -35,6 +44,13 @@ const config: Config = {
       },
       maxWidth: {
         measure: "40rem",
+      },
+      boxShadow: {
+        glass: "var(--glass-shadow)",
+        "glass-sm": "var(--glass-shadow-sm)",
+      },
+      borderRadius: {
+        glass: "1.25rem",
       },
     },
   },
