@@ -2,9 +2,7 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
-  useMemo,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -32,18 +30,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     getThemeServerSnapshot
   );
 
-  const setTheme = useCallback((next: Theme) => {
+  const setTheme = (next: Theme) => {
     persistTheme(next);
-  }, []);
+  };
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = () => {
     persistTheme(theme === "dark" ? "light" : "dark");
-  }, [theme]);
+  };
 
-  const value = useMemo(
-    () => ({ theme, setTheme, toggleTheme }),
-    [theme, setTheme, toggleTheme]
-  );
+  const value = { theme, setTheme, toggleTheme };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

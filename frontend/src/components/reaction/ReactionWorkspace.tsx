@@ -45,7 +45,7 @@ export function ReactionWorkspace({
 
   if (!chart || chart.candles.length === 0) {
     return (
-      <div className="reaction-workspace">
+      <section aria-label="Reaction workspace" className="reaction-workspace">
         <div className="reaction-workspace-divider border-b px-4 py-4 sm:px-5">
           <p className="font-mono text-[0.95rem] text-chart-shell-muted">{ticker}</p>
           <h3 className="mt-1 text-[1.15rem] font-semibold">Reaction workspace</h3>
@@ -55,7 +55,7 @@ export function ReactionWorkspace({
           </p>
         </div>
         <ReactionMoveHistogram reactions={historicalReactions} />
-      </div>
+      </section>
     );
   }
 
