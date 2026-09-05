@@ -87,12 +87,14 @@ async def test_backtest_analyze_ticker_mocked(settings, cache, ticker):
     )
 
     price_service = PriceDataService(cache=cache)
+    dip_bars = _bars_dip_then_rally()
+    price_service.fetch_ohlcv = MagicMock(return_value=dip_bars)
     price_service.fetch_around_earnings = MagicMock(
         return_value=EarningsWindowPrices(
             ticker=ticker,
             earnings_date=date(2024, 1, 3),
             window_days=3,
-            bars=_bars_dip_then_rally(),
+            bars=dip_bars,
             metrics=None,
         )
     )

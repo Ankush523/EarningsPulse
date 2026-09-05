@@ -146,12 +146,14 @@ async def test_analyze_ticker_with_mocks(settings, cache):
     )
 
     price_service = PriceDataService(cache=cache)
+    dip_bars = _bars_dip_then_rally()
+    price_service.fetch_ohlcv = MagicMock(return_value=dip_bars)
     price_service.fetch_around_earnings = MagicMock(
         return_value=EarningsWindowPrices(
             ticker="AAPL",
             earnings_date=date(2024, 1, 3),
             window_days=3,
-            bars=_bars_dip_then_rally(),
+            bars=dip_bars,
             metrics=None,
         )
     )

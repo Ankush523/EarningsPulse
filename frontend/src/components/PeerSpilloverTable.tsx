@@ -64,7 +64,7 @@ export function PeerSpilloverTable({ peers }: PeerSpilloverTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px] text-left text-[0.95rem]">
         <thead>
-          <tr className="border-b border-rule text-ink-soft">
+          <tr className="border-b border-white/50 text-ink-soft">
             {sortableHeader("ticker", "Ticker")}
             <th className="pb-2.5 pr-4 font-normal">Company</th>
             {sortableHeader("relationship", "Relationship")}
@@ -75,11 +75,11 @@ export function PeerSpilloverTable({ peers }: PeerSpilloverTableProps) {
         </thead>
         <tbody>
           {sorted.map((peer) => (
-            <tr key={peer.ticker} className="border-b border-rule-soft align-top">
+            <tr key={peer.ticker} className="border-b border-white/35 align-top transition hover:bg-white/20">
               <td className="py-3 pr-4">
                 <span className="font-mono font-medium">{peer.ticker}</span>
                 {peer.watch_flag && (
-                  <span className="ml-2 rounded-sm bg-caution-wash px-1.5 py-px text-[0.75rem] text-caution">
+                  <span className="glass-chip ml-2 px-2 py-0.5 text-[0.75rem] font-medium text-caution">
                     Watch
                   </span>
                 )}
@@ -118,7 +118,7 @@ function SortButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1 transition hover:text-ink ${
+      className={`inline-flex cursor-pointer items-center gap-1 transition hover:text-ink ${
         active ? "text-ink" : ""
       }`}
     >
@@ -134,8 +134,8 @@ function CorrelationBar({ score }: { score: number }) {
   const pct = Math.min(Math.abs(score), 1) * 100;
   return (
     <span className="flex items-center gap-3">
-      <span className="h-1.5 w-24 overflow-hidden rounded-sm bg-rule-soft">
-        <span className="block h-full bg-ink" style={{ width: `${pct}%` }} />
+      <span className="h-1.5 w-24 overflow-hidden rounded-full bg-white/45">
+        <span className="block h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </span>
       <span className="font-mono text-[0.9rem]">{score.toFixed(2)}</span>
     </span>

@@ -199,6 +199,11 @@ def _build_top_drivers(
     if forecast.get("key_metrics"):
         drivers.append(f"Watch {forecast['key_metrics'][0]['name']}")
     drivers.append(f"Historical pattern: {reaction.archetype.value.replace('_', ' ')}")
+    if reaction.backtest_years is not None:
+        drivers.append(
+            f"Backtested {len(reaction.historical_reactions)} earnings over "
+            f"{reaction.backtest_years:.1f} years"
+        )
     if reaction.dip_frequency_on_positive is not None:
         drivers.append(f"Dip-on-positive frequency: {reaction.dip_frequency_on_positive:.0%}")
     if forecast.get("bull_case"):

@@ -20,7 +20,7 @@ interface ConfidenceBadgeProps {
 export function ConfidenceBadge({ tier, className = "" }: ConfidenceBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-2 text-[0.9rem] text-ink-soft ${className}`}
+      className={`glass-chip inline-flex items-center gap-2 px-3 py-1 text-[0.85rem] text-ink-soft ${className}`}
     >
       <span className={`h-2 w-2 rounded-full ${DOT[tier]}`} aria-hidden />
       {LABEL[tier]}

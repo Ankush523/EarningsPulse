@@ -68,9 +68,6 @@ async function downloadServerExport(
   downloadBlob(match?.[1] ?? fallbackFilename(kind, ticker, jobId), blob);
 }
 
-const QUIET_BUTTON =
-  "rounded border border-rule bg-panel px-3.5 py-1.5 text-[0.9rem] transition hover:border-ink disabled:opacity-50";
-
 export function ExportToolbar({
   jobId,
   ticker,
@@ -105,24 +102,24 @@ export function ExportToolbar({
         type="button"
         disabled={loading !== null}
         onClick={() => handleServerExport("json")}
-        className={QUIET_BUTTON}
+        className="btn-secondary cursor-pointer rounded-xl px-3.5 py-1.5 text-[0.9rem] font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading === "json" ? "Exporting" : "JSON"}
+        {loading === "json" ? "Exporting…" : "JSON"}
       </button>
 
       <button
         type="button"
         disabled={loading !== null}
         onClick={() => handleServerExport("bundle")}
-        className={QUIET_BUTTON}
+        className="btn-secondary cursor-pointer rounded-xl px-3.5 py-1.5 text-[0.9rem] font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading === "bundle" ? "Exporting" : "JSON + trace"}
+        {loading === "bundle" ? "Exporting…" : "JSON + trace"}
       </button>
 
       <button
         type="button"
         onClick={printPlaybook}
-        className="rounded bg-ink px-3.5 py-1.5 text-[0.9rem] font-medium text-paper transition hover:bg-ink/90"
+        className="btn-primary cursor-pointer rounded-xl px-3.5 py-1.5 text-[0.9rem] font-semibold"
       >
         Print / PDF
       </button>

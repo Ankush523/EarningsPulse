@@ -7,6 +7,7 @@ from typing import Any
 
 from app.agents.mappers import reaction_analysis_to_summary
 from app.agents.trace_utils import make_trace_event, trace_to_dict, traced_tool
+from app.config import get_settings
 from app.models.agent_state import AgentState
 from app.models.playbook import ConfidenceTier, ReactionAnalysisSummary, ReactionArchetype
 from app.models.trace import TraceEventType
@@ -37,14 +38,22 @@ class ReactionAgent:
         ]
         errors: list[str] = []
 
+        settings = get_settings()
         try:
             async with traced_tool(
                 job_id,
                 AGENT_NAME,
                 "reaction_analyzer",
-                {"ticker": ticker, "limit": 8},
+                {
+                    "ticker": ticker,
+                    "limit": settings.reaction_history_limit,
+                    "backtest_years_target": 10,
+                },
             ) as tool_events:
-                analysis = await self._analyzer.analyze_ticker(ticker, limit=8)
+                analysis = await self._analyzer.analyze_ticker(
+                    ticker,
+                    limit=settings.reaction_history_limit,
+                )
                 trace_events.extend(trace_to_dict(e) for e in tool_events)
             reaction: ReactionAnalysisSummary = reaction_analysis_to_summary(analysis)
         except Exception as exc:

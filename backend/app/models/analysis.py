@@ -25,6 +25,38 @@ class EarningsReactionEvent(BaseModel):
     window_days: int = 3
 
 
+class MonteCarloSummary(BaseModel):
+    """Monte Carlo percentile bands for post-earnings moves."""
+
+    simulations: int
+    p10_final_move_pct: float
+    p50_final_move_pct: float
+    p90_final_move_pct: float
+    p10_max_dip_pct: float | None = None
+    p50_max_dip_pct: float | None = None
+    p90_max_dip_pct: float | None = None
+    dip_before_recovery_prob: float | None = Field(
+        default=None,
+        ge=0,
+        le=1,
+        description="Fraction of simulations with dip-then-recovery shape",
+    )
+    mean_final_move_pct: float | None = None
+
+
+class ValidationSummary(BaseModel):
+    """Out-of-sample validation for reaction pattern stability."""
+
+    train_events: int
+    test_events: int
+    train_dominant_archetype: ReactionArchetype
+    test_pattern_match_rate: float = Field(ge=0, le=1)
+    pattern_drift: float = Field(ge=0, le=1)
+    overfitting_risk: str = Field(description="low, medium, or high")
+    is_reliable: bool
+    summary: str
+
+
 class ReactionPatternAnalysis(BaseModel):
     """Aggregate reaction pattern analysis for a ticker."""
 
@@ -63,6 +95,10 @@ class ReactionPatternAnalysis(BaseModel):
     )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
     analyzed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    monte_carlo: MonteCarloSummary | None = None
+    validation: ValidationSummary | None = None
+    backtest_years: float | None = None
+    fib_levels: dict[str, float] = Field(default_factory=dict)
 
 
 class PeerCandidate(BaseModel):

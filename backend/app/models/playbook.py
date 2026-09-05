@@ -105,6 +105,33 @@ class HistoricalReaction(BaseModel):
     pattern: ReactionArchetype
 
 
+class MonteCarloSummary(BaseModel):
+    """Monte Carlo percentile bands surfaced in the playbook."""
+
+    simulations: int
+    p10_final_move_pct: float
+    p50_final_move_pct: float
+    p90_final_move_pct: float
+    p10_max_dip_pct: float | None = None
+    p50_max_dip_pct: float | None = None
+    p90_max_dip_pct: float | None = None
+    dip_before_recovery_prob: float | None = Field(default=None, ge=0, le=1)
+    mean_final_move_pct: float | None = None
+
+
+class ValidationSummary(BaseModel):
+    """Out-of-sample validation surfaced in the playbook."""
+
+    train_events: int
+    test_events: int
+    train_dominant_archetype: ReactionArchetype
+    test_pattern_match_rate: float = Field(ge=0, le=1)
+    pattern_drift: float = Field(ge=0, le=1)
+    overfitting_risk: str
+    is_reliable: bool
+    summary: str
+
+
 class ReactionAnalysisSummary(BaseModel):
     """Section C — Price reaction scenarios and historical analysis."""
 
@@ -142,6 +169,10 @@ class ReactionAnalysisSummary(BaseModel):
     )
     confidence: ConfidenceTier = ConfidenceTier.MEDIUM
     sources: list[Source] = Field(default_factory=list)
+    monte_carlo: MonteCarloSummary | None = None
+    validation: ValidationSummary | None = None
+    backtest_years: float | None = None
+    fib_levels: dict[str, float] = Field(default_factory=dict)
 
 
 class PeerSpillover(BaseModel):

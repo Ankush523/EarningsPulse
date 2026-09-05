@@ -11,7 +11,7 @@ interface ReactionChartProps {
 export function ReactionChart({ reactions, ticker }: ReactionChartProps) {
   if (reactions.length === 0) {
     return (
-      <p className="max-w-measure rounded border border-dashed border-rule px-4 py-5 text-[0.95rem] text-ink-soft">
+      <p className="max-w-measure rounded-2xl border border-dashed border-white/55 bg-white/30 px-4 py-5 text-[0.95rem] text-ink-soft backdrop-blur-sm">
         No prior report-day reactions on file for {ticker}. This chart fills in
         when price history is available for the last several prints.
       </p>
@@ -45,7 +45,7 @@ export function ReactionChart({ reactions, ticker }: ReactionChartProps) {
     .join(" ");
 
   return (
-    <div>
+    <div className="glass-chip rounded-2xl p-4">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
@@ -134,7 +134,7 @@ export function ReactionChart({ reactions, ticker }: ReactionChartProps) {
       <div className="mt-5 overflow-x-auto">
         <table className="w-full min-w-[480px] text-left text-[0.95rem]">
           <thead>
-            <tr className="border-b border-rule text-ink-soft">
+            <tr className="border-b border-white/50 text-ink-soft">
               <th className="pb-2 pr-4 font-normal">Report</th>
               <th className="pb-2 pr-4 font-normal">Outcome</th>
               <th className="pb-2 pr-4 text-right font-normal">First move</th>
@@ -144,7 +144,7 @@ export function ReactionChart({ reactions, ticker }: ReactionChartProps) {
           </thead>
           <tbody>
             {reactions.map((r) => (
-              <tr key={r.earnings_date} className="border-b border-rule-soft">
+              <tr key={r.earnings_date} className="border-b border-white/35">
                 <td className="py-2 pr-4 font-mono text-[0.9rem]">
                   {formatDate(r.earnings_date)}
                 </td>

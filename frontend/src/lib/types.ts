@@ -75,6 +75,29 @@ export interface HistoricalReaction {
   pattern: ReactionArchetype;
 }
 
+interface MonteCarloSummary {
+  simulations: number;
+  p10_final_move_pct: number;
+  p50_final_move_pct: number;
+  p90_final_move_pct: number;
+  p10_max_dip_pct?: number | null;
+  p50_max_dip_pct?: number | null;
+  p90_max_dip_pct?: number | null;
+  dip_before_recovery_prob?: number | null;
+  mean_final_move_pct?: number | null;
+}
+
+interface ValidationSummary {
+  train_events: number;
+  test_events: number;
+  train_dominant_archetype: ReactionArchetype;
+  test_pattern_match_rate: number;
+  pattern_drift: number;
+  overfitting_risk: string;
+  is_reliable: boolean;
+  summary: string;
+}
+
 interface ReactionAnalysisSummary {
   archetype: ReactionArchetype;
   archetype_description: string;
@@ -90,6 +113,10 @@ interface ReactionAnalysisSummary {
   options_summary?: string | null;
   confidence: ConfidenceTier;
   sources: Source[];
+  monte_carlo?: MonteCarloSummary | null;
+  validation?: ValidationSummary | null;
+  backtest_years?: number | null;
+  fib_levels?: Record<string, number>;
 }
 
 export interface PeerSpillover {

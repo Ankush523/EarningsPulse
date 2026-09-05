@@ -11,7 +11,7 @@ const OUTCOMES = [
 
 export function ReactionPathHero() {
   return (
-    <figure className="m-0">
+    <figure className="glass-chip m-0 rounded-2xl p-3 sm:p-4">
       <svg
         viewBox="0 0 760 430"
         className="h-auto w-full"
