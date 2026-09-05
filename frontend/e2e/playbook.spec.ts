@@ -38,7 +38,9 @@ test.describe("Demo playbook flow", () => {
       page.getByRole("heading", { name: "Peer Spillover Map" })
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Action Playbook" })).toBeVisible();
-    await expect(page.getByText("AAPL", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: /reaction workspace/i }).getByText("AAPL")
+    ).toBeVisible();
   });
 
   test("export toolbar is visible on completed demo", async ({ page }) => {
