@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { ReactionCandleChart } from "@/components/reaction/ReactionCandleChart";
 import { ReactionMoveHistogram } from "@/components/reaction/ReactionMoveHistogram";
@@ -41,7 +41,7 @@ export function ReactionWorkspace({
   const [showMedian, setShowMedian] = useState(true);
   const [showGhostPaths, setShowGhostPaths] = useState(true);
 
-  const pathOptions = useMemo(() => chart?.paths ?? [], [chart?.paths]);
+  const pathOptions = chart?.paths ?? [];
 
   if (!chart || chart.candles.length === 0) {
     return (

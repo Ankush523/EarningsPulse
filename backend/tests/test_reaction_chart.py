@@ -93,6 +93,4 @@ def test_build_reaction_chart_data_returns_none_without_bars():
         )
     ]
 
-    assert (
-        build_reaction_chart_data("AAPL", events, [], _analysis(), window_days=3) is None
-    )
+    assert build_reaction_chart_data("AAPL", events, [], _analysis(), window_days=3) is None

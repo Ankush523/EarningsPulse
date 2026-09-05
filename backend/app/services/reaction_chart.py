@@ -13,7 +13,6 @@ from app.models.playbook import (
     ReactionEventPath,
     ReactionPathPoint,
     ReactionReferenceLine,
-    ReportOutcome,
 )
 from app.services.price_data import PriceDataService
 
@@ -215,13 +214,9 @@ def _trading_reference_lines(
     tp, sl = _entry_targets(baseline, analysis, pivot_levels)
 
     if pivot_price is not None:
-        lines.append(
-            ReactionReferenceLine(label="Pivot", price=pivot_price, kind="pivot")
-        )
+        lines.append(ReactionReferenceLine(label="Pivot", price=pivot_price, kind="pivot"))
     if support_price is not None:
-        lines.append(
-            ReactionReferenceLine(label="Support", price=support_price, kind="support")
-        )
+        lines.append(ReactionReferenceLine(label="Support", price=support_price, kind="support"))
     if resistance_price is not None:
         lines.append(
             ReactionReferenceLine(label="Resistance", price=resistance_price, kind="resistance")

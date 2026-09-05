@@ -130,9 +130,7 @@ class ReactionReferenceLine(BaseModel):
 
     label: str
     price: float
-    kind: str = Field(
-        description="pivot, support, resistance, entry, tp, sl"
-    )
+    kind: str = Field(description="pivot, support, resistance, entry, tp, sl")
 
 
 class ReactionChartData(BaseModel):
