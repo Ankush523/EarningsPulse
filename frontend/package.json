@@ -20,6 +20,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "lightweight-charts": "^5.0.9",
     "next": "16.3.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

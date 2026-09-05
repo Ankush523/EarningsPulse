@@ -53,7 +53,7 @@ export function ScenarioTree({ scenarios }: ScenarioTreeProps) {
               className={`cursor-pointer rounded-xl px-4 py-3 text-left transition sm:min-w-[8rem] ${
                 isActive
                   ? "glass-panel-strong"
-                  : "border border-transparent bg-white/25 text-ink-soft hover:bg-white/45 hover:text-ink"
+                  : "border border-transparent bg-surface-hover text-ink-soft hover:brightness-110 hover:text-ink"
               }`}
             >
               <span

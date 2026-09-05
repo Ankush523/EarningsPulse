@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { BackendStatus } from "@/components/BackendStatus";
+import { HeaderNav } from "@/components/HeaderNav";
 
 interface AppHeaderProps {
   showNav?: boolean;
@@ -31,14 +31,7 @@ export function AppHeader({ showNav = true }: AppHeaderProps) {
             EarningsPulse
           </span>
         </Link>
-        {showNav && (
-          <nav className="flex items-center gap-4 sm:gap-6">
-            <Link href="/calendar" className="link-glass text-[0.95rem] font-medium">
-              Calendar
-            </Link>
-            <BackendStatus />
-          </nav>
-        )}
+        {showNav && <HeaderNav />}
       </div>
     </header>
   );

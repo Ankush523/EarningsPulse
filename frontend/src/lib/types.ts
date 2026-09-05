@@ -75,6 +75,46 @@ export interface HistoricalReaction {
   pattern: ReactionArchetype;
 }
 
+export interface ReactionPathPoint {
+  offset_days: number;
+  date: string;
+  pct_from_baseline: number;
+  close: number;
+}
+
+export interface ReactionEventPath {
+  earnings_date: string;
+  report_outcome?: ReportOutcome | null;
+  baseline_price: number;
+  points: ReactionPathPoint[];
+}
+
+export interface ReactionReferenceLine {
+  label: string;
+  price: number;
+  kind: string;
+}
+
+export interface ReactionChartBar {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number | null;
+}
+
+export interface ReactionChartData {
+  ticker: string;
+  focus_earnings_date: string;
+  baseline_price: number;
+  window_days: number;
+  candles: ReactionChartBar[];
+  paths: ReactionEventPath[];
+  median_path: ReactionPathPoint[];
+  reference_lines: ReactionReferenceLine[];
+}
+
 interface MonteCarloSummary {
   simulations: number;
   p10_final_move_pct: number;
@@ -117,6 +157,7 @@ interface ReactionAnalysisSummary {
   validation?: ValidationSummary | null;
   backtest_years?: number | null;
   fib_levels?: Record<string, number>;
+  reaction_chart?: ReactionChartData | null;
 }
 
 export interface PeerSpillover {

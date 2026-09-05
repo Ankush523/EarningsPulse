@@ -13,6 +13,7 @@ from app.models.playbook import ConfidenceTier, ReactionArchetype, ReportOutcome
 from app.services.earnings_calendar import EarningsCalendarService
 from app.services.monte_carlo import simulate_reaction_paths
 from app.services.price_data import PriceDataService
+from app.services.reaction_chart import build_reaction_chart_data, ensure_chart_history_bars
 from app.services.reaction_validation import validate_reaction_patterns
 from app.utils.cache import TTLCache, app_cache
 from app.utils.confidence import combine_confidence, score_from_data_quality
@@ -92,7 +93,7 @@ class ReactionAnalyzer:
             use_cache=use_cache,
         )
 
-        events = self._analyze_events_batch(
+        events, all_bars = self._analyze_events_batch(
             normalized,
             historical.events,
             window_days=window,
@@ -126,6 +127,22 @@ class ReactionAnalyzer:
                     latest.earnings_date,
                 )
 
+        if all_bars and events:
+            chart_bars = ensure_chart_history_bars(
+                normalized,
+                events,
+                all_bars,
+                self._price,
+                use_cache=use_cache,
+            )
+            result.reaction_chart = build_reaction_chart_data(
+                normalized,
+                events,
+                chart_bars,
+                result,
+                window_days=window,
+            )
+
         if result.validation and result.validation.overfitting_risk == "high":
             result.confidence = combine_confidence(result.confidence, ConfidenceTier.LOW)
         elif result.validation and result.validation.overfitting_risk == "medium":
@@ -143,9 +160,9 @@ class ReactionAnalyzer:
         *,
         window_days: int,
         use_cache: bool,
-    ) -> list[EarningsReactionEvent]:
+    ) -> tuple[list[EarningsReactionEvent], list[OHLCVBar]]:
         if not earnings_events:
-            return []
+            return [], []
 
         min_date = min(event.report_date for event in earnings_events) - timedelta(days=window_days)
         max_date = max(event.report_date for event in earnings_events) + timedelta(days=window_days)
@@ -179,7 +196,7 @@ class ReactionAnalyzer:
                 )
             if analyzed is not None:
                 events.append(analyzed)
-        return events
+        return events, all_bars
 
     def _load_bars_for_event(
         self,

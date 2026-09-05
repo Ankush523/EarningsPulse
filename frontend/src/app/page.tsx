@@ -59,12 +59,12 @@ export default function HomePage() {
         </section>
 
         <section className="glass-panel mt-10 p-6 sm:p-8 lg:p-10">
-          <h2 className="border-b border-white/50 pb-4 text-[1.65rem] font-semibold leading-tight tracking-tight">
+          <h2 className="border-b border-rule pb-4 text-[1.65rem] font-semibold leading-tight tracking-tight">
             What a playbook contains
           </h2>
           <dl className="mt-2 grid gap-x-10 sm:grid-cols-2">
             {PLAYBOOK_PARTS.map((part) => (
-              <div key={part.title} className="border-b border-white/40 py-6">
+              <div key={part.title} className="border-b border-rule-soft py-6">
                 <dt className="text-[1.15rem] font-semibold leading-snug">{part.title}</dt>
                 <dd className="mt-2 max-w-measure text-[0.98rem] leading-relaxed text-ink-soft">
                   {part.body}
