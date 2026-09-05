@@ -27,19 +27,17 @@ def _bars(center: date, *, base: float = 100.0, span: int = 3) -> list[OHLCVBar]
     return bars
 
 
-def _analysis(**overrides) -> ReactionPatternAnalysis:
-    payload = {
-        "ticker": "AAPL",
-        "archetype": ReactionArchetype.DIP_THEN_RALLY,
-        "archetype_description": "Dip-then-rally",
-        "events_analyzed": 1,
-        "confidence": ConfidenceTier.MEDIUM,
-        "implied_move_pct": 4.0,
-        "avg_dip_pct": -2.5,
-        "avg_recovery_pct": 3.0,
-    }
-    payload.update(overrides)
-    return ReactionPatternAnalysis(**payload)
+def _analysis() -> ReactionPatternAnalysis:
+    return ReactionPatternAnalysis(
+        ticker="AAPL",
+        archetype=ReactionArchetype.DIP_THEN_RALLY,
+        archetype_description="Dip-then-rally",
+        events_analyzed=1,
+        confidence=ConfidenceTier.MEDIUM,
+        implied_move_pct=4.0,
+        avg_dip_pct=-2.5,
+        avg_recovery_pct=3.0,
+    )
 
 
 def test_build_reaction_chart_data_includes_candles_and_trading_lines():
