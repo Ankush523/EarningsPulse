@@ -16,7 +16,7 @@ interface ReactionAnalysisSectionProps {
 export function ReactionAnalysisSection({ reaction, ticker }: ReactionAnalysisSectionProps) {
   return (
     <PlaybookSection title="Price reaction scenarios" confidence={reaction.confidence}>
-      <p className="max-w-measure text-ink-soft">{reaction.archetype_description}</p>
+      <p className="text-ink-soft">{reaction.archetype_description}</p>
 
       <div className="mt-6">
         <ReactionWorkspace
@@ -86,7 +86,7 @@ function OptionsVolatilityBlock({ reaction }: { reaction: ReactionAnalysis }) {
       <h3 className="text-[1.15rem] font-medium">
         What options expect against what usually happens
       </h3>
-      <dl className="mt-4 grid grid-cols-2 gap-6 sm:max-w-md">
+      <dl className="mt-4 grid grid-cols-2 gap-6 lg:grid-cols-4">
         {reaction.implied_move_pct != null && (
           <Figure
             label="Options-implied move"
@@ -101,7 +101,7 @@ function OptionsVolatilityBlock({ reaction }: { reaction: ReactionAnalysis }) {
         )}
       </dl>
       {reaction.volatility_assessment && (
-        <p className="mt-4 max-w-measure">
+        <p className="mt-4">
           <span className="font-medium">
             {volatilityVerdict(reaction.volatility_assessment)}
           </span>
@@ -135,7 +135,7 @@ function QuantitativeValidationBlock({ reaction }: { reaction: ReactionAnalysis 
       )}
       {reaction.monte_carlo && <MonteCarloFigures monteCarlo={reaction.monte_carlo} />}
       {reaction.validation && (
-        <p className="mt-4 max-w-measure text-ink-soft">
+        <p className="mt-4 text-ink-soft">
           <span className="font-medium text-ink">
             Overfitting check ({reaction.validation.overfitting_risk} risk):
           </span>{" "}

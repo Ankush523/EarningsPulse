@@ -38,7 +38,7 @@ export function PlaybookPageClient({ jobId }: PlaybookPageClientProps) {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-10 pt-8 sm:px-6">
+      <main className="mx-auto w-full max-w-page flex-1 px-5 pb-10 pt-8 sm:px-6 lg:px-8">
         <div className="no-print mb-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 text-[0.95rem] text-ink-soft">
           <Link href="/" className="link-glass font-medium">
             Back to home

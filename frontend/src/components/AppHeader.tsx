@@ -9,7 +9,7 @@ interface AppHeaderProps {
 export function AppHeader({ showNav = true }: AppHeaderProps) {
   return (
     <header className="glass-nav">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex max-w-page items-center justify-between px-6 py-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
           <svg
             width="30"

@@ -44,7 +44,7 @@ function PlaybookHeader({ summary }: { summary: Playbook["executive_summary"] })
   const reportLine = buildReportLine(summary);
 
   return (
-    <header className="glass-panel-strong mb-5 p-6 sm:p-8">
+    <header className="glass-panel-strong mb-5 p-6 sm:p-8 xl:p-10">
       <p className="font-mono text-[1.05rem] text-ink-soft">{summary.ticker}</p>
       <h1 className="mt-1 text-balance text-[2.25rem] font-semibold leading-[1.1] tracking-tight sm:text-[2.75rem]">
         {summary.company_name ?? summary.ticker} earnings playbook
@@ -70,7 +70,7 @@ function buildReportLine(summary: Playbook["executive_summary"]): string | null 
 
 function ExecutiveOddsSection({ summary }: { summary: Playbook["executive_summary"] }) {
   return (
-    <section className="glass-panel mb-5 p-6 sm:p-8" aria-labelledby="odds-heading">
+    <section className="glass-panel mb-5 p-6 sm:p-8 xl:p-10" aria-labelledby="odds-heading">
       <h2 id="odds-heading" className="sr-only">
         Report odds
       </h2>
@@ -79,15 +79,13 @@ function ExecutiveOddsSection({ summary }: { summary: Playbook["executive_summar
         inline={summary.inline_probability}
         miss={summary.miss_probability}
       />
-      <div className="mt-10 grid gap-10 md:grid-cols-2">
+      <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-12">
         <div>
           <h3 className="text-[1.15rem] font-semibold">Expected pattern</h3>
           <p className="mt-2 text-[1.35rem] leading-snug">
             {describeArchetype(summary.primary_pattern)}
           </p>
-          <p className="mt-2 max-w-measure text-ink-soft">
-            {summary.primary_pattern_description}
-          </p>
+          <p className="mt-2 text-ink-soft">{summary.primary_pattern_description}</p>
         </div>
         <div>
           <h3 className="text-[1.15rem] font-semibold">What decides it</h3>
@@ -112,7 +110,7 @@ function ActionPlaybookSection({ actions }: { actions: Playbook["action_playbook
           {actions.rules.map((rule) => (
             <li
               key={`${rule.condition}:${rule.action}:${rule.confidence}`}
-              className="grid gap-x-8 gap-y-2 py-5 first:pt-0 sm:grid-cols-[1fr_1.4fr]"
+              className="grid gap-x-10 gap-y-2 py-5 first:pt-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]"
             >
               <p>
                 <span className="italic text-ink-soft">If </span>
@@ -133,7 +131,7 @@ function ActionPlaybookSection({ actions }: { actions: Playbook["action_playbook
         </ol>
       )}
       {actions.disclaimer && (
-        <p className="mt-8 max-w-measure text-[0.9rem] italic text-ink-soft">
+        <p className="mt-8 text-[0.9rem] italic text-ink-soft">
           {actions.disclaimer}
         </p>
       )}
@@ -197,9 +195,9 @@ function OddsStrip({
 
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         {segments.map((segment) => (
-          <div key={segment.label} className="glass-chip rounded-2xl px-4 py-3">
+          <div key={segment.label} className="glass-chip min-w-0 rounded-2xl px-5 py-4">
             <p className={`text-[1.05rem] font-medium ${segment.text}`}>{segment.label}</p>
             <p className="font-mono text-[2.5rem] leading-none tracking-tight sm:text-[3rem]">
               {formatPercent(segment.value)}

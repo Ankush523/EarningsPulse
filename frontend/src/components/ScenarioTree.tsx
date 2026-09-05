@@ -76,10 +76,10 @@ export function ScenarioTree({ scenarios }: ScenarioTreeProps) {
             Bias: {describeDirection(active.expected_direction).toLowerCase()}
           </span>
         </div>
-        <p className="mt-2 max-w-measure text-ink-soft">{active.description}</p>
+        <p className="mt-2 text-ink-soft">{active.description}</p>
 
         {active.historical_reference && (
-          <p className="mt-3 max-w-measure text-[0.95rem]">
+          <p className="mt-3 text-[0.95rem]">
             <span className="italic text-ink-soft">History: </span>
             {active.historical_reference}
           </p>

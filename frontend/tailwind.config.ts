@@ -49,7 +49,8 @@ const config: Config = {
         "2xs": ["0.75rem", { lineHeight: "1.4" }],
       },
       maxWidth: {
-        measure: "40rem",
+        measure: "42rem",
+        page: "85rem",
       },
       boxShadow: {
         glass: "var(--glass-shadow)",

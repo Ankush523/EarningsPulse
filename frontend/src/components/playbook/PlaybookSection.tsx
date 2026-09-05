@@ -13,8 +13,8 @@ export function PlaybookSection({
   children: ReactNode;
 }) {
   return (
-    <section className="glass-panel mb-5 grid gap-x-10 gap-y-4 p-6 sm:p-8 lg:grid-cols-[11rem_1fr] lg:p-9">
-      <div className="lg:sticky lg:top-24 lg:self-start">
+    <section className="glass-panel mb-5 grid gap-x-12 gap-y-5 p-6 sm:p-8 xl:grid-cols-[13rem_minmax(0,1fr)] xl:p-10">
+      <div className="xl:sticky xl:top-24 xl:self-start">
         <h2 className="text-[1.2rem] font-semibold leading-snug">{title}</h2>
         {confidence && (
           <p className="mt-2">

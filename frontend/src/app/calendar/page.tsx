@@ -67,7 +67,7 @@ export default function CalendarPage() {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 pb-10 pt-8 sm:px-6">
+      <main className="mx-auto w-full max-w-page flex-1 px-5 pb-10 pt-8 sm:px-6 lg:px-8">
         <Link href="/" className="link-glass text-[0.95rem] font-medium">
           Back to home
         </Link>

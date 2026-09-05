@@ -13,7 +13,7 @@ export function ReportForecastSection({ forecast }: { forecast: ReportForecast }
   return (
     <PlaybookSection title="Report forecast" confidence={forecast.confidence}>
       {forecast.key_metrics.length > 0 && (
-        <dl className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
+        <dl className="grid gap-x-10 gap-y-5 lg:grid-cols-2 xl:grid-cols-3">
           {forecast.key_metrics.map((metric) => (
             <div key={metric.name}>
               <dt className="flex flex-wrap items-baseline gap-x-3">
@@ -28,7 +28,7 @@ export function ReportForecastSection({ forecast }: { forecast: ReportForecast }
         </dl>
       )}
 
-      <div className="mt-10 grid gap-8 md:grid-cols-3">
+      <div className="mt-10 grid gap-6 lg:grid-cols-3 lg:gap-8">
         <ForecastCase title="Bull case" tone="up" text={forecast.bull_case} />
         <ForecastCase title="Base case" tone="ink" text={forecast.base_case} />
         <ForecastCase title="Bear case" tone="down" text={forecast.bear_case} />

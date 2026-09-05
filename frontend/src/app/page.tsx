@@ -33,7 +33,7 @@ export default function HomePage() {
     <div className="flex min-h-screen flex-col">
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 pb-10 pt-10 sm:px-6 lg:pt-14">
+      <main className="mx-auto w-full max-w-page flex-1 px-5 pb-10 pt-10 sm:px-6 lg:px-8 lg:pt-14">
         <section className="glass-panel-strong grid gap-y-10 p-6 sm:p-8 lg:grid-cols-[minmax(0,26rem)_1fr] lg:grid-rows-[auto_auto] lg:items-center lg:gap-x-12 lg:p-10">
           <h1 className="text-balance text-[2.5rem] font-semibold leading-[1.05] tracking-tight lg:self-end lg:text-[3.25rem]">
             Know the report.
