@@ -7,7 +7,7 @@ export function SiteFooter() {
             Not financial advice. EarningsPulse is decision support: it reads filings, news
             and price history so you can prepare, not so you can trade on autopilot.
           </p>
-          <p className="shrink-0">Built for the AI x Finance Hackathon</p>
+          <p className="shrink-0">EarningsPulse</p>
         </div>
       </div>
     </footer>

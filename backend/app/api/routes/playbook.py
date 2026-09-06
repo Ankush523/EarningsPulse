@@ -7,7 +7,14 @@ import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    status,
+)
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from app.api.deps import get_job_runner, get_job_store

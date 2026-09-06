@@ -508,6 +508,7 @@ body::before {
     animation: shimmer 1.4s ease-in-out infinite;
     border-radius: 0.375rem;
   }
+
 }
 
 @layer utilities {
@@ -537,6 +538,7 @@ body::before {
   .pulse-dot {
     animation: pulse-dot 1.4s ease-in-out infinite;
   }
+
 }
 
 @keyframes reveal {
